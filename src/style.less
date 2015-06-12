@@ -31,6 +31,7 @@ h1 {
 	height: 100%;
   	overflow-y: scroll;
   	flex-basis: 0;
+  	padding-top: 10px;
 }
 
 .editpane {
@@ -42,6 +43,21 @@ h1 {
   	padding: 30px;
   	background: #ECECEC;
   	box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  	-webkit-user-select: initial;
+}
+
+.cell {
+	display: flex;
+	padding-bottom: 20px;
+	margin: 10px;
+	margin-left: 20px;
+}
+
+.cell-handle {
+	border-left: 5px solid #ddd;
+}
+.cell-editor {
+	flex-grow: 1;
 }
 
 .Resizer {
