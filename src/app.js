@@ -56,6 +56,12 @@ class DocumentModel { // a document is a collection of cells
     }
     append(cell) {
         this.cells.push(cell)
+        cell.doc = this;
+        cell.id = -this.cells.length;
+
+    }
+    find(id) {
+        return this.cells.filter(x => x.id === id)[0]
     }
     item(index) {
         return this.cells[index]
@@ -63,20 +69,66 @@ class DocumentModel { // a document is a collection of cells
     get length() {
         return this.length
     }
+    update(){}
 }
 
+
+// moveCard(id, afterId) {
+//     const cells = this.props.cells;
+
+//     const card = cells.filter(c => c.key === id)[0];
+//     const afterCard = cells.filter(c => c.key === afterId)[0];
+//     const cardIndex = cells.indexOf(card);
+//     const afterIndex = cells.indexOf(afterCard);
+
+//     this.props.update(update(this.props, {
+//         cells: {
+//             $splice: [
+//                 [cardIndex, 1],
+//                 [afterIndex, 0, card]
+//             ]
+//         }
+//     }));
+// }
+
 class CellModel {
+    constructor(text) {
+        this.value = text
+        this.doc = null
+        this.id = null
+        this.cm = null
+    }
     insertBefore(cell) {
 
     }
     insertAfter(cell) {
 
     }
+    moveTo(after) {
+        var cardIndex = this.index,
+            afterIndex = after.index;
+        this.doc.cells.splice(cardIndex, 1)
+        this.doc.cells.splice(afterIndex, 0, this);
+        this.update()
+    }
+    update(){
+        if(this.doc) this.doc.update()
+    }
+    get value(){
+        return this._value;
+    }
+    set value(val){
+        this._value = val;
+        this.update()
+    }
+    get index(){
+        return this.doc.cells.indexOf(this)
+    }
     get prev(){
-
+        return this.doc.item(this.index - 1)
     }
     get next(){
-
+        return this.doc.item(this.index + 1)
     }
 }
 
@@ -86,12 +138,11 @@ class Editor extends Component {
         super(props)
         this.componentDidMount = this.componentDidMount.bind(this)
     }
-    componentDidMount() {
-        console.log(this, React.findDOMNode(this))
-        var com = this;
+    componentDidMount() {        
+        var {doc, cell} = this.props;
 
-        this.editor = CodeMirror(React.findDOMNode(this), {
-            value: this.props.value,
+        var cm = CodeMirror(React.findDOMNode(this), {
+            value: cell.value,
             mode: "javascript",
             lineNumbers: false,
             indentUnit: 4,
@@ -104,7 +155,9 @@ class Editor extends Component {
             viewportMargin: Infinity
         })
 
-        this.editor.setOption("extraKeys", {
+        cell.cm = cm;
+
+        cm.setOption("extraKeys", {
             "Ctrl-Space": function(cm) { eliot.complete(cm); },
             "Ctrl-I": function(cm) { eliot.showType(cm); },
             "Ctrl-O": function(cm) { eliot.showDocs(cm); },
@@ -113,72 +166,90 @@ class Editor extends Component {
             "Ctrl-Q": function(cm) { eliot.rename(cm); },
             "Ctrl-.": function(cm) { eliot.selectName(cm); },
             "Shift-Enter": (cm) => {
-                console.log('i ran')
+                // console.log('i ran')
+                if(cell.next) cell.next.cm.focus()
 
-                var state = this.props.state;
-                this.props.update({
-                    count: state.count + 1,
-                    cells: state.cells.slice(0).concat([{
-                        value: `zombocom dos (actually ${state.count})`,
-                        key: state.count + 1
-                    }])
-                })
+
+                // var state = this.props.state;
+                // this.props.update({
+                //     count: state.count + 1,
+                //     cells: state.cells.slice(0).concat([{
+                //         value: `zombocom dos (actually ${state.count})`,
+                //         key: state.count + 1
+                //     }])
+                // })
             },
             "Ctrl-N": (cm) => {
-                console.log('new')
-                var state = this.props.state;
-                this.props.update({
-                    count: state.count + 1,
-                    cells: state.cells.slice(0).concat([{
-                        value: `zombocom dos (actually ${state.count})`,
-                        key: state.count + 1
-                    }])
-                })
+                // console.log('new')
+                // var state = this.props.state;
+                // this.props.update({
+                //     count: state.count + 1,
+                //     cells: state.cells.slice(0).concat([{
+                //         value: `zombocom dos (actually ${state.count})`,
+                //         key: state.count + 1
+                //     }])
+                // })
             }
         })
 
-        // this.editor.on('changes', (cm) => {
-        //     this.props.update({
-        //         cells: state.cells
-        //     })
-        // })
-        this.editor.on("cursorActivity", function(cm) { 
+        cm.on('changes', (cm) => {
+            cell.value = cm.getValue()    
+            
+            if(!cell.next && cell.value){
+                var newCell = new CellModel("")
+                doc.append(newCell)
+                doc.update()
+            }
+        })
+        cm.on("cursorActivity", function(cm) { 
             eliot.updateArgHints(cm); 
             // eliot.complete(cm)
         });
-        this.editor.on('focus', (cm, evt) => {
+        cm.on('focus', (cm, evt) => {
             // console.log(cm, evt)
-            this.props.update({
-                focus: this.props.key
-            })
+            // this.props.update({
+            //     focus: this.props.key
+            // })
+            if(!cell.next && cell.value){
+                var newCell = new CellModel("")
+                doc.append(newCell)
+                doc.update()
+            }
         })
-        this.editor.on('keyup', function(cm, evt){
+        cm.on('keyup', function(cm, evt){
             // console.log(cm.type, cm, evt.keyCode)
             if(evt.keyCode == 190){ // i don't know why this is "."
                 eliot.complete(cm)
             }
         })
-        this.editor.on('keydown', (cm, evt) => {
-            // console.log(evt, cm, evt.keyCode)
+        cm.on('keydown', (cm, evt) => {
+            console.log(evt, cm, evt.keyCode)
             if(evt.keyCode == 40){ // down
                 var cursor = cm.getCursor()
-                if (cursor.line === (cm.lineCount()-1) && 
-                    cursor.ch === cm.getLine(cursor.line).length) {
+                if (cursor.line === (cm.lineCount()-1)) {
+                    // cursor.ch === cm.getLine(cursor.line).length
                     // select the next thing
+                    cell.next.cm.focus()
+                }
+            }else if(evt.keyCode == 38){ // up
+                var cursor = cm.getCursor()
+                if (cursor.line === 0) {
+                    cell.prev.cm.focus()
                 }
             }
+            
             // this.props.update({
             //     value: cm.getValue()
             // })
-            console.log(this.props, cm.getValue())
+            // console.log(this.props, cm.getValue())
             // this.props.update(update(this.props, {
             //     $set: {
             //         value: cm.getValue()
             //     }
             // }))
-            this.props.update({
-                value: cm.getValue()
-            })
+            // this.props.update({
+            //     value: cm.getValue()
+            // })
             
         })
     }
@@ -189,18 +260,17 @@ class Editor extends Component {
 
 
 const cardSource = {
-  beginDrag(props) {
-    return { id: props.id };
-  }
+    beginDrag(props) {
+        return { id: props.cell.id };
+    }
 };
 
 const cardTarget = {
   hover(props, monitor) {
-    // console.log('hover', props, monitor)
     const draggedId = monitor.getItem().id;
-
-    if (draggedId !== props.id) {
-      props.moveCard(draggedId, props.id);
+    if (draggedId !== props.cell.id) {
+      // props.moveCard(draggedId, props.cell.key);
+      props.doc.find(draggedId).moveTo(props.cell)
     }
   }
 };
@@ -222,71 +292,45 @@ class Cell extends Component {
     //     moveCard: PropTypes.func.isRequired
     // };
     render() {
-        const { text, isDragging, connectDragSource, connectDropTarget } = this.props;
+        const { doc, cell } = this.props;
+
+        const { isDragging, connectDragSource, connectDropTarget } = this.props;
         const opacity = isDragging ? 0 : 1;
 
-        const style = {
-            border: '1px dashed gray',
-            padding: '0.5rem 1rem',
-            marginBottom: '.5rem',
-            backgroundColor: 'white',
-            cursor: 'move'
-        };
+        // const style = {
+        //     border: '5px solid gray',
+        //     padding: '0.5rem 1rem',
+        //     marginBottom: '.5rem',
+        //     backgroundColor: 'white',
+        //     float: 'left',
+        //     cursor: 'move'
+        // };
 
         return connectDragSource(
-            <div>
+            <div className="cell">
                 {connectDropTarget(
-                    <div style={{ ...style, opacity }}> DragHandle {text} </div>
+                    <div className="cell-handle" style={{ opacity }}></div>
                 )}
-                <div style={{ opacity }}>
+                <div className="cell-editor" style={{ opacity }}>
                     <Editor {...this.props}></Editor>
                 </div>
             </div>);
-    }    
+    } 
 }
 
 @DragDropContext(HTML5Backend)
 class EditPane extends Component {
     constructor(props) {
         super(props);
-        this.moveCard = this.moveCard.bind(this);
 
-    }
-
-    moveCard(id, afterId) {
-        const cells = this.props.cells;
-
-        const card = cells.filter(c => c.key === id)[0];
-        const afterCard = cells.filter(c => c.key === afterId)[0];
-        const cardIndex = cells.indexOf(card);
-        const afterIndex = cells.indexOf(afterCard);
-
-        this.props.update(update(this.props, {
-            cells: {
-                $splice: [
-                    [cardIndex, 1],
-                    [afterIndex, 0, card]
-                ]
-            }
-        }));
-    }
-    handleClick(e) {
-        console.log('clicked', e.target == this.getDOMNode())
     }
     render() {
+        var {doc} = this.props;
+
         return (
-            <div className="editpane" onClick={this.handleClick}>{
-                this.props.cells.map(
-                    (cell) => 
-                        <Cell 
-                            id={cell.key}
-                            moveCard={this.moveCard}    
-                            update={this.props.update} 
-                            state={this.props.state}
-                            key={cell.key} 
-                            text={cell.value}
-                            value={cell.value}>
-                        </Cell>
+            <div className="editpane">{
+                doc.cells.map(
+                    (cell) => <Cell {...this.props} key={cell.id} cell={cell}></Cell>
                 )
             }</div>
         )
@@ -294,16 +338,18 @@ class EditPane extends Component {
 }
 
 class OutPane extends Component {
-    handleClick() {
-        this.props.update({
-            count: this.props.state.count + 1
-        })
-    }
+    // handleClick() {
+    //     this.props.update({
+    //         count: this.props.state.count + 1
+    //     })
+    // }
     render() {
+        var {doc} = this.props;
+
         return (
             <div className="outpane">
-                {this.props.cells.map(
-                    (cell) => <div>{cell.value}</div>
+                {doc.cells.map(
+                    (cell) => <div key={cell.key}>{cell.value}</div>
                 )}
             </div>
         )
@@ -316,40 +362,20 @@ class OutPane extends Component {
 export default class App extends Component {
   constructor(props) {
     super(props);
-    this.state = {
-        count: 4,
-        cells: [{
-            key: 1,
-            value: "function zombocom(z){\n\treturn z + 1\n}"
-        },{
-            key: 2,
-            value: "function derpsacola(z){\n\treturn z + 1\n}"
-        },{
-            key: 3,
-            value: "function walp(z){\n\treturn z + 1\n}"
-        }]
-    }
+    var doc = new DocumentModel()
+    doc.append(new CellModel("function zombocom(z){\n\treturn z + 1\n}"))
+    doc.append(new CellModel("function derpsacola(z){\n\treturn z + 1\n}"))
+    doc.append(new CellModel("function walp(z){\n\treturn z + 1\n}"))
+    this.state = { doc }
+
+    doc.update = this.forceUpdate.bind(this)
   }
   render() {
     return  (
-        <SplitPane orientation="horizontal" minSize="50">
-           <EditPane 
-                update={this.setState.bind(this)}
-                state={this.state}
-                cells={this.state.cells}>
-            </EditPane>
-           <OutPane 
-                update={this.setState.bind(this)}
-                state={this.state}
-                cells={this.state.cells}>
-            </OutPane>
+        <SplitPane orientation="horizontal" minSize={250}>
+           <EditPane doc={this.state.doc}></EditPane>
+           <OutPane  doc={this.state.doc}></OutPane>
        </SplitPane>
    );
-    return (
-      <div className="wrapper">
-            
-            
-        </div>
-    );
   }
 }
