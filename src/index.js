@@ -1,8 +1,6 @@
 'use strict';
 
-require("./style.less");
-
-require("./CodeMirror/lib/codemirror.css");
+require("./style.less")
 
 var React = require('react'),
     App = require('./app');
