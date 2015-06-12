@@ -2,6 +2,7 @@
 
 import React, { Component, PropTypes } from 'react';
 import update from 'react/lib/update';
+var classNames = require('classnames');
 import SplitPane from 'react-split-pane'
 
 var CodeMirror = require('codemirror')
@@ -53,13 +54,17 @@ import { DragSource, DropTarget } from 'react-dnd';
 class DocumentModel { // a document is a collection of cells
     constructor() {
         this.cells = []
+        this._ids = 0
     }
-    append(cell) {
-        this.cells.push(cell)
-        cell.doc = this;
-        cell.id = -this.cells.length;
-
-    }
+    // append(cell) {
+    //     // this.insertAt(0, cell)
+    //     this.cells.push(cell)
+    // }
+    // insertAt(index, cell) {
+    //     this.cells.splice(index, 0, cell)
+    //     // cell.doc = this;
+    //     // cell.id = --this._ids;
+    // }
     find(id) {
         return this.cells.filter(x => x.id === id)[0]
     }
@@ -73,36 +78,41 @@ class DocumentModel { // a document is a collection of cells
 }
 
 
-// moveCard(id, afterId) {
-//     const cells = this.props.cells;
-
-//     const card = cells.filter(c => c.key === id)[0];
-//     const afterCard = cells.filter(c => c.key === afterId)[0];
-//     const cardIndex = cells.indexOf(card);
-//     const afterIndex = cells.indexOf(afterCard);
-
-//     this.props.update(update(this.props, {
-//         cells: {
-//             $splice: [
-//                 [cardIndex, 1],
-//                 [afterIndex, 0, card]
-//             ]
-//         }
-//     }));
-// }
 
 class CellModel {
-    constructor(text) {
-        this.value = text
-        this.doc = null
-        this.id = null
+    constructor(doc, index) {
+        this.doc = doc
+        this.id = --doc._ids;
+
+        this.value = ""
         this.cm = null
-    }
-    insertBefore(cell) {
 
-    }
-    insertAfter(cell) {
+        if(typeof index === 'undefined'){
+            doc.cells.push(this)
+        }else{
+            doc.cells.splice(index, 0, this)
+        }
+        
+        this._mounted =  []
 
+        this.update()
+    }
+    mount = (x) => {
+        if(typeof x == 'function'){
+            if(this.cm){
+                x()
+            }else{
+                this._mounted.push(x)
+            }
+        }else if(x instanceof CodeMirror){
+            this.cm = x;
+            while(this._mounted.length)
+                this._mounted.shift()();
+        }
+    }
+    remove() {
+        this.doc.cells.splice(this.index, 1)
+        this.update()
     }
     moveTo(after) {
         var cardIndex = this.index,
@@ -120,6 +130,17 @@ class CellModel {
     set value(val){
         this._value = val;
         this.update()
+    }
+    get has_focus(){ return this._has_focus; }
+    set has_focus(val){
+        this._has_focus = val;
+        if(val){
+            for(var i = 0; i < this.doc.cells.length; i++){
+                var other = this.doc.cells[i];
+                if(other !== this) other.has_focus = false;
+            }
+            this.doc.update()
+        }
     }
     get index(){
         return this.doc.cells.indexOf(this)
@@ -155,7 +176,8 @@ class Editor extends Component {
             viewportMargin: Infinity
         })
 
-        cell.cm = cm;
+        // cell.cm = cm;
+        cell.mount(cm)
 
         cm.setOption("extraKeys", {
             "Ctrl-Space": function(cm) { eliot.complete(cm); },
@@ -189,6 +211,15 @@ class Editor extends Component {
                 //         key: state.count + 1
                 //     }])
                 // })
+            },
+            "Cmd-J": (cm) => {
+                var newCell = new CellModel(doc, cell.index + 1)
+                newCell.cm.focus()
+
+            },
+            "Cmd-K": (cm) => {
+                var newCell = new CellModel(doc, cell.index)
+                newCell.cm.focus()
             }
         })
 
@@ -196,23 +227,22 @@ class Editor extends Component {
             cell.value = cm.getValue()    
             
             if(!cell.next && cell.value){
-                var newCell = new CellModel("")
-                doc.append(newCell)
-                doc.update()
+                new CellModel(doc);
             }
         })
         cm.on("cursorActivity", function(cm) { 
             eliot.updateArgHints(cm); 
             // eliot.complete(cm)
         });
+        cm.on('blur', (cm, evt) => {
+            // cell.has_focus = false
+            // doc.update()
+        })
         cm.on('focus', (cm, evt) => {
-            // console.log(cm, evt)
-            // this.props.update({
-            //     focus: this.props.key
-            // })
+            cell.has_focus = true
+
             if(!cell.next && cell.value){
-                var newCell = new CellModel("")
-                doc.append(newCell)
+                new CellModel(doc)
                 doc.update()
             }
         })
@@ -229,12 +259,23 @@ class Editor extends Component {
                 if (cursor.line === (cm.lineCount()-1)) {
                     // cursor.ch === cm.getLine(cursor.line).length
                     // select the next thing
-                    cell.next.cm.focus()
+                    if(cell.next) cell.next.cm.focus()
                 }
             }else if(evt.keyCode == 38){ // up
                 var cursor = cm.getCursor()
                 if (cursor.line === 0) {
-                    cell.prev.cm.focus()
+                    if(cell.prev) cell.prev.cm.focus()
+                }
+            }else if(evt.keyCode == 8) { // backspace
+                if(cm.getValue() == ""){ // if the cell is empty
+                    if(cell.prev){
+                        cell.prev.cm.focus()    
+                    }else if(cell.next){
+                        cell.next.cm.focus()
+                    }
+                    if(doc.cells.length > 1){
+                        cell.remove()   
+                    }
                 }
             }
             
@@ -291,23 +332,19 @@ class Cell extends Component {
     //     text: PropTypes.string.isRequired,
     //     moveCard: PropTypes.func.isRequired
     // };
+
+    handleClick = (e) => {
+        console.log(this, e)
+        this.props.cell.has_focus = true;
+    }
     render() {
         const { doc, cell } = this.props;
 
         const { isDragging, connectDragSource, connectDropTarget } = this.props;
         const opacity = isDragging ? 0 : 1;
-
-        // const style = {
-        //     border: '5px solid gray',
-        //     padding: '0.5rem 1rem',
-        //     marginBottom: '.5rem',
-        //     backgroundColor: 'white',
-        //     float: 'left',
-        //     cursor: 'move'
-        // };
-
+        
         return connectDragSource(
-            <div className="cell">
+            <div className={classNames({"cell": true, "focused": cell.has_focus})} onMouseDown={this.handleClick}>
                 {connectDropTarget(
                     <div className="cell-handle" style={{ opacity }}></div>
                 )}
@@ -349,7 +386,7 @@ class OutPane extends Component {
         return (
             <div className="outpane">
                 {doc.cells.map(
-                    (cell) => <div key={cell.key}>{cell.value}</div>
+                    (cell) => <div key={cell.id}>{cell.value}</div>
                 )}
             </div>
         )
@@ -363,9 +400,10 @@ export default class App extends Component {
   constructor(props) {
     super(props);
     var doc = new DocumentModel()
-    doc.append(new CellModel("function zombocom(z){\n\treturn z + 1\n}"))
-    doc.append(new CellModel("function derpsacola(z){\n\treturn z + 1\n}"))
-    doc.append(new CellModel("function walp(z){\n\treturn z + 1\n}"))
+    new CellModel(doc)
+    // doc.append(new CellModel("function zombocom(z){\n\treturn z + 1\n}"))
+    // doc.append(new CellModel("function derpsacola(z){\n\treturn z + 1\n}"))
+    // doc.append(new CellModel("function walp(z){\n\treturn z + 1\n}"))
     this.state = { doc }
 
     doc.update = this.forceUpdate.bind(this)
