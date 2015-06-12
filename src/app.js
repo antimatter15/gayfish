@@ -1,6 +1,7 @@
 'use strict';
 
-var React = require('react');
+import React, { Component, PropTypes } from 'react';
+import update from 'react/lib/update';
 
 var CodeMirror = require('codemirror')
 
@@ -44,11 +45,21 @@ var eliot = new CodeMirror.TernServer({defs: [
 ]});
 
 
-var Editor = React.createClass({
+import { DragDropContext } from 'react-dnd';
+import HTML5Backend from 'react-dnd/modules/backends/HTML5';
+import { DragSource, DropTarget } from 'react-dnd';
+
+
+class Editor extends Component {
+    constructor(props) {
+        super(props)
+        this.componentDidMount = this.componentDidMount.bind(this)
+    }
     componentDidMount() {
+        console.log(this, React.findDOMNode(this))
         var com = this;
 
-        this.editor = CodeMirror(this.getDOMNode(), {
+        this.editor = CodeMirror(React.findDOMNode(this), {
             value: this.props.value,
             mode: "javascript",
             lineNumbers: false,
@@ -125,77 +136,172 @@ var Editor = React.createClass({
                     // select the next thing
                 }
             }
+            // this.props.update({
+            //     value: cm.getValue()
+            // })
+            console.log(this.props, cm.getValue())
+            // this.props.update(update(this.props, {
+            //     $set: {
+            //         value: cm.getValue()
+            //     }
+            // }))
             this.props.update({
                 value: cm.getValue()
             })
             
         })
-    },
-    componentWillReceiveProps(nextProps) {
-        // console.log(nextProps)
-    },
-    shouldComponentUpdate() { return false },
-    render() { return <div></div> }
-})
+    }
+    render() {
+        return <div></div>
+    }
+}
 
 
-var EditPane = React.createClass({
+const cardSource = {
+  beginDrag(props) {
+    return { id: props.id };
+  }
+};
+
+const cardTarget = {
+  hover(props, monitor) {
+    // console.log('hover', props, monitor)
+    const draggedId = monitor.getItem().id;
+
+    if (draggedId !== props.id) {
+      props.moveCard(draggedId, props.id);
+    }
+  }
+};
+
+@DropTarget('Cell', cardTarget, connect => ({
+  connectDropTarget: connect.dropTarget(),
+}))
+@DragSource('Cell', cardSource, (connect, monitor) => ({
+  connectDragSource: connect.dragSource(),
+  isDragging: monitor.isDragging()
+}))
+class Cell extends Component {
+    // static propTypes = {
+    //     connectDragSource: PropTypes.func.isRequired,
+    //     connectDropTarget: PropTypes.func.isRequired,
+    //     isDragging: PropTypes.bool.isRequired,
+    //     id: PropTypes.any.isRequired,
+    //     text: PropTypes.string.isRequired,
+    //     moveCard: PropTypes.func.isRequired
+    // };
+    render() {
+        const { text, isDragging, connectDragSource, connectDropTarget } = this.props;
+        const opacity = isDragging ? 0 : 1;
+
+        const style = {
+            border: '1px dashed gray',
+            padding: '0.5rem 1rem',
+            marginBottom: '.5rem',
+            backgroundColor: 'white',
+            cursor: 'move'
+        };
+
+        return connectDragSource(
+            <div>
+                {connectDropTarget(
+                    <div style={{ ...style, opacity }}> DragHandle </div>
+                )}
+                <div style={{ opacity }}>
+                    <Editor {...this.props}></Editor>
+                </div>
+            </div>);
+    }    
+}
+
+@DragDropContext(HTML5Backend)
+class EditPane extends Component {
+    constructor(props) {
+        super(props);
+        this.moveCard = this.moveCard.bind(this);
+
+    }
+
+    moveCard(id, afterId) {
+        const cells = this.props.cells;
+
+        const card = cells.filter(c => c.key === id)[0];
+        const afterCard = cells.filter(c => c.key === afterId)[0];
+        const cardIndex = cells.indexOf(card);
+        const afterIndex = cells.indexOf(afterCard);
+
+        this.props.update(update(this.props, {
+            cells: {
+                $splice: [
+                    [cardIndex, 1],
+                    [afterIndex, 0, card]
+                ]
+            }
+        }));
+    }
     handleClick(e) {
         console.log('clicked', e.target == this.getDOMNode())
-    },
+    }
     render() {
         return (
             <div className="editpane" onClick={this.handleClick}>{
                 this.props.cells.map(
                     (cell) => 
-                        <Editor 
+                        <Cell 
+                            id={cell.key}
+                            moveCard={this.moveCard}    
                             update={this.props.update} 
                             state={this.props.state}
                             key={cell.key} 
+                            text={cell.value}
                             value={cell.value}>
-                        </Editor>
+                        </Cell>
                 )
             }</div>
         )
     }
-})
+}
 
-var OutPane = React.createClass({
+class OutPane extends Component {
     handleClick() {
         this.props.update({
             count: this.props.state.count + 1
         })
-    },
+    }
     render() {
         return (
             <div className="outpane">
-                <h1>Whats up, world doge.</h1>
-                <button onClick={this.handleClick}>Zombocom {this.props.state.count}</button>
                 {this.props.cells.map(
                     (cell) => <div>{cell.value}</div>
                 )}
             </div>
         )
     }
-})
+}
 
 
 
-var App = React.createClass({
-    getInitialState() {
-        return {
-            count: 4,
-            cells: [{
-                key: 1,
-                value: `function zombocom(z){
-    return z + 1
-}`
-            }]
-        }
-    },
-    render() {
+
+export default class App extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+        count: 4,
+        cells: [{
+            key: 1,
+            value: "function zombocom(z){\n\treturn z + 1\n}"
+        },{
+            key: 2,
+            value: "function derpsacola(z){\n\treturn z + 1\n}"
+        },{
+            key: 3,
+            value: "function walp(z){\n\treturn z + 1\n}"
+        }]
+    }
+  }
+  render() {
     return (
-        <div className="wrapper">
+      <div className="wrapper">
             <EditPane 
                 update={this.setState.bind(this)}
                 state={this.state}
@@ -208,7 +314,5 @@ var App = React.createClass({
             </OutPane>
         </div>
     );
-    }
-});
-
-module.exports = App;
+  }
+}
