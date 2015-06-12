@@ -2,6 +2,7 @@
 
 import React, { Component, PropTypes } from 'react';
 import update from 'react/lib/update';
+import SplitPane from 'react-split-pane'
 
 var CodeMirror = require('codemirror')
 
@@ -48,6 +49,36 @@ var eliot = new CodeMirror.TernServer({defs: [
 import { DragDropContext } from 'react-dnd';
 import HTML5Backend from 'react-dnd/modules/backends/HTML5';
 import { DragSource, DropTarget } from 'react-dnd';
+
+class DocumentModel { // a document is a collection of cells
+    constructor() {
+        this.cells = []
+    }
+    append(cell) {
+        this.cells.push(cell)
+    }
+    item(index) {
+        return this.cells[index]
+    }
+    get length() {
+        return this.length
+    }
+}
+
+class CellModel {
+    insertBefore(cell) {
+
+    }
+    insertAfter(cell) {
+
+    }
+    get prev(){
+
+    }
+    get next(){
+
+    }
+}
 
 
 class Editor extends Component {
@@ -205,7 +236,7 @@ class Cell extends Component {
         return connectDragSource(
             <div>
                 {connectDropTarget(
-                    <div style={{ ...style, opacity }}> DragHandle </div>
+                    <div style={{ ...style, opacity }}> DragHandle {text} </div>
                 )}
                 <div style={{ opacity }}>
                     <Editor {...this.props}></Editor>
@@ -300,18 +331,24 @@ export default class App extends Component {
     }
   }
   render() {
-    return (
-      <div className="wrapper">
-            <EditPane 
+    return  (
+        <SplitPane orientation="horizontal" minSize="50">
+           <EditPane 
                 update={this.setState.bind(this)}
                 state={this.state}
                 cells={this.state.cells}>
             </EditPane>
-            <OutPane 
+           <OutPane 
                 update={this.setState.bind(this)}
                 state={this.state}
                 cells={this.state.cells}>
             </OutPane>
+       </SplitPane>
+   );
+    return (
+      <div className="wrapper">
+            
+            
         </div>
     );
   }
