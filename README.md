@@ -10,7 +10,7 @@ TODO:
 	* In a WebWorker (run browserify inside browserify?)
 	* Through Jupyter
 * Inject profiling code to automatically (a la Adobe's Theseus) to automatically display progress bar for code execution
-* Experiment with annotating CodeMirror inline with function arguments
+* Experiment with annotating CodeMirror inline with named function arguments and other documentation
 * Interactive Output
 	* Standard Text Output
 	* Images (multiple images per cell)

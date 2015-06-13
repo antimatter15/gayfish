@@ -5,6 +5,7 @@ import update from 'react/lib/update';
 import classNames from 'classnames'
 import SplitPane from 'react-split-pane'
 import babel from 'babel-core/lib/babel/api/browser.js'
+import falafel from 'falafel';
 
 global.babel = babel
 var CodeMirror = require('codemirror')
@@ -303,19 +304,47 @@ class EditPane extends Component {
 class CellResult extends Component {
     render() {
         var {doc, cell} = this.props;
-        if(cell.has_focus){
-            return <div className="active-result">omg has focus</div>
-        }
+        // if(cell.has_focus){
+        //     return <div className="active-result">omg has focus</div>
+        // }
         try {
-            var result = babel.transform(cell.value).code;
+            var middle = babel.transform(cell.value).code;
+
+            var progressTracker = '__track$loop__'
+            function removeMerp(src){
+                return falafel(src, function(node){
+                    if(node.type == 'CallExpression' &&
+                        node.callee.type == 'Identifier' &&
+                        node.callee.name == progressTracker){
+                        node.update('0')
+                    }
+                })
+            }
+            var result = falafel(middle, function (node) {
+                if(node.type === 'ForStatement'){
+                    if(node.test.type == 'BinaryExpression' && 
+                        node.test.right.type == 'Literal' && 
+                        node.test.left.type == 'Identifier'){
+                        node.update.update(node.update.source() + ','+progressTracker+'(' + node.test.left.name + ', ' + node.test.right.value + ')')
+                        node.body.update(removeMerp(node.body.source()))
+                    }
+                }else if(node.type === 'CallExpression'){
+                    if(node.callee.type == 'MemberExpression' && 
+                        ['forEach', 'map'].indexOf(node.callee.property.name) != -1) {
+                        var thing = node.arguments[0].body;
+                        thing.update(removeMerp('{'+progressTracker+'(arguments[1], arguments[2].length);' + thing.source().slice(1)))
+                    }
+                }
+            });
+
         } catch (err) {
             var result = err.toString()
         }
         
         return (
-            <div>
+            <pre>
                 {result}
-            </div>
+            </pre>
         )
     }
 }
