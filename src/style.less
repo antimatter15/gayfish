@@ -51,13 +51,28 @@ h1 {
 	padding-bottom: 20px;
 	margin: 10px;
 	margin-left: 20px;
+	
+	// transition: opacity 1s ease-in;
+
+	.cell-handle {
+		border-left: 5px solid #ddd;
+		cursor: move;
+		transition: border-color 0.1s linear;
+	}
+	.cell-editor {
+		flex-grow: 1;
+	}
+	&.focused .cell-handle{
+		border-color: #74CAA3;
+	}
 }
 
-.cell-handle {
-	border-left: 5px solid #ddd;
-}
-.cell-editor {
-	flex-grow: 1;
+.active-result {
+	background: white;
+	padding: 20px;
+	margin-top: 20px;
+	margin-bottom: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
 
 .Resizer {

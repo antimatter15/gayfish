@@ -4,6 +4,7 @@
   "description": "this name is almost certainly temporary",
   "dependencies": {
     "acorn": "^1.2.2",
+    "classnames": "^2.1.2",
     "codemirror": "^5.3.0",
     "css-loader": "^0.14.5",
     "json-loader": "^0.5.2",

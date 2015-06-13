@@ -1,51 +1,45 @@
 'use strict';
 
-import React, { Component, PropTypes } from 'react';
+import React, { Component, PropTypes } from 'react/addons';
 import update from 'react/lib/update';
-var classNames = require('classnames');
+import classNames from 'classnames'
 import SplitPane from 'react-split-pane'
+import babel from 'babel-core/lib/babel/api/browser.js'
 
+global.babel = babel
 var CodeMirror = require('codemirror')
-
 require("codemirror/lib/codemirror.css");
-
+require("./codemirror.less");
 require("codemirror/mode/javascript/javascript")
 require("codemirror/keymap/sublime")
+// require("codemirror/addon/edit/closebrackets")
+require("./closebrackets");
 
-require("codemirror/addon/edit/closebrackets")
 require("codemirror/addon/edit/matchbrackets")
 require("codemirror/addon/comment/comment")
 require("codemirror/addon/comment/continuecomment")
 // require("codemirror/addon/fold/foldcode")
 // require("codemirror/addon/fold/foldgutter")
-
 require("codemirror/addon/fold/foldgutter.css")
 require("codemirror/addon/search/match-highlighter")
-
 require("codemirror/addon/hint/show-hint")
 require("codemirror/addon/hint/show-hint.css")
-
 require("codemirror/addon/dialog/dialog")
 require("codemirror/addon/dialog/dialog.css")
-
-
 require("codemirror/addon/search/searchcursor")
 require("codemirror/addon/search/search")
 
-require("./codemirror.less");
-
-global.acorn = require('acorn')
 global.tern = require('tern')
-
-
 require("codemirror/addon/tern/tern.css")
 require("codemirror/addon/tern/tern")
 
 // Tern Server Eliot
 var eliot = new CodeMirror.TernServer({defs: [
-    require('json!tern/defs/ecma5.json')
+    require('tern/defs/ecma5.json')
 ]});
 
+// var ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
+// import ReactCSSTransitionGroup from 'react/lib/ReactCSSTransitionGroup'
 
 import { DragDropContext } from 'react-dnd';
 import HTML5Backend from 'react-dnd/modules/backends/HTML5';
@@ -56,54 +50,29 @@ class DocumentModel { // a document is a collection of cells
         this.cells = []
         this._ids = 0
     }
-    // append(cell) {
-    //     // this.insertAt(0, cell)
-    //     this.cells.push(cell)
-    // }
-    // insertAt(index, cell) {
-    //     this.cells.splice(index, 0, cell)
-    //     // cell.doc = this;
-    //     // cell.id = --this._ids;
-    // }
-    find(id) {
-        return this.cells.filter(x => x.id === id)[0]
-    }
-    item(index) {
-        return this.cells[index]
-    }
-    get length() {
-        return this.length
-    }
+    find(id) { return this.cells.filter(x => x.id === id)[0] }
+    item(index) { return this.cells[index] }
+    get length() { return this.length }
     update(){}
 }
-
-
 
 class CellModel {
     constructor(doc, index) {
         this.doc = doc
         this.id = --doc._ids;
-
         this.value = ""
         this.cm = null
-
         if(typeof index === 'undefined'){
             doc.cells.push(this)
         }else{
             doc.cells.splice(index, 0, this)
         }
-        
         this._mounted =  []
-
         this.update()
     }
     mount = (x) => {
         if(typeof x == 'function'){
-            if(this.cm){
-                x()
-            }else{
-                this._mounted.push(x)
-            }
+            this.cm ? x() : this._mounted.push(x);
         }else if(x instanceof CodeMirror){
             this.cm = x;
             while(this._mounted.length)
@@ -119,14 +88,11 @@ class CellModel {
             afterIndex = after.index;
         this.doc.cells.splice(cardIndex, 1)
         this.doc.cells.splice(afterIndex, 0, this);
+        console.log('moveto', after)
         this.update()
     }
-    update(){
-        if(this.doc) this.doc.update()
-    }
-    get value(){
-        return this._value;
-    }
+    update(){ if(this.doc) this.doc.update() }
+    get value(){ return this._value; }
     set value(val){
         this._value = val;
         this.update()
@@ -142,17 +108,10 @@ class CellModel {
             this.doc.update()
         }
     }
-    get index(){
-        return this.doc.cells.indexOf(this)
-    }
-    get prev(){
-        return this.doc.item(this.index - 1)
-    }
-    get next(){
-        return this.doc.item(this.index + 1)
-    }
+    get index(){ return this.doc.cells.indexOf(this) }
+    get prev(){ return this.doc.item(this.index - 1) }
+    get next(){ return this.doc.item(this.index + 1) }
 }
-
 
 class Editor extends Component {
     constructor(props) {
@@ -176,7 +135,6 @@ class Editor extends Component {
             viewportMargin: Infinity
         })
 
-        // cell.cm = cm;
         cell.mount(cm)
 
         cm.setOption("extraKeys", {
@@ -188,34 +146,20 @@ class Editor extends Component {
             "Ctrl-Q": function(cm) { eliot.rename(cm); },
             "Ctrl-.": function(cm) { eliot.selectName(cm); },
             "Shift-Enter": (cm) => {
-                // console.log('i ran')
+
                 if(cell.next) cell.next.cm.focus()
-
-
-                // var state = this.props.state;
-                // this.props.update({
-                //     count: state.count + 1,
-                //     cells: state.cells.slice(0).concat([{
-                //         value: `zombocom dos (actually ${state.count})`,
-                //         key: state.count + 1
-                //     }])
-                // })
             },
             "Ctrl-N": (cm) => {
-                // console.log('new')
-                // var state = this.props.state;
-                // this.props.update({
-                //     count: state.count + 1,
-                //     cells: state.cells.slice(0).concat([{
-                //         value: `zombocom dos (actually ${state.count})`,
-                //         key: state.count + 1
-                //     }])
-                // })
+            },
+            "Cmd-Up": (cm) => {
+                if(cell.prev) cell.prev.cm.focus();
+            },
+            "Cmd-Down": (cm) => {
+                if(cell.next) cell.next.cm.focus();
             },
             "Cmd-J": (cm) => {
                 var newCell = new CellModel(doc, cell.index + 1)
                 newCell.cm.focus()
-
             },
             "Cmd-K": (cm) => {
                 var newCell = new CellModel(doc, cell.index)
@@ -253,7 +197,7 @@ class Editor extends Component {
             }
         })
         cm.on('keydown', (cm, evt) => {
-            console.log(evt, cm, evt.keyCode)
+            // console.log(evt, cm, evt.keyCode)
             if(evt.keyCode == 40){ // down
                 var cursor = cm.getCursor()
                 if (cursor.line === (cm.lineCount()-1)) {
@@ -279,19 +223,6 @@ class Editor extends Component {
                 }
             }
             
-            // this.props.update({
-            //     value: cm.getValue()
-            // })
-            // console.log(this.props, cm.getValue())
-            // this.props.update(update(this.props, {
-            //     $set: {
-            //         value: cm.getValue()
-            //     }
-            // }))
-            // this.props.update({
-            //     value: cm.getValue()
-            // })
-            
         })
     }
     render() {
@@ -307,32 +238,22 @@ const cardSource = {
 };
 
 const cardTarget = {
-  hover(props, monitor) {
-    const draggedId = monitor.getItem().id;
-    if (draggedId !== props.cell.id) {
-      // props.moveCard(draggedId, props.cell.key);
-      props.doc.find(draggedId).moveTo(props.cell)
+    hover(props, monitor) {
+        const draggedId = monitor.getItem().id;
+        if (draggedId !== props.cell.id) {
+            props.doc.find(draggedId).moveTo(props.cell)
+        }
     }
-  }
 };
 
 @DropTarget('Cell', cardTarget, connect => ({
-  connectDropTarget: connect.dropTarget(),
+    connectDropTarget: connect.dropTarget(),
 }))
 @DragSource('Cell', cardSource, (connect, monitor) => ({
-  connectDragSource: connect.dragSource(),
-  isDragging: monitor.isDragging()
+    connectDragSource: connect.dragSource(),
+    isDragging: monitor.isDragging()
 }))
 class Cell extends Component {
-    // static propTypes = {
-    //     connectDragSource: PropTypes.func.isRequired,
-    //     connectDropTarget: PropTypes.func.isRequired,
-    //     isDragging: PropTypes.bool.isRequired,
-    //     id: PropTypes.any.isRequired,
-    //     text: PropTypes.string.isRequired,
-    //     moveCard: PropTypes.func.isRequired
-    // };
-
     handleClick = (e) => {
         console.log(this, e)
         this.props.cell.has_focus = true;
@@ -343,15 +264,13 @@ class Cell extends Component {
         const { isDragging, connectDragSource, connectDropTarget } = this.props;
         const opacity = isDragging ? 0 : 1;
         
-        return connectDragSource(
+        return connectDropTarget(connectDragSource(
             <div className={classNames({"cell": true, "focused": cell.has_focus})} onMouseDown={this.handleClick}>
-                {connectDropTarget(
-                    <div className="cell-handle" style={{ opacity }}></div>
-                )}
+                <div className="cell-handle" style={{ opacity }}></div>
                 <div className="cell-editor" style={{ opacity }}>
                     <Editor {...this.props}></Editor>
                 </div>
-            </div>);
+            </div>));
     } 
 }
 
@@ -361,32 +280,19 @@ class EditPane extends Component {
         super(props);
 
     }
-    render() {
+    handleClick = (e) => {
         var {doc} = this.props;
-
-        return (
-            <div className="editpane">{
-                doc.cells.map(
-                    (cell) => <Cell {...this.props} key={cell.id} cell={cell}></Cell>
-                )
-            }</div>
-        )
+        if(e.target === React.findDOMNode(this)){
+            doc.cells[doc.cells.length - 1].cm.focus()
+        }
     }
-}
-
-class OutPane extends Component {
-    // handleClick() {
-    //     this.props.update({
-    //         count: this.props.state.count + 1
-    //     })
-    // }
     render() {
         var {doc} = this.props;
 
         return (
-            <div className="outpane">
+            <div className="editpane" onClick={this.handleClick}>
                 {doc.cells.map(
-                    (cell) => <div key={cell.id}>{cell.value}</div>
+                    (cell) => <Cell {...this.props} key={cell.id} cell={cell}></Cell>
                 )}
             </div>
         )
@@ -394,26 +300,56 @@ class OutPane extends Component {
 }
 
 
+class CellResult extends Component {
+    render() {
+        var {doc, cell} = this.props;
+        if(cell.has_focus){
+            return <div className="active-result">omg has focus</div>
+        }
+        try {
+            var result = babel.transform(cell.value).code;
+        } catch (err) {
+            var result = err.toString()
+        }
+        
+        return (
+            <div>
+                {result}
+            </div>
+        )
+    }
+}
+
+class OutPane extends Component {
+    render() {
+        var {doc} = this.props;
+        return (
+            <div className="outpane">
+                {doc.cells.map(
+                    (cell) => <CellResult {...this.props} cell={cell} key={cell.id}></CellResult>
+                )}
+            </div>
+        )
+    }
+}
 
 
 export default class App extends Component {
-  constructor(props) {
-    super(props);
-    var doc = new DocumentModel()
-    new CellModel(doc)
-    // doc.append(new CellModel("function zombocom(z){\n\treturn z + 1\n}"))
-    // doc.append(new CellModel("function derpsacola(z){\n\treturn z + 1\n}"))
-    // doc.append(new CellModel("function walp(z){\n\treturn z + 1\n}"))
-    this.state = { doc }
-
-    doc.update = this.forceUpdate.bind(this)
-  }
-  render() {
-    return  (
-        <SplitPane orientation="horizontal" minSize={250}>
-           <EditPane doc={this.state.doc}></EditPane>
-           <OutPane  doc={this.state.doc}></OutPane>
-       </SplitPane>
-   );
-  }
+    constructor(props) {
+        super(props);
+        var doc = new DocumentModel()
+        new CellModel(doc)
+        this.state = { doc }
+        doc.update = this.forceUpdate.bind(this)
+    }
+    render() {
+        return  (
+            <div>
+                <SplitPane orientation="horizontal" minSize={250}>
+                    <EditPane doc={this.state.doc}></EditPane>
+                    <OutPane  doc={this.state.doc}></OutPane>
+                </SplitPane>
+            </div>
+        );
+    }
 }
