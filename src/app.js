@@ -6,6 +6,7 @@ import classNames from 'classnames'
 import SplitPane from 'react-split-pane'
 import babel from 'babel-core/lib/babel/api/browser.js'
 import falafel from 'falafel';
+import _ from 'lodash';
 
 global.babel = babel
 var CodeMirror = require('codemirror')
@@ -62,7 +63,9 @@ class DocumentModel { // a document is a collection of cells
     }
     restore(state){
         for(let c of state.cells){
+            if(typeof c.index != 'number') throw 'Cell index must be number';
             var cell = new CellModel(this, c.index)
+            if(typeof c.value != 'string') throw 'Cell value must be string';
             cell.value = c.value
         }
     }
@@ -251,6 +254,7 @@ class Editor extends Component {
 
 const cardSource = {
     beginDrag(props) {
+        props.cell.has_focus = true;
         return { id: props.cell.id };
     }
 };
@@ -273,7 +277,6 @@ const cardTarget = {
 }))
 class Cell extends Component {
     handleClick = (e) => {
-        console.log(this, e)
         this.props.cell.has_focus = true;
     }
     render() {
@@ -335,13 +338,14 @@ class CellResult extends Component {
                         node.callee.name == progressTracker){
                         node.update('0')
                     }
-                })
+                }).toString()
             }
             var result = falafel(middle, function (node) {
                 if(node.type === 'ForStatement'){
                     if(node.test.type == 'BinaryExpression' && 
                         node.test.right.type == 'Literal' && 
-                        node.test.left.type == 'Identifier'){
+                        node.test.left.type == 'Identifier' &&
+                        node.test.operator == '<'){
                         node.update.update(node.update.source() + ','+progressTracker+'(' + node.test.left.name + ', ' + node.test.right.value + ')')
                         node.body.update(removeMerp(node.body.source()))
                     }
@@ -349,7 +353,15 @@ class CellResult extends Component {
                     if(node.callee.type == 'MemberExpression' && 
                         ['forEach', 'map'].indexOf(node.callee.property.name) != -1) {
                         var thing = node.arguments[0].body;
-                        thing.update(removeMerp('{'+progressTracker+'(arguments[1], arguments[2].length);' + thing.source().slice(1)))
+                        thing.update('{'+progressTracker+'(arguments[1], arguments[2].length);' + removeMerp(thing.source()).slice(1))
+                    }
+                }else if(node.type == 'WhileStatement'){
+                    if(node.test.type == 'BinaryExpression' &&
+                        node.test.right.type == 'Literal' && 
+                        node.test.left.type == 'Identifier' &&
+                        node.test.operator == '<' &&
+                        node.body.type == 'BlockStatement'){
+                        node.body.update('{'+progressTracker+'(' + node.test.left.name + ', ' + node.test.right.value + ');' + removeMerp(node.body.source()).slice(1))
                     }
                 }
             });
@@ -380,19 +392,61 @@ class OutPane extends Component {
 }
 
 
+class Palette extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            show: false,
+            query: ''
+        }
+    }
+    handleInput = (e) => {
+        this.setState({ query: React.findDOMNode(this.refs.input).value })
+    }
+    handleKey = (e) => {
+        if(e.keyCode == 27){ // esc
+            this.setState({ show: false })
+        }
+    }
+    focus = () => {
+        React.findDOMNode(this.refs.input).focus()
+    }
+    componentDidUpdate = (prevProps, prevState) => {
+        if(this.state.show){
+            this.focus()
+        }
+    }
+    render() {
+        if(!this.state.show) return null;
+
+        return (
+            <div className="palette">
+                <input type="text" ref="input" onChange={this.handleInput} onKeyDown={this.handleKey}></input>
+                <div className="results">
+                    {
+                        _.range(42).filter(x => x % this.state.query.length == 0).map(x => <div>{x}</div>)
+                    }
+                </div>
+            </div>
+        )
+    }
+}
+
 export default class App extends Component {
     constructor(props) {
         super(props);
-        var doc = new DocumentModel()
-        new CellModel(doc)
-        this.state = { doc }
+        
         try {
+            var doc = new DocumentModel()
             var last_state = JSON.parse(localStorage.last_state);
             doc.restore(last_state)
         } catch (err) {
             console.error(err)
+            var doc = new DocumentModel()
+            new CellModel(doc)
         }
 
+        this.state = { doc }
         doc.update = () => {
             localStorage.last_state = JSON.stringify(doc.serialize())
             this.forceUpdate()
@@ -400,8 +454,9 @@ export default class App extends Component {
     }
     handleKey = (e) => {
         if(e.keyCode == 80 && e.metaKey){
-            console.log('Cmd+P')
+            // console.log('Cmd+P')
             e.preventDefault();
+            this.refs.palette.setState({ show: true })
         }
     }
     render() {
@@ -411,6 +466,7 @@ export default class App extends Component {
                     <EditPane doc={this.state.doc}></EditPane>
                     <OutPane  doc={this.state.doc}></OutPane>
                 </SplitPane>
+                <Palette ref="palette"></Palette>
             </div>
         );
     }
