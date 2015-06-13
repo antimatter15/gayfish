@@ -299,7 +299,6 @@ class Cell extends Component {
 class EditPane extends Component {
     constructor(props) {
         super(props);
-
     }
     handleClick = (e) => {
         var {doc} = this.props;
@@ -364,7 +363,7 @@ class CellResult extends Component {
                         node.body.update('{'+progressTracker+'(' + node.test.left.name + ', ' + node.test.right.value + ');' + removeMerp(node.body.source()).slice(1))
                     }
                 }
-            });
+            }).toString();
 
         } catch (err) {
             var result = err.toString()
@@ -406,6 +405,10 @@ class Palette extends Component {
     handleKey = (e) => {
         if(e.keyCode == 27){ // esc
             this.setState({ show: false })
+        }else if(e.keyCode == 38) { // up
+
+        }else if(e.keyCode == 40) { // down
+
         }
     }
     focus = () => {
@@ -418,15 +421,78 @@ class Palette extends Component {
     }
     render() {
         if(!this.state.show) return null;
+        var matches = _.range(442).filter(x => x % this.state.query.length == 0);
 
+        if(matches.length == 0){
+            var results = <div className="no-results">(no matches)</div>
+        }else{
+            var results = <div className="results">
+                {matches.map(x => <div>{x}</div>)}
+            </div>
+        }
         return (
             <div className="palette">
                 <input type="text" ref="input" onChange={this.handleInput} onKeyDown={this.handleKey}></input>
-                <div className="results">
-                    {
-                        _.range(42).filter(x => x % this.state.query.length == 0).map(x => <div>{x}</div>)
-                    }
+                {results}            
+            </div>
+        )
+    }
+}
+
+
+@DropTarget('UnifiedPair', cardTarget, connect => ({
+    connectDropTarget: connect.dropTarget(),
+}))
+@DragSource('UnifiedPair', cardSource, (connect, monitor) => ({
+    connectDragSource: connect.dragSource(),
+    connectDragPreview: connect.dragPreview(),
+    isDragging: monitor.isDragging()
+}))
+class UnifiedPair extends Component {
+    handleClick = (e) => {
+        this.props.cell.has_focus = true;
+        console.log('merp')
+        this.props.cell.cm.focus()
+    }
+    render() {
+        const { doc, cell } = this.props;
+
+        const { isDragging, connectDragSource, connectDropTarget, connectDragPreview } = this.props;
+        const opacity = isDragging ? 0 : 1;
+        
+        return connectDragPreview(
+            <div className="cell-cluster">
+                {connectDropTarget(<div className={classNames({"cell-input": true, "focused": cell.has_focus})} onClick={this.handleClick}>
+                    {connectDragSource(<div className="cell-handle" style={{ opacity }}></div>)}
+                    <div className="cell-editor" style={{ opacity }}>
+                        <Editor {...this.props}></Editor>
+                    </div>
+                </div>)}
+                <div className="cell-output" style={{ opacity }}>
+                    <CellResult {...this.props} cell={cell}></CellResult>
                 </div>
+            </div>);
+    } 
+}
+
+
+@DragDropContext(HTML5Backend)
+class UnifiedPane extends Component {
+    render() {
+        var {doc} = this.props;
+        return (
+            <div>
+            {
+                doc.cells.map(cell => {
+                    return <UnifiedPair {...this.props} key={cell.id} cell={cell}></UnifiedPair>
+                    // return (
+                    //     <div key={cell.id} className="unified-pair">
+                    //         <Cell {...this.props} cell={cell}></Cell>
+                    //         <CellResult {...this.props} cell={cell}></CellResult>
+                    //     </div>
+                    // )
+                })
+            }
             </div>
         )
     }
@@ -460,12 +526,16 @@ export default class App extends Component {
         }
     }
     render() {
+        // <SplitPane orientation="horizontal" minSize={250}>
+        //     <EditPane doc={this.state.doc}></EditPane>
+        //     <OutPane  doc={this.state.doc}></OutPane>
+        // </SplitPane>
+        var {doc} = this.state;
+
         return  (
-            <div onKeyDown={this.handleKey}>
-                <SplitPane orientation="horizontal" minSize={250}>
-                    <EditPane doc={this.state.doc}></EditPane>
-                    <OutPane  doc={this.state.doc}></OutPane>
-                </SplitPane>
+            <div onKeyDown={this.handleKey} className="container">
+                <div className="background"></div>
+                <UnifiedPane doc={doc}></UnifiedPane>
                 <Palette ref="palette"></Palette>
             </div>
         );

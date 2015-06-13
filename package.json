@@ -11,6 +11,7 @@
     "json-loader": "^0.5.2",
     "less": "^2.5.1",
     "less-loader": "^2.2.0",
+    "lodash": "^3.9.3",
     "react-split-pane": "git://github.com/tomkp/react-split-pane",
     "style-loader": "^0.12.3",
     "tern": "^0.11.0"
