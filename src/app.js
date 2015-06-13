@@ -55,6 +55,17 @@ class DocumentModel { // a document is a collection of cells
     item(index) { return this.cells[index] }
     get length() { return this.length }
     update(){}
+    serialize() {
+        return {
+            cells: this.cells.map( x => x.serialize() )
+        }
+    }
+    restore(state){
+        for(let c of state.cells){
+            var cell = new CellModel(this, c.index)
+            cell.value = c.value
+        }
+    }
 }
 
 class CellModel {
@@ -70,6 +81,12 @@ class CellModel {
         }
         this._mounted =  []
         this.update()
+    }
+    serialize() {
+        return {
+            value: this.value,
+            index: this.index
+        }
     }
     mount = (x) => {
         if(typeof x == 'function'){
@@ -369,11 +386,27 @@ export default class App extends Component {
         var doc = new DocumentModel()
         new CellModel(doc)
         this.state = { doc }
-        doc.update = this.forceUpdate.bind(this)
+        try {
+            var last_state = JSON.parse(localStorage.last_state);
+            doc.restore(last_state)
+        } catch (err) {
+            console.error(err)
+        }
+
+        doc.update = () => {
+            localStorage.last_state = JSON.stringify(doc.serialize())
+            this.forceUpdate()
+        }
+    }
+    handleKey = (e) => {
+        if(e.keyCode == 80 && e.metaKey){
+            console.log('Cmd+P')
+            e.preventDefault();
+        }
     }
     render() {
         return  (
-            <div>
+            <div onKeyDown={this.handleKey}>
                 <SplitPane orientation="horizontal" minSize={250}>
                     <EditPane doc={this.state.doc}></EditPane>
                     <OutPane  doc={this.state.doc}></OutPane>
