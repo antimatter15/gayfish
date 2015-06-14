@@ -99,10 +99,11 @@ class Machine {
         this.busy = true;
         cell.status = 'running';
         cell.oldValue = cell.value;
+        cell.compiled = ''
         cell.update()
         var error, code;
         try {
-            code = transformCode(cell.value)    
+            code = transformCode(cell.value)
         } catch (err) { error = err }
         if(error){
             cell.status = 'error'
@@ -111,6 +112,7 @@ class Machine {
             this.busy = false;
             this._dequeue()
         }else{
+            cell.compiled = code
             cell.progress = 0;
             this.worker.postMessage({ type: 'exec', code, cell: cell.id })
 
@@ -162,7 +164,11 @@ class DocumentModel { // a document is a collection of cells
 }
 
 function transformCode(code){
-    var middle = babel.transform(code).code;
+    var middle = babel.transform(code, {
+        optional: ["runtime"],
+        // modules: 'amd',
+        stage: 0
+    }).code;
 
     var progressTracker = '__track$loop__'
     function removeMerp(src){
@@ -436,16 +442,91 @@ class CellResult extends Component {
             "focused": cell.has_focus
         }) + ' ' + cell.status;
 
+        if(typeof cell.output == 'string'){
+            var output = <pre> {cell.output} </pre>
+        }else{
+            var output = <ObjectTree node={cell.output} />
+        }
+        
         return (
             <div className={cell_classes}>
-                {(cell.status == 'running') ? <progress value={cell.progress} max={1}></progress> : null}
-                <pre>
-                    {cell.output}
-                </pre>
+                {(cell.status == 'running' && cell.progress > 0 && cell.progress < 1) ? <progress value={cell.progress} max={1}></progress> : null}
+                {output}
+                {(cell.status == 'error') ? <pre>{cell.compiled}</pre> : null}
             </div>
         )
     }
 }
+
+class ObjectTree extends Component {
+    render() {
+        var {node} = this.props;
+        if(typeof node == "undefined"){
+            return <span className="undefined">undefined</span>
+        }else if(typeof node == "string"){
+            return <span className="string">{'"' + node + '"'}</span>
+        }else if(typeof node == "number"){
+            return <span className="number">{node}</span>
+        }else if(typeof node == "object"){
+            if(Array.isArray(node)){
+                return <ul>
+                    { node.map(x => <li><ObjectTree node={x} /></li>) }
+                </ul>
+            }else{
+                return <ul>
+                    {Object.keys(node).map(function(blah){
+                        return <li><ObjectTree node={blah} />: <ObjectTree node={node[blah]} /></li>
+                    })}
+                </ul>
+            }
+        }
+        return <div>hi</div>
+    }
+}
+
+// var TreeNode = React.createClass({
+//   getInitialState: function() {
+//     return {
+//       visible: true
+//     };
+//   },
+//   render: function() {
+//     var childNodes;
+//     var classObj;
+
+//     if (this.props.node.childNodes != null) {
+//       childNodes = this.props.node.childNodes.map(function(node, index) {
+//         return <li key={index}><TreeNode node={node} /></li>
+//       });
+
+//       classObj = {
+//         togglable: true,
+//         "togglable-down": this.state.visible,
+//         "togglable-up": !this.state.visible
+//       };
+//     }
+
+//     var style;
+//     if (!this.state.visible) {
+//       style = {display: "none"};
+//     }
+
+//     return (
+//       <div>
+//         <h5 onClick={this.toggle} className={React.addons.classSet(classObj)}>
+//           {this.props.node.title}
+//         </h5>
+//         <ul style={style}>
+//           {childNodes}
+//         </ul>
+//       </div>
+//     );
+//   },
+//   toggle: function() {
+//     this.setState({visible: !this.state.visible});
+//   }
+// });
+
 
 class Palette extends Component {
     constructor(props) {

@@ -149,20 +149,21 @@ h1 {
     .cell-editor {
         flex-grow: 1;
     }
+
+    &.error .cell-handle {
+        border-color: #CA7474;
+    }
+
     &.focused .cell-handle{
         border-color: #B1C4E0;
     }
     &.running .cell-handle{
         border-color: #74CAA3;
-        // 
         // animation: pulse 1.5s ease-in-out infinite;
         
     }
     &.queued .cell-handle {
         border-color: #E0D089;
-    }
-    &.error .cell-handle {
-        border-color: #CA7474;
     }
     &.modified .cell-handle {
         border-right-style: double;
