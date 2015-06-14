@@ -92,18 +92,37 @@ h1 {
 .cell-cluster {
     display: flex;
 }
-.cell-output {
+
+.cell-result {
+    // TODO: figure out some way to highlight focused thing
+    transition: opacity 0.2s ease-in-out;
+
+    progress::-webkit-progress-value {
+        transition: width 1s linear;
+    }
+
+    &.running, &.queued {
+        // opacity: 0.5;
+        color: gray;
+    }
+    &.error {
+        color: #BD2424;
+    }
+    progress {
+        width: 100%;
+    }
+    margin: 10px;
+    margin-left: 20px;
+    margin-bottom: 30px;
+
     pre {
         word-wrap: break-word;
         
-        margin: 10px;
-        margin-left: 20px;
-        margin-bottom: 30px;
         // padding-left: 20px;
         // border-left: 5px solid #AABCCE;
     }
-}
 
+}
 
 // @-webkit-keyframes "pulse" {
 //  0% { border-color: #CA7474; }
@@ -150,17 +169,6 @@ h1 {
     }
 }
 
-.cell-result {
-    // TODO: figure out some way to highlight focused thing
-    transition: opacity 0.2s ease-in-out;
-    &.running, &.queued {
-        opacity: 0.5;
-    }
-    &.error {
-        color: #BD2424;
-    }
-
-}
 
 .active-result {
     background: white;

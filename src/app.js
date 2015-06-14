@@ -54,11 +54,44 @@ import { DragSource, DropTarget } from 'react-dnd';
 
 class Machine {
     // src/vm.js
-    constructor() {
+    constructor(doc) {
+        this.doc = doc;
         this.worker = new Worker('/src/vm.js')
-        // this.status = 'idle'
+        this.worker.onmessage = this._onmessage.bind(this)
         this._queue = []
         this.busy = false
+    }
+    _onmessage(e) {
+        var data = e.data;
+        // console.log(data)
+        var cell = this.doc.find(data.cell);
+        if(!cell){
+            console.error('cell not found', data)
+            return;
+        }
+        if(data.type == 'result'){
+            cell.status = 'done'
+            if(data.result == 'use strict'){
+                cell.output = 'nothing';
+            }else{
+                cell.output = data.result;
+            }
+            
+            cell.update()
+            this.busy = false;
+            this._dequeue()
+        }else if(data.type == 'error'){
+            cell.status = 'error'
+            cell.output = data.error;
+            cell.update()
+            this.busy = false;
+            this._dequeue()
+        }else if(data.type == 'progress'){
+            cell.progress = data.frac;
+            cell.update()
+        }else{
+            console.error('no handler for data packet', data)
+        }
     }
     _dequeue() {
         if(this.busy || this._queue.length == 0) return;
@@ -78,19 +111,21 @@ class Machine {
             this.busy = false;
             this._dequeue()
         }else{
-            setTimeout(x => {
-                cell.status = 'done';
-                cell.output = code;
-                cell.update()
+            cell.progress = 0;
+            this.worker.postMessage({ type: 'exec', code, cell: cell.id })
 
-                this.busy = false;
-                this._dequeue();
-            }, 500)            
+            // setTimeout(x => {
+            //     cell.status = 'done';
+            //     cell.output = code;
+            //     cell.update()
+
+            //     this.busy = false;
+            //     this._dequeue();
+            // }, 500)
         }
 
     }
     queue(cell) {
-        // this.worker.postMessage({ type: 'exec', code })
         if(this._queue.indexOf(cell) != -1) return;
         this._queue.push(cell)
         cell.status = 'queued'
@@ -104,7 +139,7 @@ class DocumentModel { // a document is a collection of cells
     constructor() {
         this.cells = []
         this._ids = 0
-        this.vm = new Machine()
+        this.vm = new Machine(this)
     }
     find(id) { return this.cells.filter(x => x.id === id)[0] }
     item(index) { return this.cells[index] }
@@ -208,7 +243,6 @@ class CellModel {
             afterIndex = after.index;
         this.doc.cells.splice(cardIndex, 1)
         this.doc.cells.splice(afterIndex, 0, this);
-        console.log('moveto', this.id, after.id, cardIndex, afterIndex)
         this.update()
     }
     update(){ if(this.doc) this.doc.update() }
@@ -400,11 +434,15 @@ class CellResult extends Component {
         const cell_classes = classNames({
             "cell-result": true,
             "focused": cell.has_focus
-        }) + ' ' + cell.status
+        }) + ' ' + cell.status;
+
         return (
-            <pre className={cell_classes}>
-                {cell.output}
-            </pre>
+            <div className={cell_classes}>
+                {(cell.status == 'running') ? <progress value={cell.progress} max={1}></progress> : null}
+                <pre>
+                    {cell.output}
+                </pre>
+            </div>
         )
     }
 }
@@ -516,7 +554,7 @@ class UnifiedPair extends Component {
                         <Editor {...this.props}></Editor>
                     </div>
                 </div>)}
-                <div className="cell-output" style={{ opacity, width: ipct }}>
+                <div style={{ opacity, width: ipct }}>
                     <CellResult {...this.props} cell={cell}></CellResult>
                 </div>
             </div>);

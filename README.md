@@ -4,12 +4,11 @@ Carbide is a new experimental notebook programming environment, inspired by Jupy
 
 TODO:
 
-* Sublime/Atom-style Command Palette
 * The actual capacity to run commands
 	* NodeJS
 	* In a WebWorker (run browserify inside browserify?)
 	* Through Jupyter
-* Inject profiling code to automatically (a la Adobe's Theseus) to automatically display progress bar for code execution
+
 * Experiment with annotating CodeMirror inline with named function arguments and other documentation
 * Interactive Output
 	* Standard Text Output
@@ -27,3 +26,5 @@ Completed:
 * CodeMirror integration
 * Drag to reorder input cells
 * Resizable two pane layout
+* Sublime/Atom-style Command Palette
+* Inject profiling code to automatically (a la Adobe's Theseus) to automatically display progress bar for code execution
