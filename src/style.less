@@ -1,5 +1,7 @@
 body {
-    color: green;
+    // color: green;
+    
+    // background: #F2F3F7;
     background: #fefefe;
     margin: 0;
     padding: 0;
@@ -66,6 +68,9 @@ h1 {
 }
 .container {
     position: relative;
+}
+.cell-culture {
+
     padding-top: 10px;
 }
 .background {
@@ -73,7 +78,9 @@ h1 {
     width: 50%;
     right: 0;
     top: 0;
+    // background: #fefefe;
     background: #F2F3F7;
+
     bottom: 0;
     z-index: -1;
     border-left: 1px solid #D0D0D0;
@@ -98,6 +105,20 @@ h1 {
     }
 }
 
+
+@-webkit-keyframes "pulse" {
+ 0% {
+    border-color: #CA7474;
+ }
+ 50% {
+    border-color: #E0AA3D;
+ }
+ 100% {
+    border-color: #CA7474;
+ }
+}
+
+
 .cell-input {
     display: flex;
     padding-bottom: 20px;
@@ -108,16 +129,44 @@ h1 {
 
     .cell-handle {
         padding-left: 20px;
+        border: 0;
         border-right: 5px solid #ddd;
         cursor: move;
-        transition: border-color 0.1s linear;
+        transition: border-color 0.2s ease-in-out;
     }
     .cell-editor {
         flex-grow: 1;
     }
     &.focused .cell-handle{
-        border-color: #74CAA3;
+        border-color: #B1C4E0;
     }
+    &.running .cell-handle{
+        border-color: #74CAA3;
+        // 
+        // animation: pulse 1.5s ease-in-out infinite;
+        
+    }
+    &.queued .cell-handle {
+        border-color: #E0D089;
+    }
+    &.error .cell-handle {
+        border-color: #CA7474;
+    }
+    &.modified .cell-handle {
+        border-right-style: double;
+    }
+}
+
+.cell-result {
+    // TODO: figure out some way to highlight focused thing
+    transition: opacity 0.2s ease-in-out;
+    &.running, &.queued {
+        opacity: 0.5;
+    }
+    &.error {
+        color: #BD2424;
+    }
+
 }
 
 .active-result {
@@ -129,13 +178,10 @@ h1 {
 }
 
 .palette {
-    position: absolute;
-    
+    position: fixed;
     background: whiteSmoke;
     padding: 10px;
     z-index: 44;
-    right: 5%;
-    width: 40%;
     border-bottom-left-radius: 10px;
     border-bottom-right-radius: 10px;
     box-shadow: 0 0 10px rgba(0,0,0,0.2);
@@ -180,22 +226,22 @@ h1 {
     transition: all 2s ease;
 }
 
- .Resizer.vertical {
-    height: 11px;
-    margin: -5px 0;
-    border-top: 5px solid rgba(255, 255, 255, 0);
-    border-bottom: 5px solid rgba(255, 255, 255, 0);
-    cursor: row-resize;
-    width: 100%;
-}
+//  .Resizer.vertical {
+//     height: 11px;
+//     margin: -5px 0;
+//     border-top: 5px solid rgba(255, 255, 255, 0);
+//     border-bottom: 5px solid rgba(255, 255, 255, 0);
+//     cursor: row-resize;
+//     width: 100%;
+// }
 
-.Resizer.vertical:hover {
-    border-top: 5px solid rgba(0, 0, 0, 0.5);
-    border-bottom: 5px solid rgba(0, 0, 0, 0.5);
-}
+// .Resizer.vertical:hover {
+//     border-top: 5px solid rgba(0, 0, 0, 0.5);
+//     border-bottom: 5px solid rgba(0, 0, 0, 0.5);
+// }
 
 .Resizer.horizontal {
-    width: 11px;
+    width: 10px;
     margin: 0 -5px;
     border-left: 5px solid rgba(255, 255, 255, 0);
     border-right: 5px solid rgba(255, 255, 255, 0);
@@ -203,7 +249,7 @@ h1 {
     height: 100%;
 }
 
-.Resizer.horizontal:hover {
+.Resizer.horizontal:hover, .Resizer.horizontal.active {
     border-left: 5px solid rgba(0, 0, 0, 0.5);
     border-right: 5px solid rgba(0, 0, 0, 0.5);
 }
