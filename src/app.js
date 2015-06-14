@@ -175,6 +175,7 @@ function transformCode(code){
 
     var progressTracker = '__track$loop__'
     function removeMerp(src){
+        console.log('removing merp', src)
         return falafel(src, function(node){
             if(node.type == 'CallExpression' &&
                 node.callee.type == 'Identifier' &&
@@ -197,7 +198,8 @@ function transformCode(code){
                 ['forEach', 'map'].indexOf(node.callee.property.name) != -1 &&
                 node.arguments[0].type == 'FunctionExpression') {
                 var thing = node.arguments[0].body;
-                thing.update('{'+progressTracker+'(arguments[1], arguments[2].length);' + removeMerp(thing.source()).slice(1))
+                thing.update('{'+progressTracker+'(arguments[1], arguments[2].length);' + thing.source().slice(1))
+                // removeMerp(
             }
         }else if(node.type == 'WhileStatement'){
             if(node.test.type == 'BinaryExpression' &&
@@ -603,6 +605,14 @@ class Palette extends Component {
     isDragging: monitor.isDragging()
 }))
 class UnifiedPair extends Component {
+    constructor(props) {
+        super(props)
+        this.componentDidMount = this.componentDidMount.bind(this)
+    }
+    componentDidMount() {  
+        const {cell} = this.props;
+        cell._pair = React.findDOMNode(this)
+    }
     handleClick = (e) => {
         const {cell} = this.props;
         cell.has_focus = true;
@@ -650,6 +660,10 @@ class UnifiedPair extends Component {
 class UnifiedPane extends Component {
     render() {
         var {doc} = this.props;
+        
+        var lastCell = doc.cells[doc.cells.length - 1];
+        var cellHeight = lastCell && lastCell._pair ? lastCell._pair.offsetHeight : 0
+
         return (
             <div className="cell-culture">
             {
@@ -657,6 +671,7 @@ class UnifiedPane extends Component {
                     return <UnifiedPair {...this.props} key={cell.id} cell={cell}></UnifiedPair>
                 })
             }
+            <div className="cell-padding" style={{ height: (innerHeight - cellHeight - 10) }} />
             </div>
         )
     }
@@ -668,20 +683,21 @@ export default class App extends Component {
         
         try {
             var doc = new DocumentModel()
-            var last_state = JSON.parse(localStorage.last_state);
+            var last_state = JSON.parse(localStorage[location.pathname]);
             doc.restore(last_state)
         } catch (err) {
             console.error(err)
             var doc = new DocumentModel()
             new CellModel(doc)
         }
+        global.Doc = doc;
 
         this.state = {
             doc,
             size: 0.55
         }
         doc.update = () => {
-            localStorage.last_state = JSON.stringify(doc.serialize())
+            localStorage[location.pathname] = JSON.stringify(doc.serialize())
             this.forceUpdate()
         }
     }
