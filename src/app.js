@@ -56,10 +56,43 @@ class Machine {
     // src/vm.js
     constructor() {
         this.worker = new Worker('/src/vm.js')
-        this.status = 'idle'
+        // this.status = 'idle'
+        this._queue = []
+        this.busy = false
     }
-    run(code) {
-        this.worker.postMessage({ type: 'exec', code })
+    _dequeue() {
+        if(this.busy || this._queue.length == 0) return;
+        var cell = this._queue.shift()
+        this.busy = true;
+        cell.status = 'running';
+        cell.oldValue = cell.value;
+        cell.update()
+        var error;
+        try {
+            var code = transformCode(cell.value)    
+        } catch (err) { error = err }
+        if(error){
+            cell.status = 'error'
+            cell.output = error.toString()
+            cell.update()
+            this.busy = false;
+            this._dequeue()
+        }else{
+            setTimeout(x => {
+                cell.status = 'done';
+                cell.update()
+                this.busy = false;
+                this._dequeue();
+            }, 500)            
+        }
+
+    }
+    queue(cell) {
+        // this.worker.postMessage({ type: 'exec', code })
+        if(this._queue.indexOf(cell) != -1) return;
+        this._queue.push(cell)
+        cell.status = 'queued'
+        if(!this.busy) this._dequeue();
     }
 }
 
@@ -92,50 +125,45 @@ class DocumentModel { // a document is a collection of cells
 }
 
 function transformCode(code){
-    try {
-        var middle = babel.transform(code).code;
+    var middle = babel.transform(code).code;
 
-        var progressTracker = '__track$loop__'
-        function removeMerp(src){
-            return falafel(src, function(node){
-                if(node.type == 'CallExpression' &&
-                    node.callee.type == 'Identifier' &&
-                    node.callee.name == progressTracker){
-                    node.update('0')
-                }
-            }).toString()
-        }
-        var result = falafel(middle, function (node) {
-            if(node.type === 'ForStatement'){
-                if(node.test.type == 'BinaryExpression' && 
-                    node.test.right.type == 'Literal' && 
-                    node.test.left.type == 'Identifier' &&
-                    node.test.operator == '<'){
-                    node.update.update(node.update.source() + ','+progressTracker+'(' + node.test.left.name + ', ' + node.test.right.value + ')')
-                    node.body.update(removeMerp(node.body.source()))
-                }
-            }else if(node.type === 'CallExpression'){
-                if(node.callee.type == 'MemberExpression' && 
-                    ['forEach', 'map'].indexOf(node.callee.property.name) != -1 &&
-                    node.arguments[0].type == 'FunctionExpression') {
-                    var thing = node.arguments[0].body;
-                    thing.update('{'+progressTracker+'(arguments[1], arguments[2].length);' + removeMerp(thing.source()).slice(1))
-                }
-            }else if(node.type == 'WhileStatement'){
-                if(node.test.type == 'BinaryExpression' &&
-                    node.test.right.type == 'Literal' && 
-                    node.test.left.type == 'Identifier' &&
-                    node.test.operator == '<' &&
-                    node.body.type == 'BlockStatement'){
-                    node.body.update('{'+progressTracker+'(' + node.test.left.name + ', ' + node.test.right.value + ');' + removeMerp(node.body.source()).slice(1))
-                }
+    var progressTracker = '__track$loop__'
+    function removeMerp(src){
+        return falafel(src, function(node){
+            if(node.type == 'CallExpression' &&
+                node.callee.type == 'Identifier' &&
+                node.callee.name == progressTracker){
+                node.update('0')
             }
-        }).toString();
-
-    } catch (err) {
-        var result = err.toString()
-        console.error(err)
+        }).toString()
     }
+    var result = falafel(middle, function (node) {
+        if(node.type === 'ForStatement'){
+            if(node.test.type == 'BinaryExpression' && 
+                node.test.right.type == 'Literal' && 
+                node.test.left.type == 'Identifier' &&
+                node.test.operator == '<'){
+                node.update.update(node.update.source() + ','+progressTracker+'(' + node.test.left.name + ', ' + node.test.right.value + ')')
+                node.body.update(removeMerp(node.body.source()))
+            }
+        }else if(node.type === 'CallExpression'){
+            if(node.callee.type == 'MemberExpression' && 
+                ['forEach', 'map'].indexOf(node.callee.property.name) != -1 &&
+                node.arguments[0].type == 'FunctionExpression') {
+                var thing = node.arguments[0].body;
+                thing.update('{'+progressTracker+'(arguments[1], arguments[2].length);' + removeMerp(thing.source()).slice(1))
+            }
+        }else if(node.type == 'WhileStatement'){
+            if(node.test.type == 'BinaryExpression' &&
+                node.test.right.type == 'Literal' && 
+                node.test.left.type == 'Identifier' &&
+                node.test.operator == '<' &&
+                node.body.type == 'BlockStatement'){
+                node.body.update('{'+progressTracker+'(' + node.test.left.name + ', ' + node.test.right.value + ');' + removeMerp(node.body.source()).slice(1))
+            }
+        }
+    }).toString();
+
     return result;
 }
 
@@ -144,6 +172,7 @@ class CellModel {
         this.doc = doc
         this.id = --doc._ids;
         this.value = ""
+        this.oldValue = ""
         this.cm = null
         if(typeof index === 'undefined'){
             doc.cells.push(this)
@@ -201,8 +230,8 @@ class CellModel {
     get prev(){ return this.doc.item(this.index - 1) }
     get next(){ return this.doc.item(this.index + 1) }
     run() {
-        this.status = 'running'
-        this.output = transformCode(this.value)
+        this.doc.vm.queue(this)
+        this.update()
     }
 }
 
@@ -239,9 +268,8 @@ class Editor extends Component {
             "Ctrl-Q": function(cm) { eliot.rename(cm); },
             "Ctrl-.": function(cm) { eliot.selectName(cm); },
             "Shift-Enter": (cm) => {
-                cell.run(x => {
-                   if(cell.next) cell.next.cm.focus() 
-                })
+                cell.run()
+                if(cell.next) cell.next.cm.focus() 
             },
             "Ctrl-N": (cm) => {
             },
@@ -344,85 +372,23 @@ const cardTarget = {
     }
 };
 
-// @DropTarget('Cell', cardTarget, connect => ({
-//     connectDropTarget: connect.dropTarget(),
-// }))
-// @DragSource('Cell', cardSource, (connect, monitor) => ({
-//     connectDragSource: connect.dragSource(),
-//     isDragging: monitor.isDragging()
-// }))
-// class Cell extends Component {
-//     handleClick = (e) => {
-//         this.props.cell.has_focus = true;
-//     }
-//     render() {
-//         const { doc, cell } = this.props;
-
-//         const { isDragging, connectDragSource, connectDropTarget } = this.props;
-//         const opacity = isDragging ? 0 : 1;
-        
-//         return connectDropTarget(connectDragSource(
-//             <div className={classNames({"cell": true, "focused": cell.has_focus})} onMouseDown={this.handleClick}>
-//                 <div className="cell-handle" style={{ opacity }}></div>
-//                 <div className="cell-editor" style={{ opacity }}>
-//                     <Editor {...this.props}></Editor>
-//                 </div>
-//             </div>));
-//     } 
-// }
-
-// @DragDropContext(HTML5Backend)
-// class EditPane extends Component {
-//     constructor(props) {
-//         super(props);
-//     }
-//     handleClick = (e) => {
-//         var {doc} = this.props;
-//         if(e.target === React.findDOMNode(this)){
-//             doc.cells[doc.cells.length - 1].cm.focus()
-//         }
-//     }
-//     render() {
-//         var {doc} = this.props;
-
-//         return (
-//             <div className="editpane" onClick={this.handleClick}>
-//                 {doc.cells.map(
-//                     (cell) => <Cell {...this.props} key={cell.id} cell={cell}></Cell>
-//                 )}
-//             </div>
-//         )
-//     }
-// }
-
-
 class CellResult extends Component {
     render() {
         var {doc, cell} = this.props;
         // if(cell.has_focus){
         //     return <div className="active-result">omg has focus</div>
         // }
+        const cell_classes = classNames({
+            "cell-result": true,
+            "focused": cell.has_focus
+        }) + ' ' + cell.status
         return (
-            <pre>
+            <pre className={cell_classes}>
                 {cell.output}
             </pre>
         )
     }
 }
-
-// class OutPane extends Component {
-//     render() {
-//         var {doc} = this.props;
-//         return (
-//             <div className="outpane">
-//                 {doc.cells.map(
-//                     (cell) => <CellResult {...this.props} cell={cell} key={cell.id}></CellResult>
-//                 )}
-//             </div>
-//         )
-//     }
-// }
-
 
 class Palette extends Component {
     constructor(props) {
@@ -459,7 +425,11 @@ class Palette extends Component {
     }
     render() {
         if(!this.state.show) return null;
-        var matches = _.range(442).filter(x => x % this.state.query.length == 0);
+        var source = []
+        for(var i = 0; i < 500; i++){
+            source.push(i)
+        }
+        var matches = source.filter(x => x % this.state.query.length == 0);
 
         if(matches.length == 0){
             var results = <div className="no-results">(no matches)</div>
@@ -513,10 +483,15 @@ class UnifiedPair extends Component {
         
         const pct = (size * 100) + '%',
               ipct = (100 - size * 100) + '%';
-
+        
+        const cell_classes = classNames({
+            "cell-input": true, 
+            "focused": cell.has_focus,
+            "modified": cell.oldValue != cell.value
+        }) + ' ' + cell.status
         return connectDragPreview(
             <div className="cell-cluster">
-                {connectDropTarget(<div style={{width: pct}} className={classNames({"cell-input": true, "focused": cell.has_focus})} onClick={this.handleClick}>
+                {connectDropTarget(<div style={{width: pct}} className={cell_classes} onClick={this.handleClick}>
                     {connectDragSource(<div className="cell-handle" style={{ opacity }} onDoubleClick={this.doubleClick}></div>)}
                     <div ref="editor" className="cell-editor" style={{ opacity }}>
                         <Editor {...this.props}></Editor>
