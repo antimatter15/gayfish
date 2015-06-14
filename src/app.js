@@ -56,7 +56,7 @@ class Machine {
     // src/vm.js
     constructor(doc) {
         this.doc = doc;
-        this.worker = new Worker('/src/vm.js')
+        this.worker = new Worker('/vm/worker.js')
         this.worker.onmessage = this._onmessage.bind(this)
         this._queue = []
         this.busy = false
@@ -104,7 +104,10 @@ class Machine {
         var error, code;
         try {
             code = transformCode(cell.value)
-        } catch (err) { error = err }
+        } catch (err) {
+            error = err
+            console.error(error)
+        }
         if(error){
             cell.status = 'error'
             cell.output = error.toString()
@@ -699,6 +702,10 @@ export default class App extends Component {
             // console.log(e.keyCode)
         }
     }
+    resetResize = (e) => {
+        e.preventDefault()
+        this.setState({ size: 0.55 })
+    }
 
     beginResize = (e) => {
         e.preventDefault()
@@ -747,7 +754,7 @@ export default class App extends Component {
         return  (
             <div className="container">
                 <Palette ref="palette" doc={doc} size={this.state.size}></Palette>
-                <div className={resize_classes} style={resizer} onMouseDown={this.beginResize}></div>
+                <div className={resize_classes} style={resizer} onMouseDown={this.beginResize} onDoubleClick={this.resetResize}></div>
                 <div className="background" style={{ width: ipct }}></div>
                 <UnifiedPane doc={doc} size={this.state.size}></UnifiedPane>
             </div>
