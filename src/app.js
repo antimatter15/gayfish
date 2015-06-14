@@ -67,9 +67,9 @@ class Machine {
         cell.status = 'running';
         cell.oldValue = cell.value;
         cell.update()
-        var error;
+        var error, code;
         try {
-            var code = transformCode(cell.value)    
+            code = transformCode(cell.value)    
         } catch (err) { error = err }
         if(error){
             cell.status = 'error'
@@ -80,7 +80,9 @@ class Machine {
         }else{
             setTimeout(x => {
                 cell.status = 'done';
+                cell.output = code;
                 cell.update()
+
                 this.busy = false;
                 this._dequeue();
             }, 500)            
