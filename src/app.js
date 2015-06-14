@@ -356,20 +356,37 @@ class Editor extends Component {
 
 
 const cardSource = {
-    beginDrag(props) {
+    beginDrag(props, monitor, component) {
         props.cell.has_focus = true;
-        return { id: props.cell.id };
+        var el = React.findDOMNode(component);
+        return {
+            id: props.cell.id,
+            height: el.getBoundingClientRect().height
+        };
     }
 };
 
+// it's really obnoxious to drag small objects because
+// when it reorders things, the small object will still
+// overlap the bigger one and it'll swap again 
 const cardTarget = {
-    hover(props, monitor) {
-        const draggedId = monitor.getItem().id;
+    hover(props, monitor, component) {
+        const item = monitor.getItem();
+        const draggedId = item.id;
         if (draggedId !== props.cell.id) {
-            console.log(monitor, props)
+            var dragged = props.doc.find(draggedId);
 
-            // console.log(draggedId, props.cell.id)
-            props.doc.find(draggedId).moveTo(props.cell)
+            var el = React.findDOMNode(component);
+            var {top, bottom} = el.getBoundingClientRect()
+            var {y} = monitor.getClientOffset()
+
+            if(props.cell.index > dragged.index){
+                if(y > bottom - item.height)
+                    dragged.moveTo(props.cell);
+            }else{
+                if(y < top + item.height)
+                    dragged.moveTo(props.cell);
+            }
         }
     }
 };
