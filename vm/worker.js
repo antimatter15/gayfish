@@ -54,7 +54,7 @@ var browserifyBuiltins = {
 };
 
 function require(path){
-	console.log('req', path)
+	
 	if(path in browserifyBuiltins && browserifyBuiltins[path] != path){
 		path = browserifyBuiltins[path]
 		if(path === false) return {};
@@ -116,6 +116,8 @@ function require(path){
 
 
 function require_relative(pkg, path){
+	// console.log('rel', pkg._id, path)
+
 	var files = npm_version_cache[pkg._id];
 	var include_prefix = ['', '.js', '.json'];
 
@@ -131,6 +133,7 @@ function require_relative(pkg, path){
 			})
 		})[0];
 		if(match){
+			console.log('browser substitution', path, canonical_mapping[match])
 			path = canonical_mapping[match];
 			if(path === false) return {};
 		}
@@ -161,20 +164,31 @@ function require_relative(pkg, path){
 		var module = {
 			exports: JSON.parse(file.data)
 		}
+
 	}else{
 		// load javascript
 		var extras = "";
+		// exports = module.exports, require = module.require, process = module.process
+
+		var module_globals = ['exports', 'require', 'process', '__dirname', '__filename']
+
+		extras += 'var ' + module_globals.map(function(e){ return e + ' = module.' + e }).join(', ') + ';';
+
 		if(pkg.name == 'http-browserify' || pkg.name == 'https-browserify'){
 			extras += "var window = self;"; // get it to work in a webworker
 		}
 		var code = "(function(module){\
-			var global = self, exports = module.exports, require = module.require, process = module.process; " + extras + " \n\
+			var global = self; " + extras + " \n\
 			" + file.data + "\
 			\n\n;return module})(prepare_module.apply(null, " + 
 				JSON.stringify([pkg._id, file.filename]) + "))";
 		try {
+			console.group(pkg._id + ":" + file.filename)
 			var module = eval.call(null, code);
+			console.groupEnd(pkg._id + ":" + file.filename)
 		} catch (err) {
+			console.groupEnd(pkg._id + ":" + file.filename)
+
 			console.groupCollapsed('code')
 			console.info(file.filename, pkg._id)
 			console.log(code)
@@ -185,14 +199,16 @@ function require_relative(pkg, path){
 			var module = { exports: {} }
 		}
 	}
-	return modules[file.filename] = module;
+
+	modules[file.filename] = module;
+	
+	return module.exports;
 }
 
 
 function prepare_module(id, filename){
 	var pkg = npm_package_cache[id.split('@')[0]]['versions'][id.split('@')[1]];
-
-	return {
+	var module = {
 		exports: {},
 		require: function(path){
 			// console.log('require', path, 'from', id, filename)
@@ -204,8 +220,14 @@ function prepare_module(id, filename){
 				return require(path)
 			}
 		},
-		process: process
+		process: process,
+		__filename: filename,
+		__dirname: Path.dirname(filename)
 	}
+	var modules = npm_require_cache[id];
+	modules[filename] = module;
+
+	return module;
 }
 
 
