@@ -182,35 +182,103 @@ h1 {
 
 .palette {
     position: fixed;
-    background: whiteSmoke;
-    padding: 10px;
+    // background: whiteSmoke;
+    background: white;
+    // padding: 10px;
     z-index: 44;
-    border-bottom-left-radius: 10px;
-    border-bottom-right-radius: 10px;
+    top: 20px;
+    border-radius: 10px;
+    border-bottom-right-radius: 0;
     box-shadow: 0 0 10px rgba(0,0,0,0.2);
-    border: 1px solid #D6D6D6;
-    border-top: none;
+    // border: 1px solid #D6D6D6;
+    // border-top: none;
     input {
         width: 100%;
-        padding: 5px;
+        padding: 15px;
         font-size: 18px;
-        border: 1px solid #D6D6D6;
+        border: 0;
+        outline: 0;
+        border-top-right-radius: 10px;
+        border-top-left-radius: 10px;
+        color: white;
+        background: #4E4E90;
+        // border: 1px solid #D6D6D6;
     }
     .no-results {
         margin-top: 10px;
+        margin-bottom: 10px;
         text-align: center;
+        // font-style: italic;
+        color: gray;
     }
     .results {
         max-height: 300px;
         overflow-y: auto;
-        margin-top: 10px;
-        border: 1px solid #D4D4D4;
+        // margin-top: 10px;
+        // border: 1px solid #D4D4D4;
         div {
             border-bottom: 1px solid #D4D4D4;
-            padding: 10px;
-            &:last-child {
-                border-bottom: none;
-            }
+            padding: 15px;
+            // &:last-child {
+            //     border-bottom: none;
+            // }
+        }
+    }
+}
+
+.cell-collapse {
+    // background: #C1C5D8;
+    // height: 6px;
+    text-align: center;
+    hr {
+
+        margin: 20px;
+        margin-top: 10px;
+        border: 0;
+        border-top: 6px solid #C1C5D8; 
+        transition: border-color 0.2s ease-in-out;
+        cursor: pointer;
+    }
+    .cell-title {
+        margin-top: -22px;
+    }
+    &:hover hr {
+        border-color: #6471AD;
+    }
+}
+
+.header {
+    overflow-y: auto;
+
+    h1 {
+        margin: 0;
+        padding: 15px;
+        padding-left: 20px;
+        padding-bottom: 0;
+        .note {
+            font-size: 15px;
+            color: gray;
+            font-weight: 400;
+        }
+    }
+    .right {
+        margin-top: 15px;
+        margin-right: 15px;
+        float: right;
+        color: #555;
+    }
+    .button {
+        display: inline-block;
+        margin-left: 10px;
+        padding: 10px;
+        padding-left: 15px;
+        padding-right: 15px;
+        background: #949AD4;
+        color: white;
+        // margin: 20px;
+        border-radius: 10px;
+        &.new {
+            background: #598BF9;
         }
     }
 }

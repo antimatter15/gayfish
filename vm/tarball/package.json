@@ -5,6 +5,6 @@
   },
   "dependencies": {
     "gzip-js": "^0.3.2",
-    "untar.js": "^0.2.1"
+    "untar.js": "^0.2.2"
   }
 }

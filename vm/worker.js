@@ -65,7 +65,6 @@ function require(path){
 	var version = id.split('@')[1] || 'latest',
 		package = id.split('@')[0];
 
-
 	// console.log('require', path, package, version)
 
 	if(!(package in npm_package_cache)){
@@ -87,6 +86,9 @@ function require(path){
 		xhr.responseType = 'arraybuffer'
 		xhr.open('GET', pkg.dist.tarball, false)
 		xhr.send(null)
+		
+		postMessage({ type: 'activity', activity: "downloading " + pkg._id, cell: __latestCellID })
+
 		// download and extract the tarball
 		npm_version_cache[pkg._id] = tarball.tarball(new Uint8Array(xhr.response)).filter(function(e){
 			return e
@@ -98,6 +100,8 @@ function require(path){
 		})
 		npm_require_cache[pkg._id] = {};
 		console.log('downloaded', pkg._id, "(" +npm_version_cache[pkg._id].length+" files)");
+
+
 	}
 	
 	if(!path){
@@ -177,6 +181,11 @@ function require_relative(pkg, path){
 		if(pkg.name == 'http-browserify' || pkg.name == 'https-browserify'){
 			extras += "var window = self;"; // get it to work in a webworker
 		}
+
+		if(/[^A-Za-z]Buffer/.test(file.data) && pkg.name != 'buffer'){
+			extras += 'var Buffer = require("buffer").Buffer;';
+			// console.log(file.data)
+		}
 		var code = "(function(module){\
 			var global = self; " + extras + " \n\
 			" + file.data + "\
@@ -189,10 +198,10 @@ function require_relative(pkg, path){
 		} catch (err) {
 			console.groupEnd(pkg._id + ":" + file.filename)
 
-			console.groupCollapsed('code')
+			console.groupCollapsed('code '+ pkg._id + ":" + file.filename)
 			console.info(file.filename, pkg._id)
 			console.log(code)
-			console.groupEnd('code')
+			console.groupEnd('code '+ pkg._id + ":" + file.filename)
 			console.error(err)
 			// throw err;
 
@@ -217,6 +226,7 @@ function prepare_module(id, filename){
 				return require_relative(pkg, Path.join(Path.dirname(filename), path))
 			}else{
 				// console.log('submodule require', path)
+				// download the newest version which matches the package
 				return require(path)
 			}
 		},

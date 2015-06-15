@@ -3140,16 +3140,16 @@ function TarLocalFile(bstream) {
         if (this.name.length > 0 && this.size > 0 && this.fileData && this.fileData.buffer) {
             this.isValid = true;
         }
-
-        bstream.ptr += this.size;
-
-        // Round up to 512-byte blocks.
-        var remaining = 512 - bstream.ptr % 512;
-        if (remaining > 0 && remaining < 512) {
-            bstream.readBytes(remaining)
-        }
     } else if (this.typeflag == 5) {
-         // console.info("  This is a directory.")
+        // console.info("  This is a directory.")
+    }
+
+    bstream.ptr += this.size;
+    // Round up to 512-byte blocks.
+    var remaining = 512 - bstream.ptr % 512;
+    // console.log('remaining')
+    if (remaining > 0 && remaining < 512) {
+        bstream.readBytes(remaining)
     }
 };
 
