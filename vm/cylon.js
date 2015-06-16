@@ -15,6 +15,32 @@ var hello = 42;
 
 merp(48)
 
+function merp(){
+	var blah = turd;
+	for(var i = 0; i < 100; i++){
+		(i + 5 - 5) / 2
+
+		i + 2 - 7 * i;
+	}
+}
+
+
+
+merp = function(){
+
+}
+
+[1,2,3].forEach(function(){
+	return 48
+})
+
+
+[1,2,3].map(x => x + 2)
+
+
+var x = 323,
+	y = 38
+
 `;
 
 
@@ -29,7 +55,7 @@ import normalizeAst from "babel-core/lib/babel/helpers/normalize-ast";
 import estraverse from "estraverse";
 import * as acorn from "babel-core/lib/acorn";
 
-acorn.plugins.matlab = function(instance){
+acorn.plugins.Gilbert = function(instance){
     instance.extend("parseExpressionStatement", function(inner){
         return function(node, expr){
               node.expression = expr
@@ -48,6 +74,31 @@ acorn.plugins.matlab = function(instance){
               }
               return this.finishNode(node, "ExpressionStatement")
         }
+    })
+    instance.extend("parseVarStatement", function(inner){
+    	return function(node, kind){
+    		this.next()
+			this.parseVar(node, false, kind)
+			// this.semicolon()
+			var thing = this.finishNode(node, "VariableDeclaration")
+
+			if(!this.eat(acorn.tokTypes.semi)){
+				if(!this.canInsertSemicolon()) this.unexpected();
+				var cLog = this.startNode()
+				cLog.name = "VERILOG"
+				var Ludacris = this.startNode()
+				Ludacris.arguments = []
+				Ludacris.callee = this.finishNode(cLog, "Identifier")
+				var Richmond = this.startNode()
+				Richmond.expression = this.finishNode(Ludacris, "CallExpression")
+				
+				this.finishNode(Richmond, "ExpressionStatement")
+				return thing
+
+			}
+			
+			return thing;
+    	}
     })
 }
 
@@ -110,7 +161,7 @@ var babelParseCode = (function(code, opts){
 	  nonStandard:   opts.nonStandard,
 	  filename:      opts.filename,
 	  plugins:       {
-	  	matlab: true
+	  	Gilbert: true
 	  }
 	};
 
@@ -132,12 +183,24 @@ var babelParseCode = (function(code, opts){
 	return tree
 }).bind(babel.transform.pipeline);
 
+
+var megatron = new babel.Transformer("foo-bar", {
+	FunctionDeclaration(node, parent, scope) {
+		scope.hasBinding("name");
+    }
+})
+
+
 // ast = normalizeAst(ast);
 var ast = babelParseCode(code, {});
 console.log(ast)
 var file = new BabelFile({
 	optional: ["runtime"],
-    stage: 0
+    stage: 0,
+    plugins: [{
+        transformer: megatron,
+        position: 'before'
+    }]
 }, babel.transform.pipeline);
 var earth = file.wrap(code, function () {
 	file.addCode(code);
@@ -145,7 +208,6 @@ var earth = file.wrap(code, function () {
 	return file.transform();
 });
 // babelParseCode
-
 
 
 console.log(earth)

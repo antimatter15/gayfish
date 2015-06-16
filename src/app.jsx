@@ -467,6 +467,8 @@ const cardTarget = {
     }
 };
 
+
+
 class CellResult extends Component {
     render() {
         var {doc, cell} = this.props;

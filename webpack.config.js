@@ -2,11 +2,11 @@ var path = require('path');
 var webpack = require('webpack');
 
 module.exports = {
-  devtool: 'source-map',
+  devtool: 'eval',
   debug: true,
   entry: {
     carbide: [
-      'webpack-dev-server/client?http://localhost:4000',
+      'webpack-dev-server/client?http://localhost:4000&progress',
       'webpack/hot/only-dev-server',
       './src/index'
     ],
@@ -26,7 +26,22 @@ module.exports = {
   },
   plugins: [
       new webpack.HotModuleReplacementPlugin(),
-      new webpack.NoErrorsPlugin()
+      new webpack.NoErrorsPlugin(),
+      new webpack.ProgressPlugin(function(percentage, msg) {
+        var state = msg;
+        if(percentage < 1) {
+          percentage = Math.floor(percentage * 100);
+          msg = percentage + "% " + msg;
+          if(percentage < 100) {
+            msg = " " + msg;
+          }
+          if(percentage < 10) {
+            msg = " " + msg;
+          }
+        }
+        goToLineStart(msg);
+        process.stderr.write(msg);
+      })
   ],
   resolve: {
     extensions: ['', '.js', '.jsx', '.json']
@@ -58,3 +73,16 @@ module.exports = {
     }]
   }
 };
+
+var chars = 0, lastState, lastStateTime;
+function goToLineStart(nextMessage) {
+  var str = "";
+  for(; chars > nextMessage.length; chars--) {
+    str += "\b \b";
+  }
+  chars = nextMessage.length;
+  for(var i = 0; i < chars; i++) {
+    str += "\b";
+  }
+  if(str) process.stderr.write(str);
+}
