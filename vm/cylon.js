@@ -8,8 +8,14 @@ import * as mininpm from './mininpm'
 console.log('hello world', mininpm);
 
 var code = `
+(function(){
+
+let wumbo = 5+5;
 
 var hello = 42;
+let zombocom = 5+8;
+const margleflarg = hello + wumbo;
+
 
 2 + 2
 
@@ -41,7 +47,53 @@ merp = function(){
 var x = 323,
 	y = 38
 
+})();
+
 `;
+
+
+// var code = `
+
+// var hello = 42;
+
+
+// let wumbo = 5+5;
+
+// const margleflarg = hello + wumbo;
+
+// 2 + 2
+
+// merp(48)
+
+// function merp(){
+// 	var blah = turd;
+// 	for(var i = 0; i < 100; i++){
+// 		(i + 5 - 5) / 2
+
+// 		i + 2 - 7 * i;
+// 	}
+// }
+
+// 4 + 4
+
+// var x = merp()!
+
+// merp = function(){
+
+// }
+
+// [1,2,3].forEach(function(){
+// 	return 48
+// })
+
+
+// [1,2,3].map(x => x + 2)
+
+
+// var x = 323,
+// 	y = 38
+
+// `;
 
 
 
@@ -103,13 +155,47 @@ import * as acorn from "babel-core/lib/acorn";
 //     })
 // }
 
+acorn.plugins.YALP = function(instance){
+	acorn.tokTypes.YALP = new acorn.TokenType("YALP")
+	instance.extend("readToken", function(inner){
+        return function(code){
+            var context = this.curContext();
+            if(code == 33){ // !
+                ++this.pos;
+                return this.finishToken(acorn.tokTypes.YALP)
+            }
+            return inner.call(this, code)
+        }
+    });
+    instance.extend("parseExpressionStatement", function(inner){
+        return function(node, expr){
+			node.expression = expr
+			if(this.eat(acorn.tokTypes.YALP)){
+				node.logStatement = true;
+			}else this.semicolon();
+			return this.finishNode(node, "ExpressionStatement")
+        }
+    })
+    instance.extend("parseVarStatement", function(inner){
+    	return function(node, kind){
+    		this.next()
+			this.parseVar(node, false, kind)
+			if(this.eat(acorn.tokTypes.YALP)){
+				node.logStatement = true;
+			}else this.semicolon();
+			return this.finishNode(node, "VariableDeclaration")
+        }
+    })
+}
+
+
 acorn.plugins.Gilbert = function(instance){
 	instance.extend("parseExpressionStatement", function(inner){
         return function(node, expr){
 			node.expression = expr
 			if(!this.eat(acorn.tokTypes.semi)){
 				if(!this.canInsertSemicolon()) this.unexpected();
-				node.semicolonInserted = true;
+				node.logStatement = true;
 			}
 			return this.finishNode(node, "ExpressionStatement")
         }
@@ -120,7 +206,7 @@ acorn.plugins.Gilbert = function(instance){
 			this.parseVar(node, false, kind)
 			if(!this.eat(acorn.tokTypes.semi)){
 				if(!this.canInsertSemicolon()) this.unexpected();
-				node.semicolonInserted = true;
+				node.logStatement = true;
 			}
 			return this.finishNode(node, "VariableDeclaration")
         }
@@ -189,7 +275,7 @@ var babelParseCode = (function(code, opts){
 	  nonStandard:   opts.nonStandard,
 	  filename:      opts.filename,
 	  plugins:       {
-	  	Gilbert: true
+	  	YALP: true
 	  }
 	};
 
@@ -214,15 +300,15 @@ var babelParseCode = (function(code, opts){
 import babelGenerator from 'babel-core/lib/babel/generation';
 
 var t = babel.types;
-var megatron = new babel.Transformer("foo-bar", {
-	FunctionDeclaration(node, parent, scope) {
-		console.log('fundecl', node)
-		scope.hasBinding("name");
-    },
+var megatron = new babel.Transformer("log-statements", {
+	// FunctionDeclaration(node, parent, scope) {
+	// 	console.log('fundecl', node)
+	// 	scope.hasBinding("name");
+ //    },
     VariableDeclaration(node, parent, scope){
     	// console.log('vardecl', node)
-    	if(node.semicolonInserted){
-    		console.log(node)
+    	if(node.logStatement){
+    		// console.log(node)
 	    	return [
 	    		node
 	    	].concat(
@@ -237,8 +323,8 @@ var megatron = new babel.Transformer("foo-bar", {
     },
     ExpressionStatement(node, parent, scope){
     	
-    	if(node.semicolonInserted){
-    		console.log('merpyderp')
+    	if(node.logStatement){
+    		// console.log('merpyderp')
     		// console.log(, node)
     		node.expression =  t.callExpression(t.identifier('explog'), [
     			node.expression, 
@@ -248,6 +334,34 @@ var megatron = new babel.Transformer("foo-bar", {
     }
 })
 
+var derpsacola = new babel.Transformer("for-annotation", {
+	ForStatement(node, parent, scope){
+		console.log('forstatement', node, parent, scope, scope.getAllBindings())
+		scope.rename("merp", "_____MERP_____")
+	},
+	FunctionDeclaration(node, parent) {
+      var id = node.id;
+      node.type = "FunctionExpression";
+      node.id   = null;
+
+      return t.variableDeclaration("var", [
+        t.variableDeclarator(id, node)
+      ]);
+    },
+    VariableDeclaration(node, parent, scope){
+    	// don't apply to let or const
+    	if(node.kind == 'var'){
+    		console.log('vardecl', scope)	
+
+    		return node.declarations.map(x => {
+    			return t.expressionStatement(
+	    			t.assignmentExpression("=", x.id, x.init)
+	    		);
+    		})
+    		
+    	}
+    }
+})
 
 // ast = normalizeAst(ast);
 var ast = babelParseCode(code, {});
@@ -257,6 +371,9 @@ var file = new BabelFile({
     stage: 0,
     plugins: [{
         transformer: megatron,
+        position: 'before'
+    }, {
+        transformer: derpsacola,
         position: 'before'
     }]
 }, babel.transform.pipeline);
