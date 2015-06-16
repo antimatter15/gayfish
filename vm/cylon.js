@@ -6,16 +6,10 @@ import {untar} from 'untar.js';
 import {unzip} from 'gzip-js';
 import path from 'path';
 import semver from 'semver';
-// import process from 'process';
+var browserifyBuiltins = require('./builtins.json')
 
 
-console.log('hello world');
-
-function untarball(input){
-	return untar(unzip(input))
-}
-
-console.log(process, path)
+console.log('hello world', browserifyBuiltins);
 
 
 var code = `
@@ -92,6 +86,26 @@ function fetch(url, type = 'json'){
 var npm_package_cache = {};
 var npm_tarball_cache = {};
 var npm_resolve_cache = {};
+var npm_modules_cache = {};
+
+npm_package_cache['_empty'] = {
+	'dist-tags': {
+		'latest': '1.0.0'
+	}, 
+	'versions': {
+		'1.0.0': {
+			'_id': '_empty@1.0.0',
+			'name': '_empty',
+			'version': '1.0.0'
+		}
+	}
+}
+npm_tarball_cache['_empty@1.0.0'] = {
+	'index.js': {
+		filename: 'index.js',
+		data: ''	
+	}
+}
 
 async function fetch_package(name){
 	// be somewhat efficient and memoize it
@@ -158,25 +172,12 @@ function lookup_path(pkg, files, filepath){
 	return match;
 }
 
-function resolveSync(dep, version = 'latest'){
-	let name = dep.split("/")[0],
-		main = dep.split("/").slice(1).join('/');
-	let meta = npm_package_cache[name];
-	// packages have to be cached for synchronous resolution
-	if(!meta) throw new Error(`Package ${name} not found in package cache!`);
-	if(meta['dist-tags'][version]) version = meta['dist-tags'][version];
-	version = semver.maxSatisfying(Object.keys(meta['versions']), version) // resolve range with semver
-	
-	let pkg = meta['versions'][version]
-	if(!pkg) throw new Error(`Version ${version} of package ${name} not found!`); 
-	let id = pkg._id;
-	let files = npm_tarball_cache[id];
-	if(!files) throw new Error(`Tarball ${id} mssing from tarball cache`);
-	var contents = lookup_path(pkg, files, main)
-	return contents;
-}
 
 async function resolve(dep, version = 'latest'){
+	if(dep in browserifyBuiltins){
+		console.debug('substituting', browserifyBuiltins[dep], 'for package', dep)
+		dep = browserifyBuiltins[dep];
+	}
 	let name = dep.split("/")[0],
 		main = dep.split("/").slice(1).join('/');
 	let meta = await fetch_package(name);
@@ -202,40 +203,106 @@ async function resolve(dep, version = 'latest'){
 	// console.log(id, contents.filename, subdeps)
 	console.group(id + ':' + contents.filename)
 	for(let subdep of subdeps){
-		if(subdep.split("/")[0] == name){
-			// loading another file from same package but by name
-			await resolve(subdep, version)
-		}else if(subdep.startsWith('.')){
-			// resolve a local dependency by turning it into an external one
-			await resolve(name + '/' + path.join(path.dirname(contents.filename), subdep), version)
-		}else{
-			// resolve an external dependency
-			var subver = (pkg.dependencies && pkg.dependencies[subdep]) ||
-						 (pkg.devDependencies && pkg.devDependencies[subdep]) ||
-						 'latest';
-			await resolve(subdep, subver)
-		}
+		await resolve(...subresolve(pkg, contents.filename, subdep))
 	}
 	console.groupEnd(id + ':' + contents.filename)
 }
+
+function subresolve(pkg, filename, subdep){
+	if(subdep.split("/")[0] == pkg.name){
+		// loading another file from same package but by name
+		return [subdep, pkg.version]
+	}else if(subdep.startsWith('.')){
+		// resolve a local dependency by turning it into an external one
+		return [pkg.name + '/' + path.join(path.dirname(filename), subdep), pkg.version]
+	}else{
+		// resolve an external dependency
+		var subname = subdep.split("/")[0];
+		var subver = (pkg.dependencies && pkg.dependencies[subname]) ||
+					 (pkg.devDependencies && pkg.devDependencies[subname]) ||
+					 'latest';
+		return [subdep, subver]
+	}
+}
+
+
 // https://github.com/jrburke/requirejs/wiki/Differences-between-the-simplified-CommonJS-wrapper-and-standard-AMD-define#cjs
 ;(async function(){
 	var deps = extract_deps(middle);
 	for(let dep of deps){
 		await resolve(dep)
-
-		
 	}
+	//@ sourceURL=foo.js
 })();
 
 
-// console.log('', deps)
+function resolveSync(dep, version = 'latest'){
+	if(dep in browserifyBuiltins) dep = browserifyBuiltins[dep];
+	let name = dep.split("/")[0],
+		main = dep.split("/").slice(1).join('/');
+	let meta = npm_package_cache[name];
+	// packages have to be cached for synchronous resolution
+	if(!meta) throw new Error(`Package ${name} not found in package cache!`);
+	if(meta['dist-tags'][version]) version = meta['dist-tags'][version];
+	version = semver.maxSatisfying(Object.keys(meta['versions']), version) // resolve range with semver
+	
+	let pkg = meta['versions'][version]
+	if(!pkg) throw new Error(`Version ${version} of package ${name} not found!`); 
+	let id = pkg._id;
+	let files = npm_tarball_cache[id];
+	if(!files) throw new Error(`Tarball ${id} mssing from tarball cache`);
+	var contents = lookup_path(pkg, files, main)
+	return { pkg, contents }
+}
 
-// deps.forEach(dep => {
 
-// 	fetch_package(pkg)
-// 	console.log(pkg, path)
-// })
+global.__prepareModule = function __prepareModule(config){
+	var {filename, id, fullpath} = config;
+	if(!(id in npm_modules_cache)) npm_modules_cache[id] = {};
+	var [name, version] = id.split('@');
+	var meta = npm_package_cache[name],
+		pkg = meta['versions'][version];
+	npm_modules_cache[id][filename] = {
+		exports: {},
+		require: function(path){
+			
+			console.log('require', path, 'from', id, filename)
+			return requireModule(...subresolve(pkg, filename, path))
+		},
+		Buffer: Buffer,
+		// console: {},
+		process: process,
+		global: global,
+		__filename: fullpath,
+		__dirname: path.dirname(fullpath)
+	}
+	return npm_modules_cache[id][filename];
+}
+
+global.requireModule = function requireModule(dep, version = 'latest'){
+	var {contents, pkg} = resolveSync(dep, version)
+	if(!contents) throw new Error(`File "${dep}" not found in package ${pkg._id}`);
+	if(pkg._id in npm_modules_cache && contents.filename in npm_modules_cache[pkg._id]){
+		return npm_modules_cache[pkg._id][contents.filename].exports
+	}
+
+	var preamble = 'var '+['exports', 'require', 'process', '__filename', '__dirname', 'Buffer', 'global']
+		.map(x => `${x} = module.${x}`).join(', ') + ';';
+
+	var fullpath = pkg._id + '/' + contents.filename;
+	var config = { fullpath, filename: contents.filename, id: pkg._id };
+	
+	eval.call(null, `// Module wrapped for Carbide VM
+	;(function(module){\n${preamble};
+	\n\n${contents.data}\n\n
+	})(__prepareModule(${JSON.stringify(config)}));
+	//@ sourceURL=${fullpath}`);
+
+	return npm_modules_cache[pkg._id][contents.filename].exports;
+}
+
+global.resolve = resolve;
+global.resolveSync = resolveSync;
 
 
 
