@@ -2,13 +2,18 @@ var path = require('path');
 var webpack = require('webpack');
 
 module.exports = {
-  devtool: 'eval',
+  devtool: 'source-map',
   debug: true,
-  entry: [
-    'webpack-dev-server/client?http://localhost:4000',
-    'webpack/hot/only-dev-server',
-    './src/index'
-  ],
+  entry: {
+    carbide: [
+      'webpack-dev-server/client?http://localhost:4000',
+      'webpack/hot/only-dev-server',
+      './src/index'
+    ],
+    cylon: [
+      './vm/cylon'
+    ]
+  },
   node: {
     fs: "empty",
     net: "empty",
@@ -16,12 +21,12 @@ module.exports = {
   },
   output: {
     path: path.join(__dirname, 'dist'),
-    filename: 'bundle.js',
+    filename: '[name].bundle.js',
     publicPath: '/static/'
   },
   plugins: [
-    new webpack.HotModuleReplacementPlugin(),
-    new webpack.NoErrorsPlugin()
+      // new webpack.HotModuleReplacementPlugin(),
+      new webpack.NoErrorsPlugin()
   ],
   resolve: {
     extensions: ['', '.js', '.jsx', '.json']
@@ -31,6 +36,12 @@ module.exports = {
       test: /\.json$/,
       loader: 'json'
     }, {
+      test: /\.jsx?$/,
+      loaders: ['babel?stage=0&optional=runtime'],
+      include: path.join(__dirname, 'vm')
+    },
+    { test: /semver\.browser\.js/, loaders: ['imports?define=>undefined'] },
+    {
       test: /\.jsx?$/,
       loaders: ['react-hot', 'babel?stage=0'],
       include: path.join(__dirname, 'src')

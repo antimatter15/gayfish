@@ -34,14 +34,14 @@ require("codemirror/addon/dialog/dialog.css")
 require("codemirror/addon/search/searchcursor")
 require("codemirror/addon/search/search")
 
-global.tern = require('tern')
-require("codemirror/addon/tern/tern.css")
-require("codemirror/addon/tern/tern")
+// global.tern = require('tern')
+// require("codemirror/addon/tern/tern.css")
+// require("codemirror/addon/tern/tern")
 
-// Tern Server Eliot
-var eliot = new CodeMirror.TernServer({defs: [
-    require('tern/defs/ecma5.json')
-]});
+// // Tern Server Eliot
+// var eliot = new CodeMirror.TernServer({defs: [
+//     require('tern/defs/ecma5.json')
+// ]});
 
 // import npm from 'npm'
 
@@ -214,6 +214,7 @@ class DocumentModel { // a document is a collection of cells
             var cell = new CellModel(this, c.index)
             if(typeof c.value != 'string') throw 'Cell value must be string';
             cell.value = c.value
+            cell._collapsed = !!c.collapsed;
         }
     }
     get focused() { return this.cells.filter(x => x.has_focus)[0] }
@@ -240,7 +241,8 @@ class CellModel {
     serialize() {
         return {
             value: this.value,
-            index: this.index
+            index: this.index,
+            collapsed: this.collapsed
         }
     }
     mount = (x) => {
@@ -327,19 +329,24 @@ class Editor extends Component {
         cell.mount(cm)
 
         cm.setOption("extraKeys", {
-            "Ctrl-Space": function(cm) { eliot.complete(cm); },
-            "Ctrl-I": function(cm) { eliot.showType(cm); },
-            "Ctrl-O": function(cm) { eliot.showDocs(cm); },
-            "Alt-.": function(cm) { eliot.jumpToDef(cm); },
-            "Alt-,": function(cm) { eliot.jumpBack(cm); },
-            "Ctrl-Q": function(cm) { eliot.rename(cm); },
-            "Ctrl-.": function(cm) { eliot.selectName(cm); },
+            // "Ctrl-Space": function(cm) { eliot.complete(cm); },
+            // "Ctrl-I": function(cm) { eliot.showType(cm); },
+            // "Ctrl-O": function(cm) { eliot.showDocs(cm); },
+            // "Alt-.": function(cm) { eliot.jumpToDef(cm); },
+            // "Alt-,": function(cm) { eliot.jumpBack(cm); },
+            // "Ctrl-Q": function(cm) { eliot.rename(cm); },
+            // "Ctrl-.": function(cm) { eliot.selectName(cm); },
             "Shift-Enter": (cm) => {
                 cell.run()
                 if(!cell.next && cell.value) new CellModel(doc);
+                // maybe it should only advance if the next cell
+                // is totally visible?
+                // or maybe it should be based on behavior
+                // (if you've run this cell multiple times consecutiviely
+                // perhaps it should not advance to the next cell)
                 if(cell.next){
-                    cell.next.cm.setCursor(0, 0)
-                    cell.next.cm.focus() 
+                    // cell.next.cm.setCursor(0, 0)
+                    // cell.next.cm.focus() 
                 }
             },
             "Ctrl-N": (cm) => {
@@ -366,7 +373,7 @@ class Editor extends Component {
             if(!cell.next && cell.value) new CellModel(doc);
         })
         cm.on("cursorActivity", function(cm) { 
-            eliot.updateArgHints(cm); 
+            // eliot.updateArgHints(cm); 
             // eliot.complete(cm)
         });
         cm.on('blur', (cm, evt) => {
@@ -383,9 +390,9 @@ class Editor extends Component {
         })
         cm.on('keyup', function(cm, evt){
             // console.log(cm.type, cm, evt.keyCode)
-            if(evt.keyCode == 190){ // i don't know why this is "."
-                eliot.complete(cm)
-            }
+            // if(evt.keyCode == 190){ // i don't know why this is "."
+            //     eliot.complete(cm)
+            // }
         })
         cm.on('keydown', (cm, evt) => {
             // console.log(evt, cm, evt.keyCode)
@@ -833,7 +840,7 @@ export default class App extends Component {
                     <div className="right">
                         <div className="button new">New Notebook</div>
                     </div>
-                    <h1>Jade <span className="note">last saved 4 minutes ago</span></h1>
+                    <h1>Tungsten Carbide <span className="note">last saved 4 minutes ago</span></h1>
                 </div>
                 <UnifiedPane doc={doc} size={this.state.size}></UnifiedPane>
             </div>
