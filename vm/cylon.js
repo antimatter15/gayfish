@@ -1,6 +1,6 @@
 // asynchronous worker bundle v2
 
-import babel from 'babel-core/lib/babel/api/browser.js';
+import * as babel from 'babel-core/lib/babel/api/node.js';
 // import babel from 'babel-core/browser.js';
 import * as mininpm from './mininpm'
 
@@ -55,52 +55,78 @@ import normalizeAst from "babel-core/lib/babel/helpers/normalize-ast";
 import estraverse from "estraverse";
 import * as acorn from "babel-core/lib/acorn";
 
-acorn.plugins.Gilbert = function(instance){
-    instance.extend("parseExpressionStatement", function(inner){
-        return function(node, expr){
-              node.expression = expr
-              if(!this.eat(acorn.tokTypes.semi)){
-                  if(this.canInsertSemicolon()){
-                      var cLog = this.startNode()
-                      cLog.name = "LOG"
-                      var Ludacris = this.startNode()
-                      Ludacris.arguments = [expr]
-                      Ludacris.callee = this.finishNode(cLog, "Identifier")
-                      node.expression = this.finishNode(Ludacris, "CallExpression")
+// acorn.plugins.Gilbert = function(instance){
+//     instance.extend("parseExpressionStatement", function(inner){
+//         return function(node, expr){
+//               node.expression = expr
+//               if(!this.eat(acorn.tokTypes.semi)){
+//                   if(this.canInsertSemicolon()){
+//                       var cLog = this.startNode()
+//                       cLog.name = "LOG"
+//                       var Ludacris = this.startNode()
+//                       Ludacris.arguments = [expr]
+//                       Ludacris.callee = this.finishNode(cLog, "Identifier")
+//                       node.expression = this.finishNode(Ludacris, "CallExpression")
                       
-                  }else{
-                      this.unexpected()
-                  }
-              }
-              return this.finishNode(node, "ExpressionStatement")
+//                   }else{
+//                       this.unexpected()
+//                   }
+//               }
+//               return this.finishNode(node, "ExpressionStatement")
+//         }
+//     })
+//     instance.extend("parseVarStatement", function(inner){
+//     	return function(node, kind){
+//     		this.next()
+// 			this.parseVar(node, false, kind)
+// 			// this.semicolon()
+// 			var thing = this.finishNode(node, "VariableDeclaration")
+
+// 			if(!this.eat(acorn.tokTypes.semi)){
+// 				if(!this.canInsertSemicolon()) this.unexpected();
+// 				// var cLog = this.startNode()
+// 				// cLog.name = "VERILOG"
+// 				// var Ludacris = this.startNode()
+// 				// Ludacris.arguments = []
+// 				// Ludacris.callee = this.finishNode(cLog, "Identifier")
+// 				// var Richmond = this.startNode()
+// 				// Richmond.expression = this.finishNode(Ludacris, "CallExpression")
+				
+// 				// this.finishNode(Richmond, "ExpressionStatement")
+// 				node.OHMYGOD='SODIJFOWIEJFSLDFN'
+// 				return thing
+
+// 			}
+			
+// 			return thing;
+//     	}
+//     })
+// }
+
+acorn.plugins.Gilbert = function(instance){
+	instance.extend("parseExpressionStatement", function(inner){
+        return function(node, expr){
+			node.expression = expr
+			if(!this.eat(acorn.tokTypes.semi)){
+				if(!this.canInsertSemicolon()) this.unexpected();
+				node.semicolonInserted = true;
+			}
+			return this.finishNode(node, "ExpressionStatement")
         }
     })
     instance.extend("parseVarStatement", function(inner){
     	return function(node, kind){
     		this.next()
 			this.parseVar(node, false, kind)
-			// this.semicolon()
-			var thing = this.finishNode(node, "VariableDeclaration")
-
 			if(!this.eat(acorn.tokTypes.semi)){
 				if(!this.canInsertSemicolon()) this.unexpected();
-				var cLog = this.startNode()
-				cLog.name = "VERILOG"
-				var Ludacris = this.startNode()
-				Ludacris.arguments = []
-				Ludacris.callee = this.finishNode(cLog, "Identifier")
-				var Richmond = this.startNode()
-				Richmond.expression = this.finishNode(Ludacris, "CallExpression")
-				
-				this.finishNode(Richmond, "ExpressionStatement")
-				return thing
-
+				node.semicolonInserted = true;
 			}
-			
-			return thing;
-    	}
+			return this.finishNode(node, "VariableDeclaration")
+        }
     })
 }
+
 
 // babel/helpers/parse.js
 function babelParseHelper(code, opts = {}) {
@@ -152,6 +178,8 @@ function babelParseHelper(code, opts = {}) {
   return ast;
 }
 
+console.log(babel)
+
 // babel/transformation/file/index.js
 var babelParseCode = (function(code, opts){
 	// var opts = this.opts;
@@ -183,10 +211,40 @@ var babelParseCode = (function(code, opts){
 	return tree
 }).bind(babel.transform.pipeline);
 
+import babelGenerator from 'babel-core/lib/babel/generation';
 
+var t = babel.types;
 var megatron = new babel.Transformer("foo-bar", {
 	FunctionDeclaration(node, parent, scope) {
+		console.log('fundecl', node)
 		scope.hasBinding("name");
+    },
+    VariableDeclaration(node, parent, scope){
+    	// console.log('vardecl', node)
+    	if(node.semicolonInserted){
+    		console.log(node)
+	    	return [
+	    		node
+	    	].concat(
+		    	node.declarations.map(x => 
+		    		t.expressionStatement(t.callExpression(t.identifier('omglog'), [
+		    			t.identifier(x.id.name),
+		    			t.literal(x.id.name)
+		    		]))
+		    	)
+	    	)
+	    }
+    },
+    ExpressionStatement(node, parent, scope){
+    	
+    	if(node.semicolonInserted){
+    		console.log('merpyderp')
+    		// console.log(, node)
+    		node.expression =  t.callExpression(t.identifier('explog'), [
+    			node.expression, 
+    			t.literal(babelGenerator(node.expression).code)
+    		])
+    	}
     }
 })
 
