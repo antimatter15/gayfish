@@ -10,23 +10,62 @@ console.log('hello world', mininpm);
 var code = `
 (function(){
 
+var aosdifjwoie;
 let wumbo = 5+5;
 
-var hello = 42;
+var marray = [1,2,3,4,5,5,5];
+5+2!
+
+marray.map(x => x).map(function(e){
+	return e + 1
+});
+
+[1,2,3,4,5,6].forEach(function(e){
+	var blah = e + 2;
+})
+
+
+var hello = 42,
+	hallu = wumbo * wumbo,
+	bonsoir = hallu - hello;
+
 let zombocom = 5+8;
 const margleflarg = hello + wumbo;
+
+while(zombocom < 100){
+	console.log(zombocom)
+}
 
 
 2 + 2
 
-merp(48)
+let q = 323;
 
 function merp(){
 	var blah = turd;
+	var n = 5;
+	let k = 72;
 	for(var i = 0; i < 100; i++){
 		(i + 5 - 5) / 2
-
+		q = q+1;
 		i + 2 - 7 * i;
+	}
+}
+
+merp(48)
+
+for(var i = 0; i < 100; i++){
+	for(var j = 0; j < i; j++){
+		for(var k = 0; k < i; k++){
+			k += i
+		}
+	}
+}
+for(let i = 0; i < 100; i++){
+	for(let j = 0; j < 100; j++){
+		for(let k = 0; k < 100; k++){
+			console.log(i + j + k)
+		}
 	}
 }
 
@@ -52,50 +91,6 @@ var x = 323,
 `;
 
 
-// var code = `
-
-// var hello = 42;
-
-
-// let wumbo = 5+5;
-
-// const margleflarg = hello + wumbo;
-
-// 2 + 2
-
-// merp(48)
-
-// function merp(){
-// 	var blah = turd;
-// 	for(var i = 0; i < 100; i++){
-// 		(i + 5 - 5) / 2
-
-// 		i + 2 - 7 * i;
-// 	}
-// }
-
-// 4 + 4
-
-// var x = merp()!
-
-// merp = function(){
-
-// }
-
-// [1,2,3].forEach(function(){
-// 	return 48
-// })
-
-
-// [1,2,3].map(x => x + 2)
-
-
-// var x = 323,
-// 	y = 38
-
-// `;
-
-
 
 // import normalizeAst from "./normalize-ast";
 // import estraverse from "estraverse";
@@ -106,54 +101,6 @@ import BabelFile from "babel-core/lib/babel/transformation/file";
 import normalizeAst from "babel-core/lib/babel/helpers/normalize-ast";
 import estraverse from "estraverse";
 import * as acorn from "babel-core/lib/acorn";
-
-// acorn.plugins.Gilbert = function(instance){
-//     instance.extend("parseExpressionStatement", function(inner){
-//         return function(node, expr){
-//               node.expression = expr
-//               if(!this.eat(acorn.tokTypes.semi)){
-//                   if(this.canInsertSemicolon()){
-//                       var cLog = this.startNode()
-//                       cLog.name = "LOG"
-//                       var Ludacris = this.startNode()
-//                       Ludacris.arguments = [expr]
-//                       Ludacris.callee = this.finishNode(cLog, "Identifier")
-//                       node.expression = this.finishNode(Ludacris, "CallExpression")
-                      
-//                   }else{
-//                       this.unexpected()
-//                   }
-//               }
-//               return this.finishNode(node, "ExpressionStatement")
-//         }
-//     })
-//     instance.extend("parseVarStatement", function(inner){
-//     	return function(node, kind){
-//     		this.next()
-// 			this.parseVar(node, false, kind)
-// 			// this.semicolon()
-// 			var thing = this.finishNode(node, "VariableDeclaration")
-
-// 			if(!this.eat(acorn.tokTypes.semi)){
-// 				if(!this.canInsertSemicolon()) this.unexpected();
-// 				// var cLog = this.startNode()
-// 				// cLog.name = "VERILOG"
-// 				// var Ludacris = this.startNode()
-// 				// Ludacris.arguments = []
-// 				// Ludacris.callee = this.finishNode(cLog, "Identifier")
-// 				// var Richmond = this.startNode()
-// 				// Richmond.expression = this.finishNode(Ludacris, "CallExpression")
-				
-// 				// this.finishNode(Richmond, "ExpressionStatement")
-// 				node.OHMYGOD='SODIJFOWIEJFSLDFN'
-// 				return thing
-
-// 			}
-			
-// 			return thing;
-//     	}
-//     })
-// }
 
 acorn.plugins.YALP = function(instance){
 	acorn.tokTypes.YALP = new acorn.TokenType("YALP")
@@ -215,54 +162,7 @@ acorn.plugins.Gilbert = function(instance){
 
 
 // babel/helpers/parse.js
-function babelParseHelper(code, opts = {}) {
-  var commentsAndTokens = [];
-  var comments          = [];
-  var tokens            = [];
-
-  var parseOpts = {
-    allowImportExportEverywhere: opts.looseModules,
-    allowReturnOutsideFunction:  opts.looseModules,
-    allowHashBang:               true,
-    ecmaVersion:                 6,
-    strictMode:                  opts.strictMode,
-    sourceType:                  opts.sourceType,
-    locations:                   true,
-    features:                    opts.features || {},
-    plugins:                     opts.plugins || {},
-    onToken:                     tokens,
-    ranges:                      true
-  };
-
-  parseOpts.onToken = function (token) {
-    tokens.push(token);
-    commentsAndTokens.push(token);
-  };
-
-  parseOpts.onComment = function (block, text, start, end, startLoc, endLoc) {
-    var comment = {
-      type: block ? "CommentBlock" : "CommentLine",
-      value: text,
-      start: start,
-      end: end,
-      loc: new acorn.SourceLocation(this, startLoc, endLoc),
-      range: [start, end]
-    };
-
-    commentsAndTokens.push(comment);
-    comments.push(comment);
-  };
-
-  if (opts.nonStandard) {
-    parseOpts.plugins.jsx = true;
-    parseOpts.plugins.flow = true;
-  }
-
-  var ast = acorn.parse(code, parseOpts);
-  estraverse.attachComments(ast, comments, tokens);
-  ast = normalizeAst(ast, comments, commentsAndTokens);
-  return ast;
-}
+import babelParseHelper from 'babel-core/lib/babel/helpers/parse.js'
 
 console.log(babel)
 
@@ -334,11 +234,8 @@ var megatron = new babel.Transformer("log-statements", {
     }
 })
 
-var derpsacola = new babel.Transformer("for-annotation", {
-	ForStatement(node, parent, scope){
-		console.log('forstatement', node, parent, scope, scope.getAllBindings())
-		scope.rename("merp", "_____MERP_____")
-	},
+var derpsacola = new babel.Transformer("globalization", {
+
 	FunctionDeclaration(node, parent) {
       var id = node.id;
       node.type = "FunctionExpression";
@@ -350,17 +247,123 @@ var derpsacola = new babel.Transformer("for-annotation", {
     },
     VariableDeclaration(node, parent, scope){
     	// don't apply to let or const
-    	if(node.kind == 'var'){
-    		console.log('vardecl', scope)	
+    	if(node.kind == 'var' && !scope.parent.parent){
+    		// console.log('vardecl', node.declarations, scope)
 
-    		return node.declarations.map(x => {
+    		return [
+    			t.expressionStatement(
+    				t.callExpression(t.identifier('__declareGlobals'), 
+    					node.declarations.map(x => t.literal(x.id.name))
+    				)
+    			)
+    		].concat(node.declarations.filter(x => x.init).map(x => {
     			return t.expressionStatement(
 	    			t.assignmentExpression("=", x.id, x.init)
 	    		);
-    		})
+    		}))
     		
     	}
-    }
+    },
+
+})
+
+console.log('TYPES', t)
+
+
+var BruceWillis = new babel.Transformer("BruceWillis", {
+	ForStatement(node, parent, scope){
+		if(!scope.parent.parent.parent &&
+			node.test.type == "BinaryExpression" &&
+			["<", "<="].indexOf(node.test.operator) != -1 &&
+			node.test.left.type == 'Identifier' &&
+			node.test.right.type == 'Literal'
+			){
+
+			// console.log('forstatement', node, parent, scope)	
+			// return t.binaryExpression("<", )
+			// return t.forStatement()
+			// ["init", "test", "update", "body"]
+			return t.forStatement(node.init, node.test, t.sequenceExpression([
+				node.update,
+				t.callExpression(t.identifier('__trackLoop'), [
+					node.test.left,
+					node.test.right
+				])
+			]), node.body)
+		}
+		// scope.rename("merp", "_____MERP_____")
+	},
+	CallExpression(node, parent, scope) {
+		if(!(node.callee.type == 'MemberExpression' &&
+			node.callee.property.type == 'Identifier' &&
+			['map', 'forEach'].indexOf(node.callee.property.name) != -1 &&
+			node.arguments.length == 1
+			)) return;
+
+		var fn = node.arguments[0];
+		if(!(fn.type == 'FunctionExpression' &&
+			fn.body.type == 'BlockStatement'
+			)) return;
+		// console.log('call expression', node)
+		return t.callExpression(node.callee, [
+			t.functionExpression(
+				fn.id, fn.params, 
+				t.blockStatement([
+					t.expressionStatement(t.callExpression(t.identifier('__trackLoop'), [
+						t.memberExpression(t.identifier('arguments'), t.literal(1)),
+						t.memberExpression(t.memberExpression(t.identifier('arguments'), t.literal(2)), t.identifier('length'))
+					]))
+				].concat(fn.body.body)), 
+				fn.returnType, fn.typeParameters
+			)
+		])
+	},
+	WhileStatement(node, parent, scope) {
+		if(!(node.test.type == 'BinaryExpression' &&
+			node.body.type == 'BlockStatement')) return;
+
+		var id, lit;
+		if( ['<', '<='].indexOf(node.test.operator) != -1 && 
+			node.test.left.type == 'Identifier' && 
+			node.test.right.type == 'Literal'){
+			id = node.test.left;
+			lit = node.test.right;
+		}else if( ['>', '>='].indexOf(node.test.operator) != -1  && 
+			node.test.right.type == 'Identifier' && 
+			node.test.left.type == 'Literal'){
+			id = node.test.right;
+			lit = node.test.left;
+		}else return;
+
+		return t.whileStatement(node.test, t.blockStatement([
+			t.expressionStatement(t.callExpression(t.identifier('__trackLoop'), [id, lit]))
+		].concat(node.body.body)))
+		console.log('whileloop', node)
+	},
+
+	Program: {
+			exit(node, parent, scope, file) {
+			console.log('derp program')
+			var counterCount = 0;
+			this.traverse({
+				CallExpression(node, parent, scope){
+					if(node.callee.name != "__trackLoop") return;
+					counterCount++;
+				}
+			}, {});
+			var countCountaculous = 0;
+			this.traverse({
+				CallExpression(node, parent, scope){
+					if(node.callee.name != "__trackLoop") return;
+					countCountaculous++;
+					return t.callExpression(node.callee, node.arguments.concat([
+						t.literal(countCountaculous),
+						t.literal(counterCount)
+					]))
+				}
+			}, {});
+		}
+	}
 })
 
 // ast = normalizeAst(ast);
@@ -375,6 +378,9 @@ var file = new BabelFile({
     }, {
         transformer: derpsacola,
         position: 'before'
+    }, {
+        transformer: BruceWillis,
+        position: 'before'
     }]
 }, babel.transform.pipeline);
 var earth = file.wrap(code, function () {
@@ -388,19 +394,6 @@ var earth = file.wrap(code, function () {
 console.log(earth)
 console.log(earth.code)
 
-// var middle = babel.transform.fromAst(ast, code, {
-//     optional: ["runtime"],
-//     stage: 0
-// }).code;
-
-
-// var middle = babel.transform(code, {
-//     optional: ["runtime"],
-//     stage: 0
-// }).code;
-
-// console.log(middle)
-
 // https://github.com/jrburke/requirejs/wiki/Differences-between-the-simplified-CommonJS-wrapper-and-standard-AMD-define#cjs
 // ;(async function(){
 // 	var deps = mininpm.extract_deps(middle);
@@ -409,53 +402,3 @@ console.log(earth.code)
 // 	}
 // 	//@ sourceURL=foo.js
 // })();
-
-
-
-
-
-// global.define = function define(deps, callback){
-// 	console.log(deps, callback)
-// }
-
-
-// console.log(middle)
-
-// eval.call(null, middle);
-
-
-
-
-// var code = `
-// var bigInt = require("big-integer");
-// var ndarray = require("ndarray");
-// var jade = require('jade')
-
-// function* calculatePi(){
-//     let [q, r, t] = [1, 0, 1].map(x => bigInt(x)); // big
-//     let [k, n, l] = [1, 3, 3]
-
-//     while(true){
-//         if(q.times(4).plus(r).minus(t).lesser(t.times(n))){
-//             yield n
-//             let nr = r.minus(t.times(n)).times(10)
-//             n = +q.times(3).plus(r).times(10).divide(t).minus(n*10)
-// 	        q = q.times(10)
-//             r = nr
-//         }else{
-//             n = +q.times(k*7).plus(2).plus(r.times(l)).divide(t.times(l))
-//             r = q.times(2).plus(r).times(l)
-//             q = q.times(k)
-//             t = t.times(l)
-//             l += 2
-//             k += 1
-//         }
-//     }
-// }
-
-// var it = calculatePi(), str = '';
-// for(var i = 0; i < 2000; i++){
-//     str += it.next().value;
-// }
-// str
-// `;

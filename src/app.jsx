@@ -4,11 +4,10 @@ import React, { Component, PropTypes } from 'react/addons';
 import update from 'react/lib/update';
 import classNames from 'classnames'
 // import SplitPane from 'react-split-pane'
-import babel from 'babel-core/lib/babel/api/browser.js'
-import falafel from 'falafel';
+// import babel from 'babel-core/lib/babel/api/browser.js'
+// import falafel from 'falafel';
 // import _ from 'lodash';
-
-global.babel = babel
+// global.babel = babel
 var CodeMirror = require('codemirror')
 require("codemirror/lib/codemirror.css");
 require("./codemirror.less");
