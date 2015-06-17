@@ -55,7 +55,7 @@ class Machine {
     // src/vm.js
     constructor(doc) {
         this.doc = doc;
-        this.worker = new Worker('/vm/worker.js')
+        this.worker = new Worker('/static/cylon.bundle.js')
         this.worker.onmessage = this._onmessage.bind(this)
         this._queue = []
         this.busy = false
@@ -104,13 +104,7 @@ class Machine {
         cell.compiled = ''
         cell.activity = ''
         cell.update()
-        var error, code;
-        try {
-            code = transformCode(cell.value)
-        } catch (err) {
-            error = err
-            console.error(error)
-        }
+        var error, code = cell.value;
         if(error){
             cell.status = 'error'
             cell.output = error.toString()
@@ -139,55 +133,6 @@ class Machine {
         cell.status = 'queued'
         if(!this.busy) this._dequeue();
     }
-}
-
-function transformCode(code){
-    var middle = babel.transform(code, {
-        optional: ["runtime"],
-        // modules: 'amd',
-        stage: 0
-    }).code;
-
-    var progressTracker = '__track$loop__'
-    function removeMerp(src){
-        console.log('removing merp', src)
-        return falafel(src, function(node){
-            if(node.type == 'CallExpression' &&
-                node.callee.type == 'Identifier' &&
-                node.callee.name == progressTracker){
-                node.update('0')
-            }
-        }).toString()
-    }
-    var result = falafel(middle, function (node) {
-        if(node.type === 'ForStatement'){
-            if(node.test.type == 'BinaryExpression' && 
-                node.test.right.type == 'Literal' && 
-                node.test.left.type == 'Identifier' &&
-                node.test.operator == '<'){
-                node.update.update(node.update.source() + ','+progressTracker+'(' + node.test.left.name + ', ' + node.test.right.value + ')')
-                node.body.update(removeMerp(node.body.source()))
-            }
-        }else if(node.type === 'CallExpression'){
-            if(node.callee.type == 'MemberExpression' && 
-                ['forEach', 'map'].indexOf(node.callee.property.name) != -1 &&
-                node.arguments[0].type == 'FunctionExpression') {
-                var thing = node.arguments[0].body;
-                thing.update('{'+progressTracker+'(arguments[1], arguments[2].length);' + thing.source().slice(1))
-                // removeMerp(
-            }
-        }else if(node.type == 'WhileStatement'){
-            if(node.test.type == 'BinaryExpression' &&
-                node.test.right.type == 'Literal' && 
-                node.test.left.type == 'Identifier' &&
-                node.test.operator == '<' &&
-                node.body.type == 'BlockStatement'){
-                node.body.update('{'+progressTracker+'(' + node.test.left.name + ', ' + node.test.right.value + ');' + removeMerp(node.body.source()).slice(1))
-            }
-        }
-    }).toString();
-
-    return result;
 }
 
 
