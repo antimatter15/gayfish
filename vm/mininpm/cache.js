@@ -64,7 +64,8 @@ export async function version_fetch(name, version){
 
 export function version_cache(name, version){
 	let meta = package_cache(name);
-	// console.log(meta)
+	if(!meta) throw new Error(`package ${name} not found in cache`);
+	
 	if(meta['dist-tags'][version]) version = meta['dist-tags'][version];
 	version = semver.maxSatisfying(Object.keys(meta['versions']), version) // resolve range with semver
 
@@ -79,7 +80,8 @@ export async function tarball_fetch(id){
 	let data = new Uint8Array(await fetch(pkg.dist.tarball, 'arraybuffer'))
 	let files = {};
 	untar(unzip(data)).filter(x => x).forEach(e => {
-		let filename = e.filename.replace(/^package\//, '')
+		// turns out it's not always in a folder named "package"
+		let filename = e.filename.split('/').slice(1).join('/');
 		files[filename] = {
 			filename,
 			data: new Buffer(e.fileData).toString('utf8')

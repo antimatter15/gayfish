@@ -15,7 +15,7 @@ function match_variants(filepath, filenames){
 }
 
 export default function lookup_path(pkg, files, filepath){
-	if(!filepath){
+	if(!filepath || path.normalize(filepath) == '.'){
 		if(typeof pkg.browser == 'string'){
 			filepath = pkg.browser
 		}else{

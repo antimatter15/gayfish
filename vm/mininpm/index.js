@@ -8,6 +8,10 @@ import {package_fetch, version_fetch, tarball_fetch,
 var npm_modules_cache = {};
 var npm_resolve_cache = {};
 
+export function reset(){
+	npm_modules_cache = {};
+	npm_resolve_cache = {};
+}
 
 export function extract_deps(code){
 	// https://github.com/jrburke/requirejs/blob/master/require.js#L2033
@@ -50,7 +54,7 @@ async function resolve(dep, version = 'latest'){
 	let pkg = await version_fetch(name, version);
 	let files = await tarball_fetch(pkg._id);
 	var contents = lookup_path(pkg, files, main)
-	return { pkg, contents }
+	return { pkg, main, contents }
 }
 
 function resolveSync(dep, version = 'latest'){
@@ -58,25 +62,25 @@ function resolveSync(dep, version = 'latest'){
 	let name = dep.split("/")[0],
 		main = dep.split("/").slice(1).join('/');
 	let pkg = version_cache(name, version);
-	let files = npm_tarball_cache[pkg._id];
-	if(!files) throw new Error(`Tarball ${pkg._id} mssing from tarball cache`);
+	let files = tarball_cache(pkg._id);
 	var contents = lookup_path(pkg, files, main)
-	return { pkg, contents }
+	return { pkg, main, contents }
 }
 
 
-export async function recursiveResolve(dep, version = 'latest'){
+export async function recursiveResolve(dep, version = 'latest', level = 0){
 	if((dep + '@' + version) in npm_resolve_cache) return; // it's already been resolved woo
-	let { pkg, contents } = await resolve(dep, version);
+	let { pkg, contents, main } = await resolve(dep, version);
 	let id = pkg._id;
-	if(!contents) throw new Error(`No file found at "${main}" for package ${id} `);
+	if(!contents) throw new Error(`No file found at "${main}" for package ${id} (require ${dep}@${version}) `);
 	npm_resolve_cache[dep + '@' + version] = 1;
 	var subdeps = extract_deps(contents.data)
-	console.group(id + ':' + contents.filename)
+
+	console[level?'group':'groupCollapsed'](id + ':' + contents.filename + ` (depth ${level + 1})`)
 	for(let subdep of subdeps){
-		await recursiveResolve(...subresolve(pkg, contents.filename, subdep))
+		await recursiveResolve(...subresolve(pkg, contents.filename, subdep), level + 1)
 	}
-	console.groupEnd(id + ':' + contents.filename)	
+	console.groupEnd(id + ':' + contents.filename + ` (depth ${level + 1})`)	
 }
 
 
@@ -86,7 +90,13 @@ export function requireModule(dep, version = 'latest'){
 	if(pkg._id in npm_modules_cache && contents.filename in npm_modules_cache[pkg._id]){
 		return npm_modules_cache[pkg._id][contents.filename].exports
 	}
-
+	
+	if(contents.filename.endsWith(".json")){
+		npm_modules_cache[pkg._id][contents.filename] = {
+			exports: JSON.parse(contents.data)
+		}
+		return npm_modules_cache[pkg._id][contents.filename].exports;
+	}
 	var preamble = 'var '+['exports', 'require', 'process', '__filename', '__dirname', 'Buffer', 'global']
 		.map(x => `${x} = module.${x}`).join(', ') + ';';
 
@@ -111,8 +121,6 @@ global.__prepareModule = function __prepareModule(config){
 	npm_modules_cache[id][filename] = {
 		exports: {},
 		require: function(path){
-			
-			console.log('require', path, 'from', id, filename)
 			return requireModule(...subresolve(pkg, filename, path))
 		},
 		Buffer: Buffer,

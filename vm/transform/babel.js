@@ -11,7 +11,14 @@ export default function transformCode(code, opts){
         plugins:       opts.acornPlugins || {}
     };
 
-    // var features = parseOpts.features = {};
+    var features = parseOpts.features = {};
+
+    var transformers = BabelTransform.pipeline.transformers;
+    for(var key in transformers){
+        var transformer = transformers[key]
+        // console.log(transformer, key)
+        features[key] = true;
+    }
     // for (var key in this.transformers) {
     //   var transformer = this.transformers[key];
     //   console.log(transformer)
@@ -20,10 +27,12 @@ export default function transformCode(code, opts){
 
     // isLoose(key: string) { return includes(this.opts.loose, key); }
     // parseOpts.looseModules = this.isLoose("es6.modules");
-    // parseOpts.strictMode = features.strict;
+    parseOpts.strictMode = features.strict;
     parseOpts.sourceType = "module";
 
     var tree = BabelParseHelper(code, parseOpts);
+    
+    delete opts['acornPlugins'];
     var file = new BabelFile(opts, BabelTransform.pipeline);
 
     return file.wrap(code, function(){

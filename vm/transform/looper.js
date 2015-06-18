@@ -1,7 +1,7 @@
 import BabelTransformer from "babel-core/lib/babel/transformation/transformer";
 import * as t from "babel-core/lib/babel/types";
 
-export default var Looper = new BabelTransformer("Looper", {
+var Looper = new BabelTransformer("Looper", {
     ForStatement(node, parent, scope){
         if(!scope.parent.parent.parent &&
             node.test.type == "BinaryExpression" &&
@@ -69,7 +69,6 @@ export default var Looper = new BabelTransformer("Looper", {
 
     Program: {
         exit(node, parent, scope, file) {
-            console.log('derp program')
             var counterCount = 0;
             this.traverse({
                 CallExpression(node, parent, scope){
@@ -91,3 +90,4 @@ export default var Looper = new BabelTransformer("Looper", {
         }
     }
 })
+export default Looper;
