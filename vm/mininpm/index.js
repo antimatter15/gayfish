@@ -68,17 +68,17 @@ function resolveSync(dep, version = 'latest'){
 }
 
 
-export async function recursiveResolve(dep, version = 'latest', level = 0){
+export async function recursiveResolve(dep, version = 'latest', opts = {}, level = 0){
 	if((dep + '@' + version) in npm_resolve_cache) return; // it's already been resolved woo
 	let { pkg, contents, main } = await resolve(dep, version);
 	let id = pkg._id;
 	if(!contents) throw new Error(`No file found at "${main}" for package ${id} (require ${dep}@${version}) `);
 	npm_resolve_cache[dep + '@' + version] = 1;
 	var subdeps = extract_deps(contents.data)
-
+	if(opts.callback) opts.callback(id);
 	console[level?'group':'groupCollapsed'](id + ':' + contents.filename + ` (depth ${level + 1})`)
 	for(let subdep of subdeps){
-		await recursiveResolve(...subresolve(pkg, contents.filename, subdep), level + 1)
+		await recursiveResolve(...subresolve(pkg, contents.filename, subdep), opts, level + 1)
 	}
 	console.groupEnd(id + ':' + contents.filename + ` (depth ${level + 1})`)	
 }

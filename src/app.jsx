@@ -9,15 +9,16 @@ import classNames from 'classnames'
 // import _ from 'lodash';
 // global.babel = babel
 var CodeMirror = require('codemirror')
+
 require("codemirror/lib/codemirror.css");
-require("./codemirror.less");
-require("codemirror/mode/javascript/javascript")
 require("codemirror/mode/xml/xml")
-require("./jsx.js")
+
+require("./codemirror/codemirror.less");
+require("./codemirror/javascript")
+require("./codemirror/jsx.js")
 
 require("codemirror/keymap/sublime")
 require("codemirror/addon/edit/closebrackets")
-// require("./closebrackets");
 
 require("codemirror/addon/edit/matchbrackets")
 require("codemirror/addon/comment/comment")
@@ -69,6 +70,7 @@ class Machine {
             return;
         }
         if(data.type == 'result'){
+
             cell.status = 'done'
             if(data.result == 'use strict'){
                 cell.output = 'nothing';
@@ -88,9 +90,39 @@ class Machine {
         }else if(data.type == 'progress'){
             cell.progress = data.frac;
             cell.update()
+        }else if(data.type == 'log'){
+            var cm = cell.cm;
+            let line = data.line - 1;
+            
+            var inlineLog = cm.findMarks({ line, ch: 0 }, { line, ch: 1e3 })
+                .filter(x => x._inlineResult);
+            inlineLog.slice(1).forEach(x => x.clear());
+            // console.log(inlineLog, '__INLINELOG')
+            var text = JSON.stringify(data.value) + '';
+            if(text.length > 25) text = text.slice(0, 15) + "..." + text.slice(-5);
+            var textNode = document.createTextNode(text);
+            var widget = document.createElement("span");
+            widget.appendChild(textNode);
+            widget.className = "CodeMirror-derp";
+
+            if(inlineLog.length > 0){
+                var marker = inlineLog[0];
+                marker.widgetNode.replaceChild(widget, marker.widgetNode.firstChild)
+            }else{
+                var marker = cm.setBookmark({ line, ch: 1e3 }, {
+                    widget: widget,
+                    insertLeft: true
+                })
+            }
+
+            marker._inlineResult = true;
+            marker._originalLine = line;
+            // cell.update()
         }else if(data.type == 'activity'){
             cell.activity = data.activity;
             cell.update()
+        }else if(data.type == 'compiled'){
+            cell.compiled = data.code
         }else{
             console.error('no handler for data packet', data)
         }
@@ -104,6 +136,11 @@ class Machine {
         cell.compiled = ''
         cell.activity = ''
         cell.update()
+        var cm = cell.cm;
+        cm.getAllMarks()
+            .filter(x => x._inlineResult)
+            .forEach(x => x.clear());
+
         var error, code = cell.value;
         if(error){
             cell.status = 'error'
@@ -112,18 +149,8 @@ class Machine {
             this.busy = false;
             this._dequeue()
         }else{
-            cell.compiled = code
             cell.progress = 0;
             this.worker.postMessage({ type: 'exec', code, cell: cell.id })
-
-            // setTimeout(x => {
-            //     cell.status = 'done';
-            //     cell.output = code;
-            //     cell.update()
-
-            //     this.busy = false;
-            //     this._dequeue();
-            // }, 500)
         }
 
     }
@@ -289,6 +316,7 @@ class Editor extends Component {
                 // (if you've run this cell multiple times consecutiviely
                 // perhaps it should not advance to the next cell)
                 if(cell.next){
+
                     // cell.next.cm.setCursor(0, 0)
                     // cell.next.cm.focus() 
                 }
@@ -319,6 +347,12 @@ class Editor extends Component {
         cm.on("cursorActivity", function(cm) { 
             // eliot.updateArgHints(cm); 
             // eliot.complete(cm)
+            // let {line, ch} = cm.getCursor();
+            // console.log(line, cm.findMarks({line, ch: 0}, {line, ch: 1e8}).map(x => x._originalLine))
+            cm.getAllMarks()
+                .filter(x => x._inlineResult && x._originalLine != x.find().line)
+                .forEach(x => x.clear());
+            // console.log('cursor activity', )
         });
         cm.on('blur', (cm, evt) => {
             // cell.has_focus = false
@@ -690,14 +724,18 @@ class UnifiedPane extends Component {
 export default class App extends Component {
     constructor(props) {
         super(props);
-        
+        var last_state;
         try {
-            var doc = new DocumentModel()
-            var last_state = JSON.parse(localStorage[location.pathname]);
-            doc.restore(last_state)
+            if(localStorage[location.pathname]){
+                last_state = JSON.parse(localStorage[location.pathname]);
+            }
         } catch (err) {
             console.error(err)
-            var doc = new DocumentModel()
+        }
+        var doc = new DocumentModel()
+        if(last_state){
+            doc.restore(last_state)
+        }else{
             new CellModel(doc)
         }
         global.Doc = doc;

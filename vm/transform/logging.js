@@ -41,10 +41,18 @@ acorn.plugins.semilog = function(instance){
     instance.extend("parseExpressionStatement", function(inner){
         return function(node, expr){
             node.expression = expr
-            if(!this.eat(acorn.tokTypes.semi)){
-                if(!this.canInsertSemicolon()) this.unexpected();
+            // const lineBreak = /\r\n?|\n|\u2028|\u2029/
+            // console.log('expression semicolon', lineBreak.test(this.input.slice(this.lastTokEnd, this.start)))
+
+            // if(this.canInsertSemicolon())
+
+            if(this.canInsertSemicolon()){
                 node.logStatement = true;
-            }
+            }else if(!this.eat(acorn.tokTypes.semi)) this.unexpected();
+            // if(!this.eat(acorn.tokTypes.semi)){
+            //     if(!this.canInsertSemicolon()) this.unexpected();
+            //     node.logStatement = true;
+            // }
             return this.finishNode(node, "ExpressionStatement")
         }
     })
@@ -52,10 +60,14 @@ acorn.plugins.semilog = function(instance){
         return function(node, kind){
             this.next()
             this.parseVar(node, false, kind)
-            if(!this.eat(acorn.tokTypes.semi)){
-                if(!this.canInsertSemicolon()) this.unexpected();
+            // if(!this.eat(acorn.tokTypes.semi)){
+            //     if(!this.canInsertSemicolon()) this.unexpected();
+            //     node.logStatement = true;
+            // }
+            if(this.canInsertSemicolon()){
                 node.logStatement = true;
-            }
+            }else if(!this.eat(acorn.tokTypes.semi)) this.unexpected();
+
             return this.finishNode(node, "VariableDeclaration")
         }
     })
@@ -63,16 +75,30 @@ acorn.plugins.semilog = function(instance){
 
 var LoggingSyntax = new BabelTransformer("logging-syntax", {
     VariableDeclaration(node, parent, scope){
+        console.log('VERDEC', node)
         if(node.logStatement){
+
+            
+            var vars = [];
+            for(let decl of node.declarations){
+                if(decl.id.type == 'Identifier'){
+                    vars.push([decl.loc.end.line, decl.id.name])
+                }else{
+                    scope.traverse(decl.id, {
+                        Identifier(node, parent, scope) { vars.push([node.loc.end.line, node.name]) }
+                    }, {});
+                }
+            }
+            console.log('LOGGING A VAR', node, vars);
             return [
                 node
             ].concat(
-                node.declarations.map(x => 
+                vars.map(([line, x]) => 
                     t.expressionStatement(t.callExpression(t.identifier('__log'), [
-                        t.identifier(x.id.name),
-                        t.literal(x.id.name),
+                        t.identifier(x),
+                        t.literal(x),
                         t.literal('var'),
-                        t.literal(node.loc.end.line)
+                        t.literal(line)
                     ]))
                 )
             )
@@ -80,12 +106,26 @@ var LoggingSyntax = new BabelTransformer("logging-syntax", {
     },
     ExpressionStatement(node, parent, scope){
         if(node.logStatement){
+            console.log('expression statement', node)
             node.expression =  t.callExpression(t.identifier('__log'), [
                 node.expression, 
                 t.literal(BabelGenerator(node.expression).code),
                 t.literal('expr'),
                 t.literal(node.loc.end.line)
             ])
+        }
+    },
+     Program: {
+        exit(node, parent, scope, file) {
+            var countCountaculous = 0;
+            this.traverse({
+                CallExpression(node, parent, scope){
+                    if(node.callee.name != "__log") return;
+                    return t.callExpression(node.callee, node.arguments.concat([
+                        t.literal(countCountaculous++)
+                    ]))
+                }
+            }, {});
         }
     }
 })

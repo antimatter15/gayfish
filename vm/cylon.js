@@ -49,10 +49,10 @@ async function transpileAndRun(packet){
                     transformer: LooperTransformer,
                     position: 'before'
                 },
-                {
-                    transformer: ResultTransformer,
-                    position: 'after'
-                },
+                // {
+                //     transformer: ResultTransformer,
+                //     position: 'after'
+                // },
             ]
         })
     } catch (err) {
@@ -60,13 +60,23 @@ async function transpileAndRun(packet){
         postMessage({ type: 'error', error: err.toString(), cell: packet.cell })
         return
     }
-    
+    console.log( transpiledCode.code)
+    postMessage({ type: 'compiled', code: transpiledCode.code, cell: packet.cell})
+
     var deps = mininpm.extract_deps(transpiledCode.code)
     console.log(transpiledCode, deps)
 
+    var seen_deps = {}
     for(let dep of deps){
-        await mininpm.recursiveResolve(dep)
+        await mininpm.recursiveResolve(dep, 'latest', {
+            callback(id){
+                if(id in seen_deps) return;
+                postMessage({ type: 'activity', activity: 'downloading ' + id, cell: packet.cell})
+                seen_deps[id] = 1;
+            }
+        })
     }
+    postMessage({ type: 'activity', activity: '', cell: packet.cell})
     
 
     var wrappedCode = __prepareExecution(transpiledCode.code, execonf)
@@ -80,7 +90,6 @@ async function transpileAndRun(packet){
         return
     }
     // if(result){
-    postMessage({ type: 'result', result: wrappedCode, cell: packet.cell })
     // }
 }
 
@@ -89,24 +98,56 @@ async function transpileAndRun(packet){
 
 
 global.__prepareExecution = function __prepareExecution(code, config){
+    function send(type, obj){
+        obj.cell = config.cell;
+        obj.type = type;
+        postMessage(obj)
+    }
+    var finalLog;
+    var lastProgress = 0;
+    var declaredGlobals = {};
+    var logTimes = {}
     var varys = {
         require: mininpm.requireModule,
-        __log(value, name, type, line) {
-            console.log(`${type} ${name}@${line}`, value)
+        __log(value, name, type, line, instance) {
+            if(!(instance in logTimes)) logTimes[instance] = 0;
+            if(Date.now() - logTimes[instance] > 50){
+                if(['number', 'string', 'undefined', 'null'].indexOf(typeof value) != -1 || Array.isArray(value)){
+                    send('log', {logtype: type, line, value})
+                }else{
+                    // console.log(`${type} ${name} @ line ${line}`, value)
+                    send('log', {logtype: type, line, value: value.toString()})
+                }
+                logTimes[instance] = Date.now()
+            }
+            
+            finalLog = value;
             return value
         },
         __declareGlobals(){
             for (var i = 0; i < arguments.length; i++) {
                 global[arguments[i]] = null;
+                declaredGlobals[i] = 1;
             }
         },
-        __result(value) {
-            console.log("RESULT", value)
-            return value
-        },
+        // __result(value) {
+        //     console.log("RESULT", value)
+        //     return value
+        // },
         __trackLoop(i, total, loop, loopTotal){
-            var frac = (i / total) / loopTotal + (loop - 1) / loopTotal;
-            postMessage({ type: 'progress', frac: frac, cell: __latestCellID })
+            if(Date.now() - lastProgress > 10){
+                var frac = (i / total) / loopTotal + (loop - 1) / loopTotal;
+                send('progress', {frac})
+                lastProgress = Date.now();    
+            }
+        },
+        $$done(){
+            send('result', {result: finalLog, newGlobals: Object.keys(declaredGlobals)})
+        },
+        console: {
+            log(){
+                console.log.apply(console, arguments)
+            },
         }
     }
     if(typeof code == 'string'){

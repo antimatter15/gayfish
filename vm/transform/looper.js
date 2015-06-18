@@ -3,7 +3,7 @@ import * as t from "babel-core/lib/babel/types";
 
 var Looper = new BabelTransformer("Looper", {
     ForStatement(node, parent, scope){
-        if(!scope.parent.parent.parent &&
+        if(!scope.parent.parent &&
             node.test.type == "BinaryExpression" &&
             ["<", "<="].indexOf(node.test.operator) != -1 &&
             node.test.left.type == 'Identifier' &&

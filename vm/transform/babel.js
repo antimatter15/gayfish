@@ -3,7 +3,7 @@ import BabelParseHelper from 'babel-core/lib/babel/helpers/parse.js'
 import BabelFile from "babel-core/lib/babel/transformation/file";
 
 // babel/transformation/file/index.js
-export default function transformCode(code, opts){
+export default function transformCode(originalCode, opts){
     var parseOpts = {
         highlightCode: opts.highlightCode,
         nonStandard:   opts.nonStandard,
@@ -29,8 +29,17 @@ export default function transformCode(code, opts){
     // parseOpts.looseModules = this.isLoose("es6.modules");
     parseOpts.strictMode = features.strict;
     parseOpts.sourceType = "module";
+    
 
-    var tree = BabelParseHelper(code, parseOpts);
+    try {
+        var code = originalCode + "\n\n;$$done();";
+        var tree = BabelParseHelper(code, parseOpts);
+    } catch (err) { }
+    if(!tree && /await/.test(originalCode)){
+        var code = '(async function AsyncWrap(){' + originalCode +'\n\n})().then($$done);'
+        var tree = BabelParseHelper(code, parseOpts);
+    }
+    
     
     delete opts['acornPlugins'];
     var file = new BabelFile(opts, BabelTransform.pipeline);
