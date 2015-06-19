@@ -6,7 +6,7 @@ module.exports = {
   debug: true,
   entry: {
     carbide: [
-      'webpack-dev-server/client?http://localhost:4000&progress',
+      'webpack-dev-server/client?http://localhost:4000',
       'webpack/hot/only-dev-server',
       './src/index'
     ],
@@ -55,6 +55,7 @@ module.exports = {
       loaders: ['babel?stage=0&optional=runtime'],
       include: path.join(__dirname, 'vm')
     },
+    { test: /\.(md|jpe?g|gif|png|woff|woff2|eot|ttf|svg)$/, loader: 'url-loader?limit=100000' },
     { test: /semver\.browser\.js/, loaders: ['imports?define=>undefined'] },
     {
       test: /\.jsx?$/,

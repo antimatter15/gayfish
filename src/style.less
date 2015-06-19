@@ -59,21 +59,18 @@ h1 {
         color: gray;
     }
     &.error {
-        color: #BD2424;
+        // color: #BD2424;
     }
     progress {
         width: 100%;
     }
+
     margin: 10px;
+    margin-top: 15px;
     margin-left: 20px;
     margin-bottom: 30px;
 
-    pre {
-        word-wrap: break-word;
-        
-        // padding-left: 20px;
-        // border-left: 5px solid #AABCCE;
-    }
+    word-wrap: break-word;
 
 }
 
@@ -106,7 +103,7 @@ h1 {
     &.focused .cell-handle{
         border-color: #B1C4E0;
     }
-    
+
     &.error .cell-handle {
         border-color: #CA7474;
     }
@@ -237,18 +234,29 @@ h1 {
     }
 }
 
+.tree-outline {
+    cursor: default;
+}
+
+.mini-me {
+    background: white;
+    padding: 10px;
+    border: 1px solid #DEDEDE;
+    border-radius: 5px;
+}
+
 .CodeMirror-derp {
 
     background: #4E5FB3;
     color: white;
     border-radius: 5px;
-    padding: 2px;
+    padding: 1px;
     font-size: 10px;
     padding-left: 5px;
     padding-right: 5px;
     vertical-align: middle;
     font-family: sans-serif;
-    padding-top: 1px;
+    padding-top: 0px;
     margin-left: 5px;
     vertical-align: baseline;    
 }
@@ -265,6 +273,14 @@ h1 {
 .Resizer:hover {
     // -webkit-transition: border-left 2s ease;
     transition: border-left 2s ease, border-right 2s ease;
+}
+
+.dropdown-code-viewer {
+    margin-top: 10px;
+    font-size: 9pt;
+    .tree-outline {
+        float: right;
+    }
 }
 
 .Resizer.horizontal {

@@ -3,6 +3,8 @@
 import React, { Component, PropTypes } from 'react/addons';
 import update from 'react/lib/update';
 import classNames from 'classnames'
+import ObjectTree from './objtree'
+
 // import SplitPane from 'react-split-pane'
 // import babel from 'babel-core/lib/babel/api/browser.js'
 // import falafel from 'falafel';
@@ -18,6 +20,8 @@ require("./codemirror/javascript")
 require("./codemirror/jsx.js")
 
 require("codemirror/keymap/sublime")
+require("codemirror/addon/runmode/runmode")
+
 require("codemirror/addon/edit/closebrackets")
 
 require("codemirror/addon/edit/matchbrackets")
@@ -59,6 +63,7 @@ class Machine {
         this.worker = new Worker('/static/cylon.bundle.js')
         this.worker.onmessage = this._onmessage.bind(this)
         this._queue = []
+        this.latestQueuedCell = null;
         this.busy = false
     }
     _onmessage(e) {
@@ -158,6 +163,7 @@ class Machine {
         if(this._queue.indexOf(cell) != -1) return;
         this._queue.push(cell)
         cell.status = 'queued'
+        this.latestQueuedCell = cell
         if(!this.busy) this._dequeue();
     }
 }
@@ -197,7 +203,7 @@ class CellModel {
         this.id = --doc._ids;
         this.value = ""
         this.oldValue = ""
-        this.output = ""
+        this.output = undefined;
 
         this.cm = null
         if(typeof index === 'undefined'){
@@ -275,6 +281,34 @@ class CellModel {
     }
 }
 
+function isElementInViewport (el) {
+    var rect = el.getBoundingClientRect();
+    return (
+        rect.top >= 0 &&
+        rect.left >= 0 &&
+        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) && /*or $(window).height() */
+        rect.right <= (window.innerWidth || document.documentElement.clientWidth) /*or $(window).width() */
+    );
+}
+
+function animatedScrollTo(target, time, callback){
+    var start = Date.now(),
+        startPos = document.body.scrollTop;
+    
+    doFrame();
+
+    function doFrame(){
+        var now = Date.now(),
+            x = Math.min(1, Math.max(0, (now - start) / time)); // clamp
+        var coef = Math.cos(Math.PI * (1 - x)) / 2 + 0.5;
+        document.body.scrollTop = coef * (target - startPos) + startPos;
+        if(x < 1){
+            requestAnimationFrame(doFrame)
+        } else callback();
+    }
+}
+global.animatedScrollTo = animatedScrollTo;
+
 class Editor extends Component {
     constructor(props) {
         super(props)
@@ -308,6 +342,11 @@ class Editor extends Component {
             // "Ctrl-Q": function(cm) { eliot.rename(cm); },
             // "Ctrl-.": function(cm) { eliot.selectName(cm); },
             "Shift-Enter": (cm) => {
+                var auto_advance = !(
+                    doc &&
+                    doc.vm &&
+                    doc.vm.latestQueuedCell && 
+                    doc.vm.latestQueuedCell == cell);
                 cell.run()
                 if(!cell.next && cell.value) new CellModel(doc);
                 // maybe it should only advance if the next cell
@@ -315,10 +354,28 @@ class Editor extends Component {
                 // or maybe it should be based on behavior
                 // (if you've run this cell multiple times consecutiviely
                 // perhaps it should not advance to the next cell)
-                if(cell.next){
+                
 
-                    // cell.next.cm.setCursor(0, 0)
-                    // cell.next.cm.focus() 
+                // var kendrick = cell._pair
+                // kendrick.scrollIntoView(true)
+
+                if(cell.next && auto_advance){
+                    // var iggy = cell.next.cm.getWrapperElement();
+                    var iggy = cell.next._pair;
+                    if(isElementInViewport(iggy)){
+                        // do nothing
+                        cell.next.cm.setCursor(0, 0)
+                        cell.next.cm.focus()         
+                    }else{
+                        // iggy.scrollIntoView(false)
+                        var target = iggy.offsetTop + iggy.offsetHeight - innerHeight;
+                        animatedScrollTo(target, Math.sqrt(Math.abs(target - document.body.scrollTop)) * 20, function(){
+                            cell.next.cm.setCursor(0, 0)
+                            cell.next.cm.focus()         
+                        })
+                        
+                    }
+                    
                 }
             },
             "Ctrl-N": (cm) => {
@@ -458,10 +515,12 @@ class CellResult extends Component {
             "focused": cell.has_focus
         }) + ' ' + cell.status;
 
-        if(typeof cell.output == 'string'){
-            var output = <pre> {cell.output} </pre>
+        if(typeof cell.output === 'undefined'){
+            var output = null;
         }else{
-            var output = <ObjectTree node={cell.output} />
+            var output = <div className="platform-mac source-code">
+                <ObjectTree node={cell.output} />
+            </div>
         }
         
         return (
@@ -469,80 +528,48 @@ class CellResult extends Component {
                 {(cell.status == 'running' && cell.progress > 0 && cell.progress < 1) ? <progress value={cell.progress} max={1}></progress> : null}
                 {(cell.status == 'running' && cell.activity ? <span>{cell.activity}</span> : null)}
                 {output}
-                {(cell.status == 'error') ? <pre>{cell.compiled}</pre> : null}
+                {cell.status == 'error' ? <DropdownCodeViewer code={cell.compiled} /> : null }
             </div>
         )
     }
 }
 
-class ObjectTree extends Component {
-    render() {
-        var {node} = this.props;
-        if(typeof node == "undefined"){
-            return <span className="undefined">undefined</span>
-        }else if(typeof node == "string"){
-            return <span className="string">{'"' + node + '"'}</span>
-        }else if(typeof node == "number"){
-            return <span className="number">{node}</span>
-        }else if(typeof node == "object"){
-            if(Array.isArray(node)){
-                return <ul>
-                    { node.map(x => <li><ObjectTree node={x} /></li>) }
-                </ul>
-            }else{
-                return <ul>
-                    {Object.keys(node).map(function(blah){
-                        return <li><ObjectTree node={blah} />: <ObjectTree node={node[blah]} /></li>
-                    })}
-                </ul>
-            }
+class DropdownCodeViewer extends Component {
+    constructor() {
+        super()
+        this.state = {
+            expanded: false
         }
-        return <div>hi</div>
+    }
+    toggleExpand = () => {
+        this.setState({ expanded: !this.state.expanded })
+    }
+    render() {
+        // var {node} = this.props;
+        var {expanded} = this.state;
+        return <div className="dropdown-code-viewer">
+            <ol className="tree-outline">
+                <li className={classNames({"parent": 1, expanded})} onClick={this.toggleExpand}>
+                    Show Transpiled Code
+                </li>
+            </ol>
+            {expanded? <CodeViewer code={this.props.code} /> : null}
+        </div>
     }
 }
 
-// var TreeNode = React.createClass({
-//   getInitialState: function() {
-//     return {
-//       visible: true
-//     };
-//   },
-//   render: function() {
-//     var childNodes;
-//     var classObj;
+class CodeViewer extends Component {
+    componentDidMount(){
+        CodeMirror.runMode(this.props.code, "javascript", React.findDOMNode(this))
+    }
+    componentDidUpdate(){
+        CodeMirror.runMode(this.props.code, "javascript", React.findDOMNode(this))
+    }
+    render() {
+        return <pre className="mini-me cm-s-default" />
+    }
+}
 
-//     if (this.props.node.childNodes != null) {
-//       childNodes = this.props.node.childNodes.map(function(node, index) {
-//         return <li key={index}><TreeNode node={node} /></li>
-//       });
-
-//       classObj = {
-//         togglable: true,
-//         "togglable-down": this.state.visible,
-//         "togglable-up": !this.state.visible
-//       };
-//     }
-
-//     var style;
-//     if (!this.state.visible) {
-//       style = {display: "none"};
-//     }
-
-//     return (
-//       <div>
-//         <h5 onClick={this.toggle} className={React.addons.classSet(classObj)}>
-//           {this.props.node.title}
-//         </h5>
-//         <ul style={style}>
-//           {childNodes}
-//         </ul>
-//       </div>
-//     );
-//   },
-//   toggle: function() {
-//     this.setState({visible: !this.state.visible});
-//   }
-// });
 
 
 class Palette extends Component {

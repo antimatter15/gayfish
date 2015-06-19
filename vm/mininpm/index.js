@@ -57,7 +57,7 @@ async function resolve(dep, version = 'latest'){
 	return { pkg, main, contents }
 }
 
-function resolveSync(dep, version = 'latest'){
+export function resolveSync(dep, version = 'latest'){
 	if(dep in browserifyBuiltins) dep = browserifyBuiltins[dep];
 	let name = dep.split("/")[0],
 		main = dep.split("/").slice(1).join('/');
@@ -78,7 +78,12 @@ export async function recursiveResolve(dep, version = 'latest', opts = {}, level
 	if(opts.callback) opts.callback(id);
 	console[level?'group':'groupCollapsed'](id + ':' + contents.filename + ` (depth ${level + 1})`)
 	for(let subdep of subdeps){
-		await recursiveResolve(...subresolve(pkg, contents.filename, subdep), opts, level + 1)
+		try {
+			await recursiveResolve(...subresolve(pkg, contents.filename, subdep), opts, level + 1)	
+		} catch (err) {
+			if(opts.error) opts.error(err, subdep);
+		}
+		
 	}
 	console.groupEnd(id + ':' + contents.filename + ` (depth ${level + 1})`)	
 }
@@ -103,11 +108,11 @@ export function requireModule(dep, version = 'latest'){
 	var fullpath = pkg._id + '/' + contents.filename;
 	var config = { fullpath, filename: contents.filename, id: pkg._id };
 	
-	eval.call(null, `// Module wrapped for Carbide VM
+	eval(`// Module wrapped for Carbide VM
 	;(function(module){\n${preamble};
 	\n\n${contents.data}\n\n
 	})(__prepareModule(${JSON.stringify(config)}));
-	//@ sourceURL=${fullpath}`);
+	\n//# sourceURL=${fullpath}?`);
 
 	return npm_modules_cache[pkg._id][contents.filename].exports;
 }
@@ -118,6 +123,7 @@ global.__prepareModule = function __prepareModule(config){
 	if(!(id in npm_modules_cache)) npm_modules_cache[id] = {};
 	var [name, version] = id.split('@');
 	var pkg = version_cache(name, version);
+	process.platform = 'linux';
 	npm_modules_cache[id][filename] = {
 		exports: {},
 		require: function(path){

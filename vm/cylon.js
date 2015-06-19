@@ -8,6 +8,8 @@ import LooperTransformer from './transform/looper'
 import GlobalTransformer from './transform/globals'
 import ResultTransformer from './transform/result'
 
+
+
 global.mininpm = mininpm;
 
 var __latestCellID;
@@ -21,6 +23,9 @@ addEventListener('message', function(e){
     if(packet.type == 'exec'){
         __latestCellID = packet.cell;
         transpileAndRun(packet)
+            .catch(function(err){
+                postMessage({ type: 'error', error: err.toString(), cell: packet.cell })
+            })
     }
 })
 
@@ -68,13 +73,18 @@ async function transpileAndRun(packet){
 
     var seen_deps = {}
     for(let dep of deps){
+    
         await mininpm.recursiveResolve(dep, 'latest', {
             callback(id){
                 if(id in seen_deps) return;
                 postMessage({ type: 'activity', activity: 'downloading ' + id, cell: packet.cell})
                 seen_deps[id] = 1;
+            },
+            error(err){
+                // postMessage({ type: 'activity', activity: 'error ' + err, cell: packet.cell})
             }
         })
+        
     }
     postMessage({ type: 'activity', activity: '', cell: packet.cell})
     
@@ -106,21 +116,28 @@ global.__prepareExecution = function __prepareExecution(code, config){
     var finalLog;
     var lastProgress = 0;
     var declaredGlobals = {};
-    var logTimes = {}
+    var logTimes = {},
+        logValues = {};
+
+
     var varys = {
-        require: mininpm.requireModule,
+        require(name, version){
+            // if(name in cachedModules && !version) return cachedModules[name];
+            return mininpm.requireModule(name, version)
+        },
         __log(value, name, type, line, instance) {
+            // TODO: send the last value of logs out when $$done is called
             if(!(instance in logTimes)) logTimes[instance] = 0;
             if(Date.now() - logTimes[instance] > 50){
-                if(['number', 'string', 'undefined', 'null'].indexOf(typeof value) != -1 || Array.isArray(value)){
+                if(['number', 'string', 'undefined'].indexOf(typeof value) != -1 || Array.isArray(value) || value === null){
                     send('log', {logtype: type, line, value})
                 }else{
                     // console.log(`${type} ${name} @ line ${line}`, value)
-                    send('log', {logtype: type, line, value: value.toString()})
+                    send('log', {logtype: type, line, value: value.toString ? value.toString() : (value + '')})
                 }
                 logTimes[instance] = Date.now()
             }
-            
+            logValues[instance] = value;
             finalLog = value;
             return value
         },
