@@ -1,7 +1,9 @@
 import React, { Component, PropTypes } from 'react/addons';
 import classNames from 'classnames'
+import CellModel from './model/cell'
 
 var CodeMirror = require('codemirror')
+global.CodeMirror = CodeMirror;
 
 require("codemirror/lib/codemirror.css");
 require("codemirror/mode/xml/xml")
@@ -21,13 +23,13 @@ require("codemirror/addon/comment/continuecomment")
 // require("codemirror/addon/fold/foldcode")
 // require("codemirror/addon/fold/foldgutter")
 require("codemirror/addon/fold/foldgutter.css")
-require("codemirror/addon/search/match-highlighter")
+// require("codemirror/addon/search/match-highlighter")
 require("codemirror/addon/hint/show-hint")
 require("codemirror/addon/hint/show-hint.css")
 require("codemirror/addon/dialog/dialog")
 require("codemirror/addon/dialog/dialog.css")
-require("codemirror/addon/search/searchcursor")
-require("codemirror/addon/search/search")
+// require("codemirror/addon/search/searchcursor")
+// require("codemirror/addon/search/search")
 
 global.tern = require('tern')
 require("codemirror/addon/tern/tern.css")
@@ -52,6 +54,7 @@ export default class Editor extends Component {
         var cm = CodeMirror(React.findDOMNode(this), {
             value: cell.value,
             mode: "jsx",
+            // mode: "javascript",
             lineNumbers: false,
             indentUnit: 4,
             continueComments: true,
@@ -100,7 +103,13 @@ export default class Editor extends Component {
         }
 
         cm.setOption("extraKeys", {
+            "Ctrl-I": function(cm) { eliot.showType(cm); },
+            "Ctrl-O": function(cm) { eliot.showDocs(cm); },
             "Ctrl-Space": function(cm) { eliot.complete(cm); },
+            "Alt-.": function(cm) { eliot.jumpToDef(cm); },
+            "Alt-,": function(cm) { eliot.jumpBack(cm); },
+            "Ctrl-Q": function(cm) { eliot.rename(cm); },
+            // "Ctrl-Space": function(cm) { eliot.complete(cm); },
             // "Ctrl-I": function(cm) { eliot.showType(cm); },
             // "Ctrl-O": function(cm) { eliot.showDocs(cm); },
             // "Alt-.": function(cm) { eliot.jumpToDef(cm); },
@@ -109,7 +118,7 @@ export default class Editor extends Component {
             // "Ctrl-.": function(cm) { eliot.selectName(cm); },
             "Cmd-Enter": (cm) => {
                 cell.run()
-                if(!cell.next && cell.value) new CellModel(doc);
+                cell.checkNext();
             },
             "Shift-Enter": (cm) => {
                 // var auto_advance = !(
@@ -119,7 +128,7 @@ export default class Editor extends Component {
                 //     doc.vm.latestQueuedCell == cell);
                 var auto_advance = true;
                 cell.run()
-                if(!cell.next && cell.value) new CellModel(doc);
+                cell.checkNext();
                 // maybe it should only advance if the next cell
                 // is totally visible?
                 // or maybe it should be based on behavior
@@ -155,13 +164,13 @@ export default class Editor extends Component {
         cm.on('changes', (cm) => {
             cell.value = cm.getValue()    
             
-            if(!cell.next && cell.value) new CellModel(doc);
+            cell.checkNext();
 
             let {line, ch} = cm.getCursor();
             cm.findMarks({line, ch: 0}, {line, ch: 1e8}).filter(x => x._inlineResult).forEach(x => x.clear())
         })
         cm.on("cursorActivity", function(cm) { 
-            // eliot.updateArgHints(cm); 
+            eliot.updateArgHints(cm); 
             // eliot.complete(cm)
             // let {line, ch} = cm.getCursor();
             // console.log(line, cm.findMarks({line, ch: 0}, {line, ch: 1e8}).map(x => x._originalLine))

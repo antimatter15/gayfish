@@ -76,6 +76,9 @@ export default class CellModel {
         if(next && next.collapsed) return next.next;
         return next;
     }
+    checkNext(){
+        if(!this.next && this.value) new CellModel(this.doc);
+    }
     run() {
         this.doc.vm.queue(this)
         this.update()

@@ -53,6 +53,13 @@ CodeMirror.defineMode("jsx", function(config, parserConfig) {
       else
         return xmlMode.indent(state.localState, textAfter);
     },
+    innerMode: function(state) {
+      if(state.token == js){
+        return {state: state.jsState, mode: jsMode}
+      }else{
+        return {state: state.xmlState, mode: xmlMode}
+      }
+    },
     blockCommentStart: "/*",
     blockCommentEnd: "*/",
     lineComment: "//",
