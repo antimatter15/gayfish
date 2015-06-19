@@ -341,6 +341,10 @@ class Editor extends Component {
             // "Alt-,": function(cm) { eliot.jumpBack(cm); },
             // "Ctrl-Q": function(cm) { eliot.rename(cm); },
             // "Ctrl-.": function(cm) { eliot.selectName(cm); },
+            "Cmd-Enter": (cm) => {
+                cell.run()
+                if(!cell.next && cell.value) new CellModel(doc);
+            },
             "Shift-Enter": (cm) => {
                 var auto_advance = !(
                     doc &&
@@ -527,8 +531,10 @@ class CellResult extends Component {
             <div className={cell_classes}>
                 {(cell.status == 'running' && cell.progress > 0 && cell.progress < 1) ? <progress value={cell.progress} max={1}></progress> : null}
                 {(cell.status == 'running' && cell.activity ? <span>{cell.activity}</span> : null)}
-                {output}
-                {cell.status == 'error' ? <DropdownCodeViewer code={cell.compiled} /> : null }
+                <div className="output">
+                    {output}
+                    {cell.status == 'error' ? <DropdownCodeViewer code={cell.compiled} /> : null }
+                </div>
             </div>
         )
     }
@@ -684,14 +690,14 @@ class UnifiedPair extends Component {
             "modified": cell.oldValue != cell.value
         }) + ' ' + cell.status
         return connectDragPreview(
-            <div className="cell-cluster">
+            <div className={classNames({"cell-cluster": 1, "focused": doc.vm.latestQueuedCell == cell})}>
                 {connectDropTarget(<div style={{width: pct}} className={cell_classes} onClick={this.handleClick}>
                     {connectDragSource(<div className="cell-handle" style={{ opacity }} onDoubleClick={this.doubleClick}></div>)}
                     <div ref="editor" className="cell-editor" style={{ opacity }}>
                         <Editor {...this.props}></Editor>
                     </div>
                 </div>)}
-                <div style={{ opacity, width: ipct }}>
+                <div className="cell-output" style={{ opacity, width: ipct }}>
                     <CellResult {...this.props} cell={cell}></CellResult>
                 </div>
             </div>);
@@ -766,11 +772,9 @@ export default class App extends Component {
             new CellModel(doc)
         }
         global.Doc = doc;
+        this.defaultSize = 0.60
 
-        this.state = {
-            doc,
-            size: 0.55
-        }
+        this.state = { doc, size: this.defaultSize }
         doc.update = () => {
             localStorage[location.pathname] = JSON.stringify(doc.serialize())
             this.forceUpdate()
@@ -795,7 +799,7 @@ export default class App extends Component {
     }
     resetResize = (e) => {
         e.preventDefault()
-        this.setState({ size: 0.55 })
+        this.setState({ size: this.defaultSize })
     }
 
     beginResize = (e) => {

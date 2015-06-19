@@ -17,6 +17,33 @@ var __latestCellID;
 //     postMessage({ type: 'progress', frac: i / total, cell: __latestCellID })
 // }
 
+var inspectables = []
+
+function summarizeObject(obj, noRecurse){
+    var type = typeof obj;
+    if(type == 'function'){
+        return {type: 'function', name: obj.name}
+    }else if(type == 'number'){
+        return {type: 'number', value: obj, isNaN: isNaN(obj), isFinite: isFinite(obj)}
+    }else if(obj === null){
+        return {type: 'null'}
+    }else if(type == 'undefined'){
+        return {type: 'undefined'}
+    }else if(type == 'string'){
+        return {type: 'string', value: obj}
+    }else if(type == 'boolean'){
+        return {type: 'boolean', value: obj}
+    }else if(Array.isArray(obj)){
+        var res = {type: 'array', length: obj.length}
+        if(!noRecurse) res.values = obj.map(x => summarizeObject(x, true));
+        return res;
+    }else{ // object
+        var res = {type: 'object', keys: Object.keys(obj)}
+        return res;
+    }
+}
+
+
 addEventListener('message', function(e){
     var packet = e.data;
     console.log(packet)
@@ -26,8 +53,12 @@ addEventListener('message', function(e){
             .catch(function(err){
                 postMessage({ type: 'error', error: err.toString(), cell: packet.cell })
             })
+    }else if(packet.type == 'inspect'){
+
     }
 })
+
+
 
 async function transpileAndRun(packet){
     var transpiledCode;

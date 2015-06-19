@@ -44,19 +44,45 @@ h1 {
 
 .cell-cluster {
     display: flex;
+    // 
+    // &.focused {
+    //     background-color: #FEFEFE;
+    //     box-shadow: 0 0 20px rgba(0, 0, 0, 0.1) inset;
+    //     border-top: 1px solid #D4D4D4;
+    //     border-bottom: 1px solid #D4D4D4;
+    // }
+    .cell-output {
+        border-top: 1px solid transparent;
+        border-bottom: 1px solid transparent;
+        transition: border 0.2s ease-in-out, background 0.2s ease-in-out;
+    }
+    &.focused {
+        .cell-output {
+            background-color: #FEFEFE;
+            // box-shadow: 0 0 20px rgba(0, 0, 0, 0.1) inset;
+            border-top: 1px solid #D4D4D4;
+            border-bottom: 1px solid #D4D4D4;
+        }
+    }
 }
 
 .cell-result {
     // TODO: figure out some way to highlight focused thing
     transition: opacity 0.2s ease-in-out;
 
-    progress::-webkit-progress-value {
-        transition: width 1s linear;
+    progress {
+        margin-bottom: 10px;
     }
 
+    // progress::-webkit-progress-value {
+    //     transition: width 1s linear;
+    // }
+
     &.running, &.queued {
-        // opacity: 0.5;
-        color: gray;
+        .output {
+            opacity: 0.5;
+        }
+        // color: gray;
     }
     &.error {
         // color: #BD2424;
@@ -83,8 +109,8 @@ h1 {
 
 .cell-input {
     display: flex;
-    padding-bottom: 20px;
-    padding-top: 10px;
+    padding-bottom: 15px;
+    padding-top: 15px;
     // margin: 10px;
     
     // transition: opacity 1s ease-in;

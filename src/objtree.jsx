@@ -128,18 +128,21 @@ class ObjectSubtree extends Component {
                 <ObjectPreview node={node} />
             </li>;
         }
-        return <li className={classNames({"parent": 1, expanded})}  onClick={this.toggleExpand}>
+        return <div>
+            <li className={classNames({"parent": 1, expanded})}  onClick={this.toggleExpand}>
             <div className="selection"></div>
             <span className={classNames({name: 1, "object-properties-section-dimmed": !desc.enumerable})}>{name}</span>
             <span className="object-properties-section-separator">: </span>
             <ObjectPreview node={node} />
-            {!expanded ? <ol className="children" /> : <ol className="children expanded">
+            
+        </li>
+        {!expanded ? <ol className="children" /> : <ol className="children expanded">
                 {
                     Object.getOwnPropertyNames(node).map((key, i, a) => {
                         return <ObjectSubtree key={key} name={key} parent={node} />
                     })
                 }
             </ol>}
-        </li>;
+        </div>
     }    
 }
