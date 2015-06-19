@@ -38,248 +38,23 @@ require("codemirror/addon/dialog/dialog.css")
 require("codemirror/addon/search/searchcursor")
 require("codemirror/addon/search/search")
 
-// global.tern = require('tern')
-// require("codemirror/addon/tern/tern.css")
-// require("codemirror/addon/tern/tern")
+global.tern = require('tern')
+require("codemirror/addon/tern/tern.css")
+require("codemirror/addon/tern/tern")
 
 // // Tern Server Eliot
-// var eliot = new CodeMirror.TernServer({defs: [
-//     require('tern/defs/ecma5.json')
-// ]});
-
-// import npm from 'npm'
-
-// var ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
-// import ReactCSSTransitionGroup from 'react/lib/ReactCSSTransitionGroup'
+var eliot = new CodeMirror.TernServer({defs: [
+    require('tern/defs/ecma5.json')
+]});
 
 import { DragDropContext } from 'react-dnd';
 import HTML5Backend from 'react-dnd/modules/backends/HTML5';
 import { DragSource, DropTarget } from 'react-dnd';
 
-class Machine {
-    // src/vm.js
-    constructor(doc) {
-        this.doc = doc;
-        this.worker = new Worker('/static/cylon.bundle.js')
-        this.worker.onmessage = this._onmessage.bind(this)
-        this._queue = []
-        this.latestQueuedCell = null;
-        this.busy = false
-    }
-    _onmessage(e) {
-        var data = e.data;
-        // console.log(data)
-        var cell = this.doc.find(data.cell);
-        if(!cell){
-            console.error('cell not found', data)
-            return;
-        }
-        if(data.type == 'result'){
+import Machine from './model/machine'
+import CellModel from './model/cell'
+import DocumentModel from './model/document'
 
-            cell.status = 'done'
-            if(data.result == 'use strict'){
-                cell.output = 'nothing';
-            }else{
-                cell.output = data.result;
-            }
-            
-            cell.update()
-            this.busy = false;
-            this._dequeue()
-        }else if(data.type == 'error'){
-            cell.status = 'error'
-            cell.output = data.error;
-            cell.update()
-            this.busy = false;
-            this._dequeue()
-        }else if(data.type == 'progress'){
-            cell.progress = data.frac;
-            cell.update()
-        }else if(data.type == 'log'){
-            var cm = cell.cm;
-            let line = data.line - 1;
-            
-            var inlineLog = cm.findMarks({ line, ch: 0 }, { line, ch: 1e3 })
-                .filter(x => x._inlineResult);
-            inlineLog.slice(1).forEach(x => x.clear());
-            // console.log(inlineLog, '__INLINELOG')
-            var text = JSON.stringify(data.value) + '';
-            if(text.length > 25) text = text.slice(0, 15) + "..." + text.slice(-5);
-            var textNode = document.createTextNode(text);
-            var widget = document.createElement("span");
-            widget.appendChild(textNode);
-            widget.className = "CodeMirror-derp";
-
-            if(inlineLog.length > 0){
-                var marker = inlineLog[0];
-                marker.widgetNode.replaceChild(widget, marker.widgetNode.firstChild)
-            }else{
-                var marker = cm.setBookmark({ line, ch: 1e3 }, {
-                    widget: widget,
-                    insertLeft: true
-                })
-            }
-
-            marker._inlineResult = true;
-            marker._originalLine = line;
-            // cell.update()
-        }else if(data.type == 'activity'){
-            cell.activity = data.activity;
-            cell.update()
-        }else if(data.type == 'compiled'){
-            cell.compiled = data.code
-        }else{
-            console.error('no handler for data packet', data)
-        }
-    }
-    _dequeue() {
-        if(this.busy || this._queue.length == 0) return;
-        var cell = this._queue.shift()
-        this.busy = true;
-        cell.status = 'running';
-        cell.oldValue = cell.value;
-        cell.compiled = ''
-        cell.activity = ''
-        cell.update()
-        var cm = cell.cm;
-        cm.getAllMarks()
-            .filter(x => x._inlineResult)
-            .forEach(x => x.clear());
-
-        var error, code = cell.value;
-        if(error){
-            cell.status = 'error'
-            cell.output = error.toString()
-            cell.update()
-            this.busy = false;
-            this._dequeue()
-        }else{
-            cell.progress = 0;
-            this.worker.postMessage({ type: 'exec', code, cell: cell.id })
-        }
-
-    }
-    queue(cell) {
-        if(this._queue.indexOf(cell) != -1) return;
-        this._queue.push(cell)
-        cell.status = 'queued'
-        this.latestQueuedCell = cell
-        if(!this.busy) this._dequeue();
-    }
-}
-
-
-
-class DocumentModel { // a document is a collection of cells
-    constructor() {
-        this.cells = []
-        this._ids = 0
-        this.vm = new Machine(this)
-    }
-    find(id) { return this.cells.filter(x => x.id === id)[0] }
-    item(index) { return this.cells[index] }
-    get length() { return this.length }
-    update(){}
-    serialize() {
-        return {
-            cells: this.cells.map( x => x.serialize() )
-        }
-    }
-    restore(state){
-        for(let c of state.cells){
-            if(typeof c.index != 'number') throw 'Cell index must be number';
-            var cell = new CellModel(this, c.index)
-            if(typeof c.value != 'string') throw 'Cell value must be string';
-            cell.value = c.value
-            cell._collapsed = !!c.collapsed;
-        }
-    }
-    get focused() { return this.cells.filter(x => x.has_focus)[0] }
-}
-
-class CellModel {
-    constructor(doc, index) {
-        this.doc = doc
-        this.id = --doc._ids;
-        this.value = ""
-        this.oldValue = ""
-        this.output = undefined;
-
-        this.cm = null
-        if(typeof index === 'undefined'){
-            doc.cells.push(this)
-        }else{
-            doc.cells.splice(index, 0, this)
-        }
-        this._collapsed = false;
-        this._mounted =  []
-        this.update()
-    }
-    serialize() {
-        return {
-            value: this.value,
-            index: this.index,
-            collapsed: this.collapsed
-        }
-    }
-    mount = (x) => {
-        if(typeof x == 'function'){
-            this.cm ? x() : this._mounted.push(x);
-        }else if(x instanceof CodeMirror){
-            this.cm = x;
-            while(this._mounted.length)
-                this._mounted.shift()();
-        }
-    }
-    remove() {
-        this.doc.cells.splice(this.index, 1)
-        this.update()
-    }
-    moveTo(after) {
-        var cardIndex = this.index,
-            afterIndex = after.index;
-        this.doc.cells.splice(cardIndex, 1)
-        this.doc.cells.splice(afterIndex, 0, this);
-        this.update()
-    }
-    update(){ if(this.doc) this.doc.update() }
-    get value(){ return this._value; }
-    set value(val){
-        this._value = val;
-        this.update()
-    }
-    get has_focus(){ return this._has_focus; }
-    set has_focus(val){
-        this._has_focus = val;
-        if(val){
-            for(var i = 0; i < this.doc.cells.length; i++){
-                var other = this.doc.cells[i];
-                if(other !== this) other.has_focus = false;
-            }
-            this.doc.update()
-        }
-    }
-    set collapsed(val){
-        this._collapsed = val;
-        this.update()
-    }
-    get collapsed(){ return this._collapsed }
-    get index(){ return this.doc.cells.indexOf(this) }
-    get prev(){ 
-        var prev = this.doc.item(this.index - 1)
-        if(prev && prev.collapsed) return prev.prev;
-        return prev;
-    }
-    get next(){
-        var next = this.doc.item(this.index + 1)
-        if(next && next.collapsed) return next.next;
-        return next;
-    }
-    run() {
-        this.doc.vm.queue(this)
-        this.update()
-    }
-}
 
 function isElementInViewport (el) {
     var rect = el.getBoundingClientRect();
@@ -333,6 +108,40 @@ class Editor extends Component {
 
         cell.mount(cm)
 
+        function slideNext(){
+            if(cell.next){
+                // var iggy = cell.next.cm.getWrapperElement();
+                var iggy = cell.next._pair;
+                if(isElementInViewport(iggy)){
+                    // do nothing
+                    cell.next.cm.setCursor(0, 0)
+                    cell.next.cm.focus()         
+                }else{
+                    // iggy.scrollIntoView(false)
+                    var target = iggy.offsetTop + iggy.offsetHeight - innerHeight;
+                    animatedScrollTo(target, Math.sqrt(Math.abs(target - document.body.scrollTop)) * 20, function(){
+                        cell.next.cm.setCursor(0, 0)
+                        cell.next.cm.focus()         
+                    })
+                }
+            }
+        }
+        function slidePrev(){
+            if(cell.prev){
+                var iggy = cell.prev._pair;
+                if(isElementInViewport(iggy)){
+                    cell.prev.cm.setCursor(1e8, 1e8)
+                    cell.prev.cm.focus()
+                }else{
+                    var target = iggy.offsetTop;
+                    animatedScrollTo(target, Math.sqrt(Math.abs(target - document.body.scrollTop)) * 20, function(){
+                        cell.prev.cm.setCursor(1e8, 1e8)
+                        cell.prev.cm.focus()
+                    })
+                }
+            }
+        }
+
         cm.setOption("extraKeys", {
             // "Ctrl-Space": function(cm) { eliot.complete(cm); },
             // "Ctrl-I": function(cm) { eliot.showType(cm); },
@@ -346,11 +155,12 @@ class Editor extends Component {
                 if(!cell.next && cell.value) new CellModel(doc);
             },
             "Shift-Enter": (cm) => {
-                var auto_advance = !(
-                    doc &&
-                    doc.vm &&
-                    doc.vm.latestQueuedCell && 
-                    doc.vm.latestQueuedCell == cell);
+                // var auto_advance = !(
+                //     doc &&
+                //     doc.vm &&
+                //     doc.vm.latestQueuedCell && 
+                //     doc.vm.latestQueuedCell == cell);
+                var auto_advance = true;
                 cell.run()
                 if(!cell.next && cell.value) new CellModel(doc);
                 // maybe it should only advance if the next cell
@@ -362,33 +172,18 @@ class Editor extends Component {
 
                 // var kendrick = cell._pair
                 // kendrick.scrollIntoView(true)
-
-                if(cell.next && auto_advance){
-                    // var iggy = cell.next.cm.getWrapperElement();
-                    var iggy = cell.next._pair;
-                    if(isElementInViewport(iggy)){
-                        // do nothing
-                        cell.next.cm.setCursor(0, 0)
-                        cell.next.cm.focus()         
-                    }else{
-                        // iggy.scrollIntoView(false)
-                        var target = iggy.offsetTop + iggy.offsetHeight - innerHeight;
-                        animatedScrollTo(target, Math.sqrt(Math.abs(target - document.body.scrollTop)) * 20, function(){
-                            cell.next.cm.setCursor(0, 0)
-                            cell.next.cm.focus()         
-                        })
-                        
-                    }
-                    
-                }
+                slideNext()
+                
             },
             "Ctrl-N": (cm) => {
             },
             "Cmd-Up": (cm) => {
-                if(cell.prev) cell.prev.cm.focus();
+                // if(cell.prev) cell.prev.cm.focus();
+                slidePrev()
             },
             "Cmd-Down": (cm) => {
-                if(cell.next) cell.next.cm.focus();
+                slideNext()
+                
             },
             "Cmd-J": (cm) => {
                 var newCell = new CellModel(doc, cell.index + 1)
@@ -404,6 +199,9 @@ class Editor extends Component {
             cell.value = cm.getValue()    
             
             if(!cell.next && cell.value) new CellModel(doc);
+
+            let {line, ch} = cm.getCursor();
+            cm.findMarks({line, ch: 0}, {line, ch: 1e8}).filter(x => x._inlineResult).forEach(x => x.clear())
         })
         cm.on("cursorActivity", function(cm) { 
             // eliot.updateArgHints(cm); 
@@ -435,17 +233,19 @@ class Editor extends Component {
         })
         cm.on('keydown', (cm, evt) => {
             // console.log(evt, cm, evt.keyCode)
-            if(evt.keyCode == 40){ // down
+            if(evt.keyCode == 40 && !evt.metaKey){ // down
                 var cursor = cm.getCursor()
                 if (cursor.line === (cm.lineCount()-1)) {
                     // cursor.ch === cm.getLine(cursor.line).length
                     // select the next thing
-                    if(cell.next) cell.next.cm.focus()
+                    // if(cell.next) cell.next.cm.focus()
+                    slideNext()
                 }
-            }else if(evt.keyCode == 38){ // up
+            }else if(evt.keyCode == 38 && !evt.metaKey){ // up
                 var cursor = cm.getCursor()
                 if (cursor.line === 0) {
-                    if(cell.prev) cell.prev.cm.focus()
+                    // if(cell.prev) cell.prev.cm.focus()
+                    slidePrev()
                 }
             }else if(evt.keyCode == 8) { // backspace
                 if(cm.getValue() == ""){ // if the cell is empty

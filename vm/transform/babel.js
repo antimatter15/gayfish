@@ -30,15 +30,16 @@ export default function transformCode(originalCode, opts){
     parseOpts.strictMode = features.strict;
     parseOpts.sourceType = "module";
     
-
+    var parseError;
     try {
         var code = originalCode + "\n\n;$$done();";
         var tree = BabelParseHelper(code, parseOpts);
-    } catch (err) { }
+    } catch (err) { parseError = err }
     if(!tree && /await/.test(originalCode)){
         var code = '(async function AsyncWrap(){' + originalCode +'\n\n})().then($$done);'
         var tree = BabelParseHelper(code, parseOpts);
     }
+    if(!tree){ throw parseError; }
     
     
     delete opts['acornPlugins'];
