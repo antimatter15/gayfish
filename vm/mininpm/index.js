@@ -102,6 +102,9 @@ export function requireModule(dep, version = 'latest'){
 		}
 		return npm_modules_cache[pkg._id][contents.filename].exports;
 	}
+
+
+
 	var preamble = 'var '+['exports', 'require', 'process', '__filename', '__dirname', 'Buffer', 'global']
 		.map(x => `${x} = module.${x}`).join(', ') + ';';
 
@@ -109,23 +112,24 @@ export function requireModule(dep, version = 'latest'){
 
 	var fullpath = pkg._id + '/' + contents.filename;
 	var config = { fullpath, filename: contents.filename, id: pkg._id };
-	
-	eval.call(global, `// Module wrapped for Carbide VM
-	;(function(module){\n${preamble};
-	\n\n${contents.data}\n\n
-	})(__prepareModule(${JSON.stringify(config)}));
-	\n//# sourceURL=mininpm:///${fullpath}?`);
+	global.eval(__prepareModule(contents.data, config));
+
+	// global.eval(`// Module wrapped for Carbide VM
+	// ;(function(module){\n${preamble};
+	// \n\n${contents.data}\n\n
+	// }).call(this, __prepareModule(${JSON.stringify(config)}));
+	// \n//# sourceURL=mininpm:///${fullpath}?`);
 
 	return npm_modules_cache[pkg._id][contents.filename].exports;
 }
 
-
-global.__prepareModule = function __prepareModule(config){
+global.__prepareModule = function __prepareModule(code, config){
 	var {filename, id, fullpath} = config;
 	if(!(id in npm_modules_cache)) npm_modules_cache[id] = {};
 	var [name, version] = id.split('@');
 	var pkg = version_cache(name, version);
 	process.platform = 'linux';
+
 	npm_modules_cache[id][filename] = {
 		exports: {},
 		require: function(path){
@@ -138,5 +142,36 @@ global.__prepareModule = function __prepareModule(config){
 		__filename: fullpath,
 		__dirname: path.dirname(fullpath)
 	}
-	return npm_modules_cache[id][filename];
+	var varys = npm_modules_cache[id][filename];
+	varys.module = varys; 
+	if(typeof code == 'string'){
+        return `// Module wrapped for Carbide MiniNPM
+        (function ModuleClosure(${Object.keys(varys).join(', ')}){
+            \n${code}\n
+        \n}).apply(null, __prepareModule(0, ${JSON.stringify(config)}));
+		\n//# sourceURL=mininpm:///${fullpath}?`
+    }
+	return Object.keys(varys).map(x => varys[x]);
 }
+
+
+// global.__prepareModule = function __prepareModule(config){
+// 	var {filename, id, fullpath} = config;
+// 	if(!(id in npm_modules_cache)) npm_modules_cache[id] = {};
+// 	var [name, version] = id.split('@');
+// 	var pkg = version_cache(name, version);
+// 	process.platform = 'linux';
+// 	npm_modules_cache[id][filename] = {
+// 		exports: {},
+// 		require: function(path){
+// 			return requireModule(...subresolve(pkg, filename, path))
+// 		},
+// 		Buffer: Buffer,
+// 		// console: {},
+// 		process: process,
+// 		global: global,
+// 		__filename: fullpath,
+// 		__dirname: path.dirname(fullpath)
+// 	}
+// 	return npm_modules_cache[id][filename];
+// }
