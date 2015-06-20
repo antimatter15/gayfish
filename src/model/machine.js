@@ -58,7 +58,8 @@ export default class Machine {
             }else{
                 var marker = cm.setBookmark({ line, ch: 1e3 }, {
                     widget: widget,
-                    insertLeft: true
+                    insertLeft: true,
+                    handleMouseEvents: true
                 })
             }
 

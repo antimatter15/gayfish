@@ -105,14 +105,16 @@ export function requireModule(dep, version = 'latest'){
 	var preamble = 'var '+['exports', 'require', 'process', '__filename', '__dirname', 'Buffer', 'global']
 		.map(x => `${x} = module.${x}`).join(', ') + ';';
 
+	if(pkg.name == 'http-browserify') preamble += 'var window = global;';
+
 	var fullpath = pkg._id + '/' + contents.filename;
 	var config = { fullpath, filename: contents.filename, id: pkg._id };
 	
-	eval(`// Module wrapped for Carbide VM
+	eval.call(global, `// Module wrapped for Carbide VM
 	;(function(module){\n${preamble};
 	\n\n${contents.data}\n\n
 	})(__prepareModule(${JSON.stringify(config)}));
-	\n//# sourceURL=${fullpath}?`);
+	\n//# sourceURL=mininpm:///${fullpath}?`);
 
 	return npm_modules_cache[pkg._id][contents.filename].exports;
 }

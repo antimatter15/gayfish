@@ -4,9 +4,10 @@ import BabelFile from "babel-core/lib/babel/transformation/file";
 
 // babel/transformation/file/index.js
 export default function transformCode(originalCode, opts){
+
     var parseOpts = {
-        highlightCode: opts.highlightCode,
-        nonStandard:   opts.nonStandard,
+        highlightCode: true, //opts.highlightCode,
+        nonStandard:   true, //opts.nonStandard,
         filename:      opts.filename,
         plugins:       opts.acornPlugins || {}
     };

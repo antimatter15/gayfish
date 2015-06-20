@@ -76,7 +76,7 @@ class CellResult extends Component {
         return (
             <div className={cell_classes}>
                 {(cell.status == 'running' && cell.progress > 0 && cell.progress < 1) ? <progress value={cell.progress} max={1}></progress> : null}
-                {(cell.status == 'running' && cell.activity ? <span>{cell.activity}</span> : null)}
+                {(cell.status == 'running' && cell.activity ? <span className="activity">{cell.activity}</span> : null)}
                 <div className="output">
                     {output}
                     {cell.status == 'error' ? <DropdownCodeViewer code={cell.compiled} /> : null }

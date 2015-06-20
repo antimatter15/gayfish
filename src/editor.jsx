@@ -11,6 +11,7 @@ require("codemirror/mode/xml/xml")
 require("./codemirror/codemirror.less");
 require("./codemirror/javascript")
 require("./codemirror/jsx.js")
+require("./codemirror/prediction")
 
 require("codemirror/keymap/sublime")
 require("codemirror/addon/runmode/runmode")
@@ -37,11 +38,14 @@ require("codemirror/addon/tern/tern")
 
 
 // // Tern Server Eliot
-var eliot = new CodeMirror.TernServer({defs: [
-    require('tern/defs/ecma5.json'),
-    require('tern/defs/browser.json')
-]});
+var eliot = new CodeMirror.TernServer({
+    defs: [
+        require('tern/defs/ecma5.json'),
+        require('tern/defs/browser.json')
+    ]
+});
 
+global.eliot = eliot
 
 export default class Editor extends Component {
     constructor(props) {
@@ -57,7 +61,7 @@ export default class Editor extends Component {
             // mode: "javascript",
             lineNumbers: false,
             indentUnit: 4,
-            continueComments: true,
+            // continueComments: true,
             keyMap: 'sublime',
             autoCloseBrackets: true,
             matchBrackets: true,
@@ -166,8 +170,14 @@ export default class Editor extends Component {
             
             cell.checkNext();
 
+            
+            cm.showPrediction({ ts: eliot })
+
             let {line, ch} = cm.getCursor();
-            cm.findMarks({line, ch: 0}, {line, ch: 1e8}).filter(x => x._inlineResult).forEach(x => x.clear())
+            cm.findMarks({line, ch: 0}, {line, ch: 1e8})
+                .filter(x => x._inlineResult)
+                .forEach(x => x.clear())
+
         })
         cm.on("cursorActivity", function(cm) { 
             eliot.updateArgHints(cm); 
