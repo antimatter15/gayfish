@@ -86,6 +86,20 @@ class CellResult extends Component {
     }
 }
 
+
+class FocusedCellResult extends Component {
+    render() {
+        var {doc, cell, size} = this.props;
+        const ipct = ((1 - size) * 100) + '%'
+        
+        return (
+            <div className="focused-cell-result" style={{width: ipct, top: cell._pair.offsetTop + 'px'}} >
+                <CellResult cell={cell} doc={doc} />
+            </div>
+        )
+    }
+}
+
 class DropdownCodeViewer extends Component {
     constructor() {
         super()
@@ -404,6 +418,7 @@ export default class App extends Component {
                     <h1>Tungsten Carbide <span className="note">last saved 4 minutes ago</span></h1>
                 </div>
                 <UnifiedPane doc={doc} size={this.state.size}></UnifiedPane>
+                { doc.vm.latestQueuedCell ? <FocusedCellResult cell={doc.vm.latestQueuedCell} doc={doc}  size={this.state.size} /> : null }
             </div>
         );
     }

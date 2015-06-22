@@ -46,7 +46,7 @@ function summarizeObject(obj, noRecurse){
 
 addEventListener('message', function(e){
     var packet = e.data;
-    console.log(packet)
+    // console.log(packet)
     if(packet.type == 'exec'){
         __latestCellID = packet.cell;
         transpileAndRun(packet)
@@ -55,6 +55,14 @@ addEventListener('message', function(e){
             })
     }else if(packet.type == 'inspect'){
 
+    }else if(packet.type == 'queryModule'){
+        var resolve;
+        try {
+            resolve = mininpm.resolveSync(packet.name)    
+        } catch (err) {}
+        if(resolve){
+            postMessage({ type: 'queryModule', name: packet.name, code: resolve.contents })    
+        }
     }
 })
 
@@ -65,6 +73,7 @@ async function transpileAndRun(packet){
     var execonf = {
         cell: packet.cell
     }
+    // postMessage({ type: 'activity', activity: 'transpiling code', cell: packet.cell})
     try{
         transpiledCode = transformCode(packet.code, {
             optional: ["runtime"],
@@ -101,12 +110,12 @@ async function transpileAndRun(packet){
 
     var deps = mininpm.extract_deps(transpiledCode.code)
     console.log(transpiledCode, deps)
-
+    
     var seen_deps = {}
     for(let dep of deps){
-    
         await mininpm.recursiveResolve(dep, 'latest', {
-            callback(id){
+            callback(subdep, version){
+                var id = subdep.replace(/\/.*$/, '') + '@' + version
                 if(id in seen_deps) return;
                 postMessage({ type: 'activity', activity: 'downloading ' + id, cell: packet.cell})
                 seen_deps[id] = 1;
@@ -205,12 +214,3 @@ global.__prepareExecution = function __prepareExecution(code, config){
     }
     return Object.keys(varys).map(x => varys[x])
 }
-
-// https://github.com/jrburke/requirejs/wiki/Differences-between-the-simplified-CommonJS-wrapper-and-standard-AMD-define#cjs
-// ;(async function(){
-//  var deps = mininpm.extract_deps(middle);
-//  for(let dep of deps){
-//      await mininpm.recursiveResolve(dep)
-//  }
-//  //@ sourceURL=foo.js
-// })();

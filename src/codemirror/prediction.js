@@ -30,8 +30,8 @@ CodeMirror.defineExtension("showPrediction", function(options) {
     var token = cm.getTokenAt({line, ch});
     if(token.type == 'comment' || token.type == 'string') return;
 
-    if (this.state.completionActive) this.state.completionActive.close();
-    var completion = this.state.completionActive = new Completion(this, options);
+    if (this.state.predictionActive) this.state.predictionActive.close();
+    var completion = this.state.predictionActive = new Completion(this, options);
 
     completion.update(true);
 });
@@ -87,7 +87,7 @@ function Completion(cm, options) {
 Completion.prototype = {
     close: function() {
         if (!this.active()) return;
-        this.cm.state.completionActive = null;
+        this.cm.state.predictionActive = null;
         // this.tick = null;
         // this.cm.off("cursorActivity", this.activityFunc);
         this.cm.removeKeyMap(this.keyMap)
@@ -98,7 +98,7 @@ Completion.prototype = {
     },
 
     active: function() {
-        return this.cm.state.completionActive == this;
+        return this.cm.state.predictionActive == this;
     },
 
     pick: function() {

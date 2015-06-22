@@ -10,7 +10,10 @@ export default class Machine {
     }
     _onmessage(e) {
         var data = e.data;
-        // console.log(data)
+        if(data.type == 'queryModule'){
+            this.queryModule[data.name] = data.code;
+            return
+        }
         var cell = this.doc.find(data.cell);
         if(!cell){
             console.error('cell not found', data)
@@ -74,6 +77,14 @@ export default class Machine {
         }else{
             console.error('no handler for data packet', data)
         }
+    }
+    queryModule(name){
+        if(this.queryModule[name]){
+            var code = this.queryModule[name]
+            delete this.queryModule[name];
+            return code;
+        }
+        this.worker.postMessage({ type: 'queryModule', name: name })
     }
     _dequeue() {
         if(this.busy || this._queue.length == 0) return;

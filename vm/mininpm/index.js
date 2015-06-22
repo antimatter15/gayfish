@@ -70,12 +70,12 @@ export function resolveSync(dep, version = 'latest'){
 
 export async function recursiveResolve(dep, version = 'latest', opts = {}, level = 0){
 	if((dep + '@' + version) in npm_resolve_cache) return; // it's already been resolved woo
+	if(opts.callback) opts.callback(dep, version);
 	let { pkg, contents, main } = await resolve(dep, version);
 	let id = pkg._id;
 	if(!contents) throw new Error(`No file found at "${main}" for package ${id} (require ${dep}@${version}) `);
 	npm_resolve_cache[dep + '@' + version] = 1;
 	var subdeps = extract_deps(contents.data)
-	if(opts.callback) opts.callback(id);
 	console[level?'group':'groupCollapsed'](id + ':' + contents.filename + ` (depth ${level + 1})`)
 	for(let subdep of subdeps){
 		try {
@@ -104,21 +104,9 @@ export function requireModule(dep, version = 'latest'){
 	}
 
 
-
-	var preamble = 'var '+['exports', 'require', 'process', '__filename', '__dirname', 'Buffer', 'global']
-		.map(x => `${x} = module.${x}`).join(', ') + ';';
-
-	if(pkg.name == 'http-browserify') preamble += 'var window = global;';
-
 	var fullpath = pkg._id + '/' + contents.filename;
 	var config = { fullpath, filename: contents.filename, id: pkg._id };
 	global.eval(__prepareModule(contents.data, config));
-
-	// global.eval(`// Module wrapped for Carbide VM
-	// ;(function(module){\n${preamble};
-	// \n\n${contents.data}\n\n
-	// }).call(this, __prepareModule(${JSON.stringify(config)}));
-	// \n//# sourceURL=mininpm:///${fullpath}?`);
 
 	return npm_modules_cache[pkg._id][contents.filename].exports;
 }
@@ -142,8 +130,12 @@ global.__prepareModule = function __prepareModule(code, config){
 		__filename: fullpath,
 		__dirname: path.dirname(fullpath)
 	}
+
 	var varys = npm_modules_cache[id][filename];
+
+	if(pkg.name == 'http-browserify') varys.window = global;
 	varys.module = varys; 
+
 	if(typeof code == 'string'){
         return `// Module wrapped for Carbide MiniNPM
         (function ModuleClosure(${Object.keys(varys).join(', ')}){
@@ -153,25 +145,3 @@ global.__prepareModule = function __prepareModule(code, config){
     }
 	return Object.keys(varys).map(x => varys[x]);
 }
-
-
-// global.__prepareModule = function __prepareModule(config){
-// 	var {filename, id, fullpath} = config;
-// 	if(!(id in npm_modules_cache)) npm_modules_cache[id] = {};
-// 	var [name, version] = id.split('@');
-// 	var pkg = version_cache(name, version);
-// 	process.platform = 'linux';
-// 	npm_modules_cache[id][filename] = {
-// 		exports: {},
-// 		require: function(path){
-// 			return requireModule(...subresolve(pkg, filename, path))
-// 		},
-// 		Buffer: Buffer,
-// 		// console: {},
-// 		process: process,
-// 		global: global,
-// 		__filename: fullpath,
-// 		__dirname: path.dirname(fullpath)
-// 	}
-// 	return npm_modules_cache[id][filename];
-// }

@@ -35,14 +35,22 @@ require("codemirror/addon/dialog/dialog.css")
 global.tern = require('tern')
 require("codemirror/addon/tern/tern.css")
 require("codemirror/addon/tern/tern")
+require("./codemirror/node")
 
-
-// // Tern Server Eliot
+// Tern Server Eliot
 var eliot = new CodeMirror.TernServer({
     defs: [
         require('tern/defs/ecma5.json'),
         require('tern/defs/browser.json')
-    ]
+    ],
+    plugins: {
+        node: {
+            // this bit is especially hacky
+            resolver: function(name){
+                return Doc.vm.queryModule(name)
+            }
+        }
+    }
 });
 
 global.eliot = eliot
@@ -68,9 +76,11 @@ export default class Editor extends Component {
             lineWrapping: true,
             // highlightSelectionMatches: true,
             viewportMargin: Infinity
-        })
+        });
 
-        cell.mount(cm)
+        cell.mount(cm);
+
+        eliot.addDoc('cell' + cell.id, cm);
 
         function slideNext(){
             if(cell.next){
@@ -256,19 +266,25 @@ function isElementInViewport (el) {
     );
 }
 
-function animatedScrollTo(target, time, callback){
-    var start = Date.now(),
-        startPos = document.body.scrollTop;
-    
-    doFrame();
 
-    function doFrame(){
-        var now = Date.now(),
-            x = Math.min(1, Math.max(0, (now - start) / time)); // clamp
-        var coef = Math.cos(Math.PI * (1 - x)) / 2 + 0.5;
-        document.body.scrollTop = coef * (target - startPos) + startPos;
-        if(x < 1){
-            requestAnimationFrame(doFrame)
-        } else callback();
-    }
+function animatedScrollTo(target, time, callback){
+    document.body.scrollTop = target;
+    callback();
 }
+
+// function animatedScrollTo(target, time, callback){
+//     var start = Date.now(),
+//         startPos = document.body.scrollTop;
+    
+//     doFrame();
+
+//     function doFrame(){
+//         var now = Date.now(),
+//             x = Math.min(1, Math.max(0, (now - start) / time)); // clamp
+//         var coef = Math.cos(Math.PI * (1 - x)) / 2 + 0.5;
+//         document.body.scrollTop = coef * (target - startPos) + startPos;
+//         if(x < 1){
+//             requestAnimationFrame(doFrame)
+//         } else callback();
+//     }
+// }
