@@ -23,7 +23,7 @@ h1 {
     position: relative;
 }
 .cell-culture {
-    padding-top: 10px;
+    // padding-top: 10px;
 }
 .background {
     position: absolute;
@@ -142,7 +142,7 @@ h1 {
                 background 0.3s ease-in-out,
                 opacity 0.1s linear;
     z-index: 55;
-    margin-top: 15px;
+    margin-top: 5px;
     min-height: 50px;
     // border-radius: 5px;
     &.running {
@@ -169,8 +169,8 @@ h1 {
 
 .cell-input {
     display: flex;
-    padding-bottom: 15px;
-    padding-top: 15px;
+    padding-bottom: 10px;
+    padding-top: 10px;
     // margin: 10px;
     
     // transition: opacity 1s ease-in;
@@ -263,24 +263,29 @@ h1 {
     }
 }
 
-.cell-collapse {
+.cell-insert {
     // background: #C1C5D8;
     // height: 6px;
     text-align: center;
+
     hr {
 
         margin: 20px;
-        margin-top: 10px;
+        margin-top: 0px;
+        margin-bottom: 0px;
         border: 0;
-        border-top: 5px solid #C1C5D8; 
+        border-top: 2px solid rgba(0, 0, 0, 0); 
+        // background: yellow;
+        // height: 10px;
+        // border-color: transparent;
         transition: border-color 0.2s ease-in-out;
-        cursor: pointer;
+        
     }
-    .cell-title {
-        margin-top: -22px;
-    }
-    &:hover hr {
-        border-color: #6471AD;
+    cursor: vertical-text;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    &.hover hr {
+        border-color: rgba(0, 0, 0, 0.1);
     }
 }
 
@@ -402,4 +407,50 @@ h1 {
 .Resizer.horizontal:hover, .Resizer.horizontal.active {
     border-left: 5px solid rgba(0, 0, 0, 0.5);
     border-right: 5px solid rgba(0, 0, 0, 0.5);
+}
+
+
+
+@media (max-width: 600px) {
+    .cell-output {
+        overflow: hidden;
+        width: auto !important;
+        /* border: 1px solid #DADADA; */
+        /* border-radius: 5px; */
+        /* margin: 10px; */
+        background: #F4F5F9;
+        border-top: 1px solid #C1C5D8;
+        border-bottom: 1px solid #C1C5D8;
+        /* margin-bottom: 10px; */
+        min-height: 30px;
+    }
+    .cell-cluster {
+        display: block;
+    }
+    .cell-input {
+        display: flex;
+        padding-bottom: 15px;
+        padding-top: 15px;
+        /* display: block; */
+        width: auto !important;
+    }
+    .focused-cell-result {
+        display: none;
+    }
+    .Resizer {
+        display: none;
+    }
+    .background {
+        display: none;
+    }
+    h1 .note {
+        display: none;
+    }
+    .cell-collapse {
+        width: auto !important;
+        hr {
+            margin-left: 0;
+            margin-right: 0;
+        }
+    }
 }

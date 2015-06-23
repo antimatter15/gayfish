@@ -63,18 +63,23 @@ export default class CellModel {
     }
     set collapsed(val){
         this._collapsed = val;
+        if(val){
+            this.cm.execCommand('foldAll')
+        }else{
+            this.cm.execCommand('unfoldAll')
+        }
         this.update()
     }
     get collapsed(){ return this._collapsed }
     get index(){ return this.doc.cells.indexOf(this) }
     get prev(){ 
         var prev = this.doc.item(this.index - 1)
-        if(prev && prev.collapsed) return prev.prev;
+        // if(prev && prev.collapsed) return prev.prev;
         return prev;
     }
     get next(){
         var next = this.doc.item(this.index + 1)
-        if(next && next.collapsed) return next.next;
+        // if(next && next.collapsed) return next.next;
         return next;
     }
     checkNext(){

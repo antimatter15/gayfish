@@ -57,3 +57,41 @@ Completed:
 * Resizable two pane layout
 * Sublime/Atom-style Command Palette
 * Inject profiling code to automatically (a la Adobe's Theseus) to automatically display progress bar for code execution
+
+
+Inspiration (in no particular order):
+
+* IPython Notebooks
+	* I love IPython Notebooks, and it's almost certainly the single largest influence on Carbide
+* Stephen Wolfram / Mathematica
+* Bret Victor (http://worrydream.com/)
+* Elm Debugger (http://debug.elm-lang.org/)
+* Steve Wittens 
+	* TermKit (https://github.com/unconed/TermKit)
+	* MathBox (https://github.com/unconed/MathBox.js/)
+* Mike Bostocks
+	* D3.js (http://d3js.org/)
+	* bl.ocks.org
+* Tom Lieber: Adobe Research / MIT CSAIL UID / Theseus (https://github.com/adobe-research/theseus)
+* Scott McDirmid / Microsoft Research (http://research.microsoft.com/en-us/people/smcdirm/liveprogramming.aspx)
+* Matlab
+	* The obvious thing plagiarized from Matlab is the use of semicolons to suppress log output. 
+* Hydrogen for Atom by Will Whitney (https://github.com/willwhitney/hydrogen)
+* XCode/Swift Playground (https://developer.apple.com/swift/)
+* Webkit Web Inspector
+	* I'm a fan of Webkit/XCode's use of autocomplete (not sure if that's the correct term, I'm referring to the slightly grayed out text injected right of the cursor) over the traditional drop-down menus which tend to occlude the code immediately above or below it (which I'm often trying to look at for reference). 
+* Blink Web Inspector
+* Chris Granger / Light Table & eve
+* JSBin/JSFiddle/CodePen/RequireBin
+* Sublime Text / Github Atom
+* Facebook Nuclide
+
+
+On the shoulders of giants
+
+* The object inspector borrows CSS heavily from the Blink Web Inspector (https://chromium.googlesource.com/chromium/blink/+/master/Source/devtools/)
+* ES6 transformation is powered by Sebastian McKenzie's Babel (http://babeljs.io)
+	* ES6 parsing is done by Marijn Haverbeke's Acorn parser
+	* Automatic loop instrumentation and Matlab-style semicolon logging semantics were made possible because Acorn and Babel are awesome and extensible
+* Marijn Haverbeke's Codemirror for syntax highlighting and code editing (https://github.com/codemirror/CodeMirror)
+* 

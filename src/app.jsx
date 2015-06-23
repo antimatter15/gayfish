@@ -53,6 +53,11 @@ class CellResult extends Component {
 class FocusedCellResult extends Component {
     render() {
         var {doc, cell, size} = this.props;
+        if(cell.index < 0) return null;
+        // if(typeof cell.output == 'undefined'){
+        //     return null;
+        // }
+
         const ipct = ((1 - size) * 100) + '%'
         const cn = classNames({
             "focused-cell-result": true,
@@ -257,6 +262,7 @@ class UnifiedPair extends Component {
         // TODO: collapse the cell
         const { doc, cell } = this.props;
         cell.collapsed = !cell.collapsed
+
     }
     render() {
         const { doc, cell, size } = this.props;
@@ -291,16 +297,36 @@ class UnifiedPair extends Component {
     } 
 }
 
-class CollapsedCell extends Component {
-    restoreCell = () => {
+class InsertCell extends Component {
+    constructor(props) {
+        super(props)
+        this.state = {}
+    }
+    insertCell = () => {
         const { doc, cell, size } = this.props;
-        cell.collapsed = false;
+        var newCell = new CellModel(doc, cell.index)
+        newCell.mount(x => newCell.cm.focus())
+        this.setState({ hover: false })
+    }
+    onEnter = () => {
+        this.setState({ hover: true })
+    }
+    onLeave = () => {
+        this.setState({ hover: false })
     }
     render() {
         const { doc, cell, size } = this.props;
         const pct = (size * 100) + '%';
+        const cn = classNames({
+            "cell-insert": true,
+            "hover": this.state.hover
+        })
         return (
-            <div onClick={this.restoreCell} style={{width: pct}} className="cell-collapse">
+            <div onClick={this.insertCell} 
+                 onMouseEnter={this.onEnter} 
+                 onMouseLeave={this.onLeave} 
+                 style={{width: pct}} 
+                 className={cn}>
                 <hr />
             </div>
         );
@@ -328,11 +354,10 @@ class UnifiedPane extends Component {
             <div className="cell-culture">
             {
                 doc.cells.map(cell => {
-                    if(cell.collapsed){
-                        return <CollapsedCell {...this.props} key={cell.id} cell={cell}></CollapsedCell>
-                    }else{
-                        return <UnifiedPair {...this.props} key={cell.id} cell={cell}></UnifiedPair>    
-                    }
+                    return <div key={cell.id}>
+                        <InsertCell {...this.props}  cell={cell}></InsertCell>
+                        <UnifiedPair {...this.props}  cell={cell}></UnifiedPair>
+                    </div>
                 })
             }
             <div className="cell-padding" style={{ height: (innerHeight - cellHeight - 10) }} onClick={this.paddingClick} />

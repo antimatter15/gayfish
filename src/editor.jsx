@@ -21,9 +21,13 @@ require("codemirror/addon/edit/closebrackets")
 require("codemirror/addon/edit/matchbrackets")
 require("codemirror/addon/comment/comment")
 require("codemirror/addon/comment/continuecomment")
-// require("codemirror/addon/fold/foldcode")
+require("codemirror/addon/fold/foldcode")
 // require("codemirror/addon/fold/foldgutter")
-require("codemirror/addon/fold/foldgutter.css")
+// require("codemirror/addon/fold/foldgutter.css")
+require("codemirror/addon/fold/brace-fold")
+// require("codemirror/addon/fold/xml-fold")
+// require("codemirror/addon/fold/markdown-fold")
+// require("codemirror/addon/fold/comment-fold")
 // require("codemirror/addon/search/match-highlighter")
 require("codemirror/addon/hint/show-hint")
 require("codemirror/addon/hint/show-hint.css")
@@ -75,8 +79,17 @@ export default class Editor extends Component {
             matchBrackets: true,
             lineWrapping: true,
             // highlightSelectionMatches: true,
-            viewportMargin: Infinity
+            viewportMargin: Infinity,
+            // foldGutter: true,
+            // gutters: ["CodeMirror-foldgutter"]
         });
+
+
+        // cm.foldCode(CodeMirror.Pos(0, 0));
+        if(cell.collapsed){
+            // cm.foldAll();
+            cm.execCommand('foldAll')
+        }
 
         cell.mount(cm);
 
@@ -175,11 +188,15 @@ export default class Editor extends Component {
             }
         })
 
+        cm.on('unfold', (cm) => {
+            cell.collapsed = false
+        })
+
         cm.on('changes', (cm) => {
             cell.value = cm.getValue()    
             
             cell.checkNext();
-            
+
             cm.showPrediction({ ts: eliot })
 
             let {line, ch} = cm.getCursor();
