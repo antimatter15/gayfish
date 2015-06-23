@@ -41,6 +41,9 @@ h1 {
 .cell-input, .cell-output {
     width: 50%;
 }
+.cell-output {
+    overflow: hidden;
+}
 
 .CodeMirror-completion {
     opacity: 0.3;
@@ -95,6 +98,7 @@ h1 {
 
     progress {
         margin-bottom: 10px;
+
     }
 
     // progress::-webkit-progress-value {
@@ -117,10 +121,10 @@ h1 {
         color: gray;
     }
 
-    margin: 10px;
-    margin-top: 15px;
-    margin-left: 20px;
-    margin-bottom: 30px;
+    margin: 15px;
+    // margin-top: 15px;
+    // margin-left: 20px;
+    // margin-bottom: 30px;
 
     word-wrap: break-word;
 
@@ -133,8 +137,28 @@ h1 {
     background: white;
     border: 1px solid #D0D0D0;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
-    padding-top: 10px;
-    transition: top 0.1s ease-in-out;
+    // padding-top: 10px;
+    transition: top 0.1s ease-in-out, 
+                background 0.3s ease-in-out,
+                opacity 0.1s linear;
+    z-index: 55;
+    margin-top: 15px;
+    min-height: 50px;
+    // border-radius: 5px;
+    &.running {
+        // background: #FFFAEB;
+        // box-shadow: 0 0 10px rgba(60, 158, 64, 0.41);
+        .output {
+            opacity: 0.3;
+        }
+    }
+    &.queued {
+        background: #FFFAEB;
+    }
+
+    &.dragging {
+        opacity: 0;
+    }
 }
 // @-webkit-keyframes "pulse" {
 //  0% { border-color: #CA7474; }
@@ -197,7 +221,7 @@ h1 {
     // background: whiteSmoke;
     background: white;
     // padding: 10px;
-    z-index: 44;
+    z-index: 94;
     top: 15px;
     border-radius: 10px;
     // border-bottom-right-radius: 0;

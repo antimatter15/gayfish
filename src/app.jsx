@@ -16,43 +16,6 @@ import Editor from './editor'
 
 var CodeMirror = require('codemirror')
 
-const cardSource = {
-    beginDrag(props, monitor, component) {
-        props.cell.has_focus = true;
-        var el = React.findDOMNode(component);
-        return {
-            id: props.cell.id,
-            height: el.getBoundingClientRect().height
-        };
-    }
-};
-
-// it's really obnoxious to drag small objects because
-// when it reorders things, the small object will still
-// overlap the bigger one and it'll swap again 
-const cardTarget = {
-    hover(props, monitor, component) {
-        const item = monitor.getItem();
-        const draggedId = item.id;
-        if (draggedId !== props.cell.id) {
-            var dragged = props.doc.find(draggedId);
-
-            var el = React.findDOMNode(component);
-            var {top, bottom} = el.getBoundingClientRect()
-            var {y} = monitor.getClientOffset()
-
-            if(props.cell.index > dragged.index){
-                if(y > bottom - item.height)
-                    dragged.moveTo(props.cell);
-            }else{
-                if(y < top + item.height)
-                    dragged.moveTo(props.cell);
-            }
-        }
-    }
-};
-
-
 
 class CellResult extends Component {
     render() {
@@ -75,7 +38,7 @@ class CellResult extends Component {
         
         return (
             <div className={cell_classes}>
-                {(cell.status == 'running' && cell.progress > 0 && cell.progress < 1) ? <progress value={cell.progress} max={1}></progress> : null}
+                {(cell.status == 'running' && cell.progress > 0 && cell.progress <= 1) ? <progress value={cell.progress} max={1}></progress> : null}
                 {(cell.status == 'running' && cell.activity ? <span className="activity">{cell.activity}</span> : null)}
                 <div className="output">
                     {output}
@@ -91,9 +54,12 @@ class FocusedCellResult extends Component {
     render() {
         var {doc, cell, size} = this.props;
         const ipct = ((1 - size) * 100) + '%'
-        
+        const cn = classNames({
+            "focused-cell-result": true,
+            "dragging": doc.isDragging
+        })  + ' ' + cell.status;
         return (
-            <div className="focused-cell-result" style={{width: ipct, top: cell._pair.offsetTop + 'px'}} >
+            <div className={cn} style={{width: ipct, top: cell._pair.offsetTop + 'px'}} >
                 <CellResult cell={cell} doc={doc} />
             </div>
         )
@@ -172,6 +138,7 @@ class Palette extends Component {
             const {doc} = this.props;
             doc.focused.cm.focus();
         }
+
     }
     render() {
         if(!this.state.show) return null;
@@ -203,6 +170,53 @@ class Palette extends Component {
 }
 
 
+const cardSource = {
+    beginDrag(props, monitor, component) {
+        var {cell} = props;
+        cell.doc.isDragging = true;
+        cell.has_focus = true;
+
+        var el = React.findDOMNode(component);
+        return {
+            id: props.cell.id,
+            height: el.getBoundingClientRect().height
+        };
+    },
+    endDrag(props, monitor, component) {
+        var {cell} = props;
+        cell.doc.isDragging = false;
+        cell.update()
+    }
+};
+
+// it's really obnoxious to drag small objects because
+// when it reorders things, the small object will still
+// overlap the bigger one and it'll swap again 
+const cardTarget = {
+    hover(props, monitor, component) {
+        const item = monitor.getItem();
+        const draggedId = item.id;
+        const {cell} = props;
+        if (draggedId !== cell.id) {
+            var dragged = props.doc.find(draggedId);
+
+            var el = React.findDOMNode(component);
+            var {top, bottom} = el.getBoundingClientRect()
+            var {y} = monitor.getClientOffset()
+
+            if(cell.index > dragged.index){
+                if(y > bottom - item.height)
+                    dragged.moveTo(cell);
+            }else{
+                if(y < top + item.height)
+                    dragged.moveTo(cell);
+            }
+        }
+    }
+};
+
+
+
 @DropTarget('UnifiedPair', cardTarget, connect => ({
     connectDropTarget: connect.dropTarget(),
 }))
@@ -223,12 +237,21 @@ class UnifiedPair extends Component {
     handleClick = (e) => {
         const {cell} = this.props;
         cell.has_focus = true;
-        if(e.target == React.findDOMNode(this.refs.editor)){
+        var el = e.target,
+            ed = React.findDOMNode(this.refs.editor);
+        while(el) {
+            if(el == ed) break;
+            el = el.parentNode;
+        }
+        if(el != ed){
             cell.cm.focus()
             cell.cm.execCommand('goDocEnd')   
-        }else{
-            // console.log(e.target)
         }
+    }
+    componentDidUpdate() {
+        const {cell} = this.props;
+        cell.height = React.findDOMNode(this.refs.editor).offsetHeight;
+        // cell.update()
     }
     doubleClick = (e) => {
         // TODO: collapse the cell
@@ -248,7 +271,11 @@ class UnifiedPair extends Component {
             "cell-input": true, 
             "focused": cell.has_focus,
             "modified": cell.oldValue != cell.value
-        }) + ' ' + cell.status
+        }) + ' ' + cell.status;
+
+        const maxheight = Math.max(50, cell.height) + 'px';
+        // React.findDOMNode(this.refs.editor)
+
         return connectDragPreview(
             <div className={classNames({"cell-cluster": 1, "focused": doc.vm.latestQueuedCell == cell})}>
                 {connectDropTarget(<div style={{width: pct}} className={cell_classes} onClick={this.handleClick}>
@@ -257,7 +284,7 @@ class UnifiedPair extends Component {
                         <Editor {...this.props}></Editor>
                     </div>
                 </div>)}
-                <div className="cell-output" style={{ opacity, width: ipct }}>
+                <div className="cell-output" style={{ opacity, width: ipct, maxHeight: maxheight }}>
                     <CellResult {...this.props} cell={cell}></CellResult>
                 </div>
             </div>);

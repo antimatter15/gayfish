@@ -179,7 +179,6 @@ export default class Editor extends Component {
             cell.value = cm.getValue()    
             
             cell.checkNext();
-
             
             cm.showPrediction({ ts: eliot })
 

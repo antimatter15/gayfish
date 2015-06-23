@@ -126,11 +126,9 @@ async function transpileAndRun(packet){
         })
         
     }
-    postMessage({ type: 'activity', activity: '', cell: packet.cell})
     
-
     var wrappedCode = __prepareExecution(transpiledCode.code, execonf)
-    
+    postMessage({ type: 'activity', activity: '', cell: packet.cell})
     
     try{
         var result = eval.call(self, wrappedCode)
