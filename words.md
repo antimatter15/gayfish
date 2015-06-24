@@ -1,3 +1,49 @@
+Problems
+
+* Alignment for the left and right panes isn't totally clear, and it's often pretty confusing because you're not mentally totally sure which input corresponds to which output. 
+	* I've played around with highlighting the cell pair for the most recent output, but it's confusing in its own right (you might be editing some other cell but your attention would be constantly pulled toward the previous one)
+	* Maybe revive some of the weird shapes or color indicators, I can't think of something that makes sense though
+
+* Sticking the focused output card in the right spot. This really shouldn't be too hard but I haven't done it yet.
+
+* It's really weird when the output card is blank. Hide it or fill it with something.
+
+
+
+What's cool?
+* 2Panez
+	* A two-pane layout doesn't waste screen space and helps alleviate excessive scrolling
+	* It cleanly separates input and output
+
+* Command Palette
+	* Quickly access any action without needing to memorize lots of keybindings or cluttering the interface with persistent toolbars and menus
+
+* Automatic Instrumentation
+	* Fire off any batch task using an ordinary for loop and it'll visually report on progress
+
+* Semicolon Logging Semantics
+	* Just like in Matlab, statements which aren't terminated in semicolons are logged
+	* Logs are placed in context right where they're created
+
+* The Future Now: ES6 and ES7 with Babel
+	* Code is automatically transpiled to support the latest proposed features
+	* Interactive `await`, call it from a function and we'll automatically wrap the entire cell.
+
+* NPM In the Browser
+	* Try out javascript libraries simply by calling `require`, Carbide comes with a tiny clone of NPM that will recursively resolve dependencies and unpack tarballs from the NPM API. 
+
+* Code Completion with Tern.JS
+	* Autocomplete methods and function names with the tern static type inference engine
+	* Also supports stuff within NPM modules.
+
+* Graphical Manipulation
+	* Make any variable adjustable with a graphical slider by wrapping calling Manipulate.Slider()
+
+* Interactive Graphics with D3
+	* Woooo
+
+
+
 TODO:
 
 * Slider
@@ -8,7 +54,7 @@ In this case, you'll call a function like `Interact()` and it'll return some num
 
 Interact's first argument would be the default value, followed by a min and max. For example, `var x = Interact(42, 0, 100)`
 
-Perhaps it should accept string arguments as well, and give the user a choice with a nice pill button `var option = Interact("Freedom", "Slavery")`. 
+Perhaps it should accept string arguments as well, and give the user a choice with a nice pill button `var option = Interact("Freedom", "Slavery")`. Maybe it should be more extensible (an interact namespace, e.g. Interact.Slider(5))
 
 
 
@@ -37,6 +83,9 @@ Perhaps it should accept string arguments as well, and give the user a choice wi
 * Adding Files
 	* it should be as easy as dragging and dropping a file from the desktop to import it as a buffer (kind of similar to Matlab)
 
+* Sublime/Atom-style Command Palette
+	* Currently it's just a sort of filler
+
 Completed:
 
 * Collapse cells
@@ -51,7 +100,11 @@ Completed:
 		* It's only somewhat working because it seems that NodeJS function declarations seem to be scoped to a single cell
 * Drag to reorder input cells
 * Resizable two pane layout
-* Sublime/Atom-style Command Palette
+	* Double click on median to restore default size (40%-60% split)
+* Insert cells before and after other cells
+	* Click on a bar which is in between the cells or use the keybindings (Cmd-J/Cmd-K)
+
+
 * Inject profiling code to automatically (a la Adobe's Theseus) to automatically display progress bar for code execution
 
 

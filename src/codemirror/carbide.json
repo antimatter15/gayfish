@@ -1,0 +1,11 @@
+{
+  "!name": "Carbide",
+  "Interact": {
+    "!doc": "Save the previous value of the `_` variable.",
+    "!type": "fn(obj: ?) -> +_",
+    "VERSION": {
+      "!type": "string",
+      "!url": "http://underscorejs.org/#VERSION"
+    }
+  }
+}

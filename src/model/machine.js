@@ -19,15 +19,8 @@ export default class Machine {
             console.error('cell not found', data)
             return;
         }
-        if(data.type == 'result'){
-
+        if(data.type == 'done'){
             cell.status = 'done'
-            if(data.result == 'use strict'){
-                cell.output = 'nothing';
-            }else{
-                cell.output = data.result;
-            }
-            
             cell.update()
             this.busy = false;
             this._dequeue()
@@ -43,11 +36,10 @@ export default class Machine {
         }else if(data.type == 'log'){
             var cm = cell.cm;
             let line = data.line - 1;
-            
+            // TODO: move this to cell, better yet, editor
             var inlineLog = cm.findMarks({ line, ch: 0 }, { line, ch: 1e3 })
                 .filter(x => x._inlineResult);
             inlineLog.slice(1).forEach(x => x.clear());
-            // console.log(inlineLog, '__INLINELOG')
             var text = JSON.stringify(data.value) + '';
             if(text.length > 25) text = text.slice(0, 15) + "..." + text.slice(-5);
             var textNode = document.createTextNode(text);

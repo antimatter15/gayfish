@@ -40,30 +40,17 @@ acorn.plugins.banglog = function(instance){
 acorn.plugins.semilog = function(instance){
     instance.extend("parseExpressionStatement", function(inner){
         return function(node, expr){
-            node.expression = expr
-            // const lineBreak = /\r\n?|\n|\u2028|\u2029/
-            // console.log('expression semicolon', lineBreak.test(this.input.slice(this.lastTokEnd, this.start)))
-
-            // if(this.canInsertSemicolon())
-
+            node.expression = expr;
             if(this.canInsertSemicolon()){
                 node.logStatement = true;
             }else if(!this.eat(acorn.tokTypes.semi)) this.unexpected();
-            // if(!this.eat(acorn.tokTypes.semi)){
-            //     if(!this.canInsertSemicolon()) this.unexpected();
-            //     node.logStatement = true;
-            // }
             return this.finishNode(node, "ExpressionStatement")
         }
     })
     instance.extend("parseVarStatement", function(inner){
         return function(node, kind){
             this.next()
-            this.parseVar(node, false, kind)
-            // if(!this.eat(acorn.tokTypes.semi)){
-            //     if(!this.canInsertSemicolon()) this.unexpected();
-            //     node.logStatement = true;
-            // }
+            this.parseVar(node, false, kind);
             if(this.canInsertSemicolon()){
                 node.logStatement = true;
             }else if(!this.eat(acorn.tokTypes.semi)) this.unexpected();
@@ -73,12 +60,10 @@ acorn.plugins.semilog = function(instance){
     })
 }
 
+// TODO: use source maps instead of passing the source line in the function call
 var LoggingSyntax = new BabelTransformer("logging-syntax", {
     VariableDeclaration(node, parent, scope){
-        console.log('VERDEC', node)
         if(node.logStatement){
-
-            
             var vars = [];
             for(let decl of node.declarations){
                 if(decl.id.type == 'Identifier'){
@@ -89,7 +74,6 @@ var LoggingSyntax = new BabelTransformer("logging-syntax", {
                     }, {});
                 }
             }
-            console.log('LOGGING A VAR', node, vars);
             return [
                 node
             ].concat(

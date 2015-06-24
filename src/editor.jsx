@@ -45,7 +45,8 @@ require("./codemirror/node")
 var eliot = new CodeMirror.TernServer({
     defs: [
         require('tern/defs/ecma5.json'),
-        require('tern/defs/browser.json')
+        require('tern/defs/browser.json'),
+        require('./codemirror/carbide.json')
     ],
     plugins: {
         node: {
@@ -185,6 +186,40 @@ export default class Editor extends Component {
             "Cmd-K": (cm) => {
                 var newCell = new CellModel(doc, cell.index)
                 newCell.cm.focus()
+            },
+            "Down": (cm) => {
+                var cursor = cm.getCursor()
+                if (cursor.line === (cm.lineCount()-1)) {
+                    // cursor.ch === cm.getLine(cursor.line).length
+                    // select the next thing
+                    // if(cell.next) cell.next.cm.focus()
+                    slideNext()
+                }
+                return CodeMirror.Pass
+            },
+            "Up": (cm) => {
+                var cursor = cm.getCursor()
+                if (cursor.line === 0) {
+                    // if(cell.prev) cell.prev.cm.focus()
+                    slidePrev()
+                }
+                return CodeMirror.Pass
+            },
+            "Backspace": (cm) => {
+                if(cm.getValue() == ""){ // if the cell is empty
+                    if(cell.prev){
+                        cell.prev.cm.focus()
+                        cell.prev.cm.setCursor(1e8, 1e8)
+                    }else if(cell.next){
+                        cell.next.cm.focus()
+                        cell.next.cm.setCursor(0, 0)
+                    }
+                    if(doc.cells.length > 1){
+                        cell.remove()   
+                    }
+                }
+                return CodeMirror.Pass
+
             }
         })
 
@@ -233,38 +268,17 @@ export default class Editor extends Component {
             //     eliot.complete(cm)
             // }
         })
-        cm.on('keydown', (cm, evt) => {
-            // console.log(evt, cm, evt.keyCode)
-            if(evt.keyCode == 40 && !evt.metaKey){ // down
-                var cursor = cm.getCursor()
-                if (cursor.line === (cm.lineCount()-1)) {
-                    // cursor.ch === cm.getLine(cursor.line).length
-                    // select the next thing
-                    // if(cell.next) cell.next.cm.focus()
-                    slideNext()
-                }
-            }else if(evt.keyCode == 38 && !evt.metaKey){ // up
-                var cursor = cm.getCursor()
-                if (cursor.line === 0) {
-                    // if(cell.prev) cell.prev.cm.focus()
-                    slidePrev()
-                }
-            }else if(evt.keyCode == 8) { // backspace
-                if(cm.getValue() == ""){ // if the cell is empty
-                    if(cell.prev){
-                        cell.prev.cm.focus()
-                        cell.prev.cm.setCursor(1e8, 1e8)
-                    }else if(cell.next){
-                        cell.next.cm.focus()
-                        cell.next.cm.setCursor(0, 0)
-                    }
-                    if(doc.cells.length > 1){
-                        cell.remove()   
-                    }
-                }
-            }
+        // cm.on('keydown', (cm, evt) => {
+        //     // console.log(evt, cm, evt.keyCode)
+        //     if(evt.keyCode == 40 && !evt.metaKey){ // down
+                
+        //     }else if(evt.keyCode == 38 && !evt.metaKey){ // up
+                
+        //     }else if(evt.keyCode == 8) { // backspace
+                
+        //     }
             
-        })
+        // })
     }
     render() {
         return <div></div>

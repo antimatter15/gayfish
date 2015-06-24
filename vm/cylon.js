@@ -1,22 +1,15 @@
 // asynchronous worker bundle v2
 
 import * as mininpm from './mininpm'
-
 import transformCode from './transform/babel'
 import LoggingSyntaxTransformer from './transform/logging'
 import LooperTransformer from './transform/looper'
 import GlobalTransformer from './transform/globals'
 import ResultTransformer from './transform/result'
-
-
+import * as _ from 'lodash'
 
 global.mininpm = mininpm;
-
 var __latestCellID;
-// function __track$loop__(i, total){
-//     postMessage({ type: 'progress', frac: i / total, cell: __latestCellID })
-// }
-
 var inspectables = []
 
 function summarizeObject(obj, noRecurse){
@@ -154,29 +147,54 @@ global.__prepareExecution = function __prepareExecution(code, config){
     var finalLog;
     var lastProgress = 0;
     var declaredGlobals = {};
-    var logTimes = {},
-        logValues = {};
+    var logInstances = {}
+    var lastLogSnapshot = 0;
+    var startTime = 0;
 
-
+    function sendLogSnapshot(){
+        var packet = []
+        for(var i in logInstances){
+            var inst = logInstances[i];
+            packet.push({
+                instance: i,
+                line: inst.line,
+                name: inst.name,
+                type: inst.type,
+                count: inst.values.length,
+                latest: summarizeObject(inst.values[inst.values.length - 1])
+            })
+        }
+        send('logs', { instances: packet })
+    }
+    function sendGlobalSnapshot(){
+        send('globals', { names: Object.keys(declaredGlobals) })
+    }
     var varys = {
         require(name, version){
             // if(name in cachedModules && !version) return cachedModules[name];
             return mininpm.requireModule(name, version)
         },
         __log(value, name, type, line, instance) {
-            // TODO: send the last value of logs out when $$done is called
-            if(!(instance in logTimes)) logTimes[instance] = 0;
-            if(Date.now() - logTimes[instance] > 50){
-                if(['number', 'string', 'undefined'].indexOf(typeof value) != -1 || Array.isArray(value) || value === null){
-                    send('log', {logtype: type, line, value})
-                }else{
-                    // console.log(`${type} ${name} @ line ${line}`, value)
-                    send('log', {logtype: type, line, value: value.toString ? value.toString() : (value + '')})
+            if(!(instance in logInstances)){
+                logInstances[instance] = {
+                    line,
+                    name,
+                    type,
+                    values: [{
+                        time: Date.now(),
+                        value
+                    }]
                 }
-                logTimes[instance] = Date.now()
+            }else{
+                logInstances[instance].values.push({
+                    time: Date.now(),
+                    value
+                });    
             }
-            logValues[instance] = value;
-            finalLog = value;
+            if(Date.now() - lastLogSnapshot > 10){
+                lastLogSnapshot = Date.now();
+                sendLogSnapshot()
+            }
             return value
         },
         __declareGlobals(){
@@ -184,11 +202,8 @@ global.__prepareExecution = function __prepareExecution(code, config){
                 global[arguments[i]] = null;
                 declaredGlobals[i] = 1;
             }
+            sendGlobalSnapshot()
         },
-        // __result(value) {
-        //     console.log("RESULT", value)
-        //     return value
-        // },
         __trackLoop(i, total, loop, loopTotal){
             if(Date.now() - lastProgress > 10){
                 var frac = (i / total) / loopTotal + (loop - 1) / loopTotal;
@@ -196,8 +211,16 @@ global.__prepareExecution = function __prepareExecution(code, config){
                 lastProgress = Date.now();    
             }
         },
+        $$start(){
+            startTime = performance.now()
+        },
         $$done(){
-            send('result', {result: finalLog, newGlobals: Object.keys(declaredGlobals)})
+            sendLogSnapshot()
+
+            // Object.keys(logInstances)
+            send('done', {
+                duration: performance.now() - startTime
+            })
         },
         console: {
             log(){
@@ -206,7 +229,7 @@ global.__prepareExecution = function __prepareExecution(code, config){
         }
     }
     if(typeof code == 'string'){
-        return `(function ExecutionClosure(${Object.keys(varys).join(', ')}){
+        return `(function ExecutionClosure(${Object.keys(varys).join(', ')}){$$start();
             \n${code}\n
         \n}).apply(null, __prepareExecution(0, ${JSON.stringify(config)}));`
     }
