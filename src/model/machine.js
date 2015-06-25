@@ -60,6 +60,7 @@ export default class Machine {
         if(this.busy || this._queue.length == 0) return;
         var cell = this._queue.shift()
         this.busy = true;
+        this.latestRunCell = cell;
         cell.status = 'running';
         cell.oldValue = cell.value;
         cell.compiled = ''
@@ -87,7 +88,7 @@ export default class Machine {
         if(this._queue.indexOf(cell) != -1) return;
         this._queue.push(cell)
         cell.status = 'queued'
-        this.latestQueuedCell = cell
+        // this.latestQueuedCell = cell
         if(!this.busy) this._dequeue();
     }
 }

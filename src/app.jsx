@@ -292,7 +292,7 @@ class UnifiedPair extends Component {
         // React.findDOMNode(this.refs.editor)
 
         return connectDragPreview(
-            <div className={classNames({"cell-cluster": 1, "focused": doc.vm.latestQueuedCell == cell})}>
+            <div className={classNames({"cell-cluster": 1, "focused": doc.vm.latestRunCell == cell})}>
                 {connectDropTarget(<div style={{width: pct}} className={cell_classes} onClick={this.handleClick}>
                     {connectDragSource(<div className="cell-handle" style={{ opacity }} onDoubleClick={this.doubleClick}></div>)}
                     <div ref="editor" className="cell-editor" style={{ opacity }}>
@@ -479,7 +479,7 @@ export default class App extends Component {
                     <h1>Tungsten Carbide <span className="note">last saved 4 minutes ago</span></h1>
                 </div>
                 <UnifiedPane doc={doc} size={this.state.size}></UnifiedPane>
-                { doc.vm.latestQueuedCell ? <FocusedCellResult cell={doc.vm.latestQueuedCell} doc={doc}  size={this.state.size} /> : null }
+                { doc.vm.latestRunCell ? <FocusedCellResult cell={doc.vm.latestRunCell} doc={doc}  size={this.state.size} /> : null }
             </div>
         );
     }
