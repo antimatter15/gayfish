@@ -21,6 +21,7 @@ export default class Machine {
         }
         if(data.type == 'done'){
             cell.status = 'done'
+            cell.duration = data.duration
             cell.update()
             this.busy = false;
             this._dequeue()
@@ -33,33 +34,10 @@ export default class Machine {
         }else if(data.type == 'progress'){
             cell.progress = data.frac;
             cell.update()
-        }else if(data.type == 'log'){
-            var cm = cell.cm;
-            let line = data.line - 1;
-            // TODO: move this to cell, better yet, editor
-            var inlineLog = cm.findMarks({ line, ch: 0 }, { line, ch: 1e3 })
-                .filter(x => x._inlineResult);
-            inlineLog.slice(1).forEach(x => x.clear());
-            var text = JSON.stringify(data.value) + '';
-            if(text.length > 25) text = text.slice(0, 15) + "..." + text.slice(-5);
-            var textNode = document.createTextNode(text);
-            var widget = document.createElement("span");
-            widget.appendChild(textNode);
-            widget.className = "CodeMirror-derp";
-
-            if(inlineLog.length > 0){
-                var marker = inlineLog[0];
-                marker.widgetNode.replaceChild(widget, marker.widgetNode.firstChild)
-            }else{
-                var marker = cm.setBookmark({ line, ch: 1e3 }, {
-                    widget: widget,
-                    insertLeft: true,
-                    handleMouseEvents: true
-                })
+        }else if(data.type == 'logs'){
+            for(let {instance, line, name, count, type, latest} of data.instances){
+                cell.logAnnotate(line - 1, count, latest)
             }
-
-            marker._inlineResult = true;
-            marker._originalLine = line;
             // cell.update()
         }else if(data.type == 'activity'){
             cell.activity = data.activity;

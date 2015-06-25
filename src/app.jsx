@@ -35,12 +35,20 @@ class CellResult extends Component {
                 <ObjectTree node={cell.output} />
             </div>
         }
-        
+        var duration = null;
+        if(cell.duration){
+            if(cell.duration > 500){
+                duration = (cell.duration / 1000).toFixed(2) + 's'
+            }else{
+                duration = (cell.duration).toFixed(2) + 'ms'
+            }
+        }
         return (
             <div className={cell_classes}>
                 {(cell.status == 'running' && cell.progress > 0 && cell.progress <= 1) ? <progress value={cell.progress} max={1}></progress> : null}
                 {(cell.status == 'running' && cell.activity ? <span className="activity">{cell.activity}</span> : null)}
                 <div className="output">
+                    <span className="timing">{duration}</span>
                     {output}
                     {cell.status == 'error' ? <DropdownCodeViewer code={cell.compiled} /> : null }
                 </div>
@@ -276,7 +284,8 @@ class UnifiedPair extends Component {
         const cell_classes = classNames({
             "cell-input": true, 
             "focused": cell.has_focus,
-            "modified": cell.oldValue != cell.value
+            "modified": cell.oldValue != cell.value,
+            "collapsed": cell.collapsed
         }) + ' ' + cell.status;
 
         const maxheight = Math.max(50, cell.height) + 'px';

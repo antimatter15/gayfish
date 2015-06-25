@@ -7,6 +7,7 @@ global.CodeMirror = CodeMirror;
 
 require("codemirror/lib/codemirror.css");
 require("codemirror/mode/xml/xml")
+require("codemirror/mode/python/python")
 
 require("./codemirror/codemirror.less");
 require("./codemirror/javascript")
@@ -25,6 +26,7 @@ require("codemirror/addon/fold/foldcode")
 // require("codemirror/addon/fold/foldgutter")
 // require("codemirror/addon/fold/foldgutter.css")
 require("codemirror/addon/fold/brace-fold")
+require("codemirror/addon/fold/indent-fold")
 // require("codemirror/addon/fold/xml-fold")
 // require("codemirror/addon/fold/markdown-fold")
 // require("codemirror/addon/fold/comment-fold")
@@ -83,6 +85,7 @@ export default class Editor extends Component {
             viewportMargin: Infinity,
             // foldGutter: true,
             // gutters: ["CodeMirror-foldgutter"]
+            scrollbarStyle: null
         });
 
 

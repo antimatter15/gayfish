@@ -100,7 +100,15 @@ h1 {
         margin-bottom: 10px;
 
     }
+    .output {
+        overflow-y: auto;
+    }
 
+    .timing {
+        float: right;
+        color: gray;
+        font-size: small;
+    }
     // progress::-webkit-progress-value {
     //     transition: width 1s linear;
     // }
@@ -184,6 +192,20 @@ h1 {
     }
     .cell-editor {
         flex-grow: 1;
+    }
+
+    &.collapsed {
+        .CodeMirror {
+            max-height: 71px;
+        }
+        .cell-editor {
+            border-bottom: 1px solid #CACACA;
+            border-style: dashed;
+            border-top: 0;
+            border-left: 0;
+            border-right: 0;
+            padding-bottom: 5px;
+        }
     }
 
     &.focused .cell-handle{
@@ -361,6 +383,10 @@ h1 {
 //         content: "// ";
 //     }
 // }
+
+.cell-padding, .cell-input {
+    cursor: text;
+}
 
 
 .CodeMirror-derp {

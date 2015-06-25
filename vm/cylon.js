@@ -191,7 +191,7 @@ global.__prepareExecution = function __prepareExecution(code, config){
                     value
                 });    
             }
-            if(Date.now() - lastLogSnapshot > 10){
+            if(Date.now() - lastLogSnapshot > 20){
                 lastLogSnapshot = Date.now();
                 sendLogSnapshot()
             }

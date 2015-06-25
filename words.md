@@ -46,6 +46,9 @@ What's cool?
 
 TODO:
 
+* Switch from the deprecated gzip-js project to https://github.com/nodeca/pako
+* Find a way to activate both brace folding and indent based code folding for codemirror so that we can have an aggressive cell collapse
+
 * Slider
 
 This should be analogous to Mathematica's `Manipulate[]` IJulia's `@manipulate` (in Interact.jl)
@@ -114,6 +117,7 @@ Inspiration (in no particular order):
 * IPython Notebooks
 	* I love IPython Notebooks, and it's almost certainly the single largest influence on Carbide
 * Stephen Wolfram / Mathematica
+	* Also, Mathics (http://mathics.org/)
 * Bret Victor (http://worrydream.com/)
 * Elm Debugger (http://debug.elm-lang.org/)
 * Steve Wittens 
@@ -132,10 +136,20 @@ Inspiration (in no particular order):
 	* I'm a fan of Webkit/XCode's use of autocomplete (not sure if that's the correct term, I'm referring to the slightly grayed out text injected right of the cursor) over the traditional drop-down menus which tend to occlude the code immediately above or below it (which I'm often trying to look at for reference). 
 * Blink Web Inspector
 * Chris Granger / Light Table & eve
-* JSBin/JSFiddle/CodePen/RequireBin
+* JSBin/JSFiddle/CodePen
 * Sublime Text / Github Atom
 * Facebook Nuclide
+* REPL.IT (https://github.com/replit)
 
+
+Cool things I've discovered along the way:
+* RequireBin
+* trinket.io
+	* http://www.codeskulptor.org/
+* Symja — an open source mathematica clone in Java (https://bitbucket.org/axelclk/symja_android_library/wiki/Home)
+* Lua via Emscripten (http://kripken.github.io/lua.vm.js/lua.vm.js.html)
+* Opal — Ruby to Javascript converter (https://github.com/opal/opal)
+* Scala.js — Scala to Javascript compiler (https://github.com/scala-js/scala-js)
 
 On the shoulders of giants
 
