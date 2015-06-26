@@ -4,6 +4,10 @@ Problems
 	* I've played around with highlighting the cell pair for the most recent output, but it's confusing in its own right (you might be editing some other cell but your attention would be constantly pulled toward the previous one)
 	* Maybe revive some of the weird shapes or color indicators, I can't think of something that makes sense though
 
+
+* Highlighting the current cell— the color bar on the left is perhaps too subtle and I've caught myself confused as to which cell is currently active.
+	* I've played around with putting a background or inset-box-shadow, and it kind of works, though I'm not sure.
+
 * Sticking the focused output card in the right spot. This really shouldn't be too hard but I haven't done it yet.
 
 * It's really weird when the output card is blank. Hide it or fill it with something.
@@ -49,7 +53,7 @@ TODO:
 * Switch from the deprecated gzip-js project to https://github.com/nodeca/pako
 * Find a way to activate both brace folding and indent based code folding for codemirror so that we can have an aggressive cell collapse
 
-* Slider
+* Manipulate
 
 This should be analogous to Mathematica's `Manipulate[]` IJulia's `@manipulate` (in Interact.jl)
 

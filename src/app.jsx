@@ -35,6 +35,17 @@ class CellResult extends Component {
                 <ObjectTree node={cell.output} />
             </div>
         }
+        var globals = [];
+        if(typeof cell.globals !== 'undefined'){
+            console.log(cell.globals)
+            for(var g in cell.globals){
+                globals.push(
+                    <div>
+                        {g}: <div className="platform-mac source-code"><ObjectTree node={cell.globals[g]} /></div>
+                    </div>
+                )
+            }
+        }
         var duration = null;
         if(cell.duration){
             if(cell.duration > 500){
@@ -50,6 +61,7 @@ class CellResult extends Component {
                 <div className="output">
                     <span className="timing">{duration}</span>
                     {output}
+                    {globals}
                     {cell.status == 'error' ? <DropdownCodeViewer code={cell.compiled} /> : null }
                 </div>
             </div>

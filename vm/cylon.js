@@ -17,15 +17,18 @@ function summarizeObject(obj, noRecurse){
     if(type == 'function'){
         return {type: 'function', name: obj.name}
     }else if(type == 'number'){
-        return {type: 'number', value: obj, isNaN: isNaN(obj), isFinite: isFinite(obj)}
+        return obj;
+        // return {type: 'number', value: obj, isNaN: isNaN(obj), isFinite: isFinite(obj)}
     }else if(obj === null){
         return {type: 'null'}
     }else if(type == 'undefined'){
         return {type: 'undefined'}
     }else if(type == 'string'){
-        return {type: 'string', value: obj}
+        // return {type: 'string', value: obj}
+        return obj
     }else if(type == 'boolean'){
-        return {type: 'boolean', value: obj}
+        // return {type: 'boolean', value: obj}
+        return obj
     }else if(Array.isArray(obj)){
         var res = {type: 'array', length: obj.length}
         if(!noRecurse) res.values = obj.map(x => summarizeObject(x, true));
@@ -167,7 +170,9 @@ global.__prepareExecution = function __prepareExecution(code, config){
         send('logs', { instances: packet })
     }
     function sendGlobalSnapshot(){
-        send('globals', { names: Object.keys(declaredGlobals) })
+        send('globals', { 
+            globals: _.zipObject(Object.keys(declaredGlobals).map(x => [x, summarizeObject(global[x])]))
+        })
     }
     var varys = {
         require(name, version){
@@ -200,14 +205,14 @@ global.__prepareExecution = function __prepareExecution(code, config){
         __declareGlobals(){
             for (var i = 0; i < arguments.length; i++) {
                 global[arguments[i]] = null;
-                declaredGlobals[i] = 1;
+                declaredGlobals[arguments[i]] = 1;
             }
             sendGlobalSnapshot()
         },
-        __trackLoop(i, total, loop, loopTotal){
+        __trackLoop(i, total, line, loop, loopTotal){
             if(Date.now() - lastProgress > 10){
                 var frac = (i / total) / loopTotal + (loop - 1) / loopTotal;
-                send('progress', {frac})
+                send('progress', {frac, line, i, total})
                 lastProgress = Date.now();    
             }
         },
@@ -216,8 +221,7 @@ global.__prepareExecution = function __prepareExecution(code, config){
         },
         $$done(){
             sendLogSnapshot()
-
-            // Object.keys(logInstances)
+            sendGlobalSnapshot()
             send('done', {
                 duration: performance.now() - startTime
             })

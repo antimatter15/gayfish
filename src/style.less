@@ -181,7 +181,6 @@ h1 {
     padding-top: 10px;
     // margin: 10px;
     
-    // transition: opacity 1s ease-in;
 
     .cell-handle {
         padding-left: 20px;
@@ -194,6 +193,8 @@ h1 {
         flex-grow: 1;
     }
 
+    // cap the collapsed text editors to 4 lines
+    // and draw a dashed line under them
     &.collapsed {
         .CodeMirror {
             max-height: 71px;
@@ -208,9 +209,20 @@ h1 {
         }
     }
 
-    &.focused .cell-handle{
-        border-color: #B1C4E0;
+
+    
+    &.focused {
+        .cell-handle{
+            border-color: #B1C4E0;
+        }
+        // border-top: 1px solid #D0D0D0;
+        // border-bottom: 1px solid #D0D0D0;
+        // background: #FDFDFD;
+        // box-shadow: 0 0 10px rgba(0,0,0,0.05) inset;
     }
+    // transition: all 0.1s ease-in;
+    // border-top: 1px solid transparent;
+    // border-bottom: 1px solid transparent;
 
     &.error .cell-handle {
         border-color: #CA7474;
@@ -358,46 +370,11 @@ h1 {
     border-radius: 5px;
 }
 
-// .CodeMirror-derp {
-
-//     background: #4E5FB3;
-//     color: white;
-//     border-radius: 5px;
-//     padding: 1px;
-//     font-size: 10px;
-//     padding-left: 5px;
-//     padding-right: 5px;
-//     vertical-align: middle;
-//     font-family: sans-serif;
-//     padding-top: 0px;
-//     margin-left: 5px;
-//     vertical-align: baseline;    
-// }
-
-
-// .CodeMirror-derp {
-//     margin-left: 10px;
-//     color: green;
-//     font-style: italic;
-//     &::before {
-//         content: "// ";
-//     }
-// }
 
 .cell-padding, .cell-input {
     cursor: text;
 }
 
-
-.CodeMirror-derp {
-    margin-left: 10px;
-    color: white;
-    background: #8181A5;
-    padding-left: 4px;
-    padding-right: 4px;
-    border-radius: 2px;
-    font-size: 12px;
-}
 
 .Resizer {
     background: #000;

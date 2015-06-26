@@ -33,6 +33,7 @@ export default class Machine {
             this._dequeue()
         }else if(data.type == 'progress'){
             cell.progress = data.frac;
+            // cell.logAnnotate(data.line - 1, data.i, data.total)
             cell.update()
         }else if(data.type == 'logs'){
             for(let {instance, line, name, count, type, latest} of data.instances){
@@ -44,6 +45,9 @@ export default class Machine {
             cell.update()
         }else if(data.type == 'compiled'){
             cell.compiled = data.code
+        }else if(data.type == 'globals'){
+            cell.globals = data.globals
+            cell.update()
         }else{
             console.error('no handler for data packet', data)
         }

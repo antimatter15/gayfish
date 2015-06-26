@@ -13,11 +13,11 @@ var Looper = new BabelTransformer("Looper", {
                 node.update,
                 t.callExpression(t.identifier('__trackLoop'), [
                     node.test.left,
-                    node.test.right
+                    node.test.right,
+                    t.literal(node.loc.start.line)
                 ])
             ]), node.body)
         }
-        // scope.rename("merp", "_____MERP_____")
     },
     CallExpression(node, parent, scope) {
         if(!(node.callee.type == 'MemberExpression' &&
@@ -37,7 +37,8 @@ var Looper = new BabelTransformer("Looper", {
                 t.blockStatement([
                     t.expressionStatement(t.callExpression(t.identifier('__trackLoop'), [
                         t.memberExpression(t.identifier('arguments'), t.literal(1)),
-                        t.memberExpression(t.memberExpression(t.identifier('arguments'), t.literal(2)), t.identifier('length'))
+                        t.memberExpression(t.memberExpression(t.identifier('arguments'), t.literal(2)), t.identifier('length')),
+                        t.literal(node.loc.start.line)
                     ]))
                 ].concat(fn.body.body)), 
                 fn.returnType, fn.typeParameters
@@ -62,9 +63,12 @@ var Looper = new BabelTransformer("Looper", {
         }else return;
 
         return t.whileStatement(node.test, t.blockStatement([
-            t.expressionStatement(t.callExpression(t.identifier('__trackLoop'), [id, lit]))
+            t.expressionStatement(t.callExpression(t.identifier('__trackLoop'), [
+                id, 
+                lit, 
+                t.literal(node.loc.start.line)
+            ]))
         ].concat(node.body.body)))
-        console.log('whileloop', node)
     },
 
     Program: {
