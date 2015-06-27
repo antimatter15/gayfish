@@ -154,6 +154,7 @@ Cool things I've discovered along the way:
 * Lua via Emscripten (http://kripken.github.io/lua.vm.js/lua.vm.js.html)
 * Opal — Ruby to Javascript converter (https://github.com/opal/opal)
 * Scala.js — Scala to Javascript compiler (https://github.com/scala-js/scala-js)
+	* A Scala REPL in the browser http://www.scala-js-fiddle.com/
 * SLIME — the Superior Lisp Interaction Mode for Emacs (https://common-lisp.net/project/slime/)
 
 

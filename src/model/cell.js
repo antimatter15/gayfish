@@ -15,6 +15,7 @@ export default class CellModel {
         this._collapsed = false;
         this._mounted =  []
         this._height = 0;
+        this.interacts = {}
         this.update()
     }
     serialize() {

@@ -66,38 +66,51 @@ export default class Machine {
     }
     _dequeue() {
         if(this.busy || this._queue.length == 0) return;
-        var cell = this._queue.shift()
+        var {cell, type} = this._queue.shift()
         this.busy = true;
         this.latestRunCell = cell;
         cell.status = 'running';
         cell.oldValue = cell.value;
-        cell.compiled = ''
         cell.activity = ''
         cell.error = null
-        cell.update()
+        cell.progress = 0;
         var cm = cell.cm;
         cm.getAllMarks()
             .filter(x => x._inlineResult)
             .forEach(x => x.clear());
 
-        var error, code = cell.value;
-        if(error){
-            cell.status = 'error'
-            cell.error = error.toString()
+        if(type == 'run'){
+            cell.compiled = ''    
             cell.update()
-            this.busy = false;
-            this._dequeue()
-        }else{
-            cell.progress = 0;
-            this.worker.postMessage({ type: 'exec', code, cell: cell.id })
+            var error, code = cell.value;
+            if(error){
+                cell.status = 'error'
+                cell.error = error.toString()
+                cell.update()
+                this.busy = false;
+                this._dequeue()
+            }else{
+                this.worker.postMessage({ type: 'exec', code, cell: cell.id })
+            }
+        }else if(type == 'repeat'){
+            cell.update()
+            this.worker.postMessage({ type: 'repeat', code, cell: cell.id, interacts: cell.interacts })
         }
-
     }
     queue(cell) {
-        if(this._queue.indexOf(cell) != -1) return;
-        this._queue.push(cell)
+        if(this._queue.some(x => x.cell == cell)) return;
+        // if(this._queue.indexOf(cell) != -1) return;
+        this._queue.push({ cell: cell, type: 'run' })
         cell.status = 'queued'
         // this.latestQueuedCell = cell
+        if(!this.busy) this._dequeue();
+    }
+    repeat(cell) {
+        if(!cell.compiled) throw "oh noes this cell isn't compiled yet";
+        if(this._queue.some(x => x.cell == cell)) return;
+        this._queue.push({ cell: cell, type: 'repeat' })
+
+        cell.status = 'queued'
         if(!this.busy) this._dequeue();
     }
 }

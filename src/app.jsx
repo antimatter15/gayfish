@@ -71,7 +71,11 @@ class Interactor extends Component {
     updateSlider = () => {
         var value = React.findDOMNode(this.refs.slider).value;
         this.setState({value: value})
-        this.replaceValue(this.props.interactor.id, value.toString());
+        var id = this.props.interactor.id
+        this.replaceValue(id, value.toString());
+        var {doc, cell} = this.props;
+        cell.interacts[id] = +value;
+        doc.vm.repeat(cell)
     }
     render(){
         var {doc, cell} = this.props;

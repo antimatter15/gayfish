@@ -1,5 +1,14 @@
 // asynchronous worker bundle v2
 
+// This stuff is pretty hacky and doesn't make much sense
+// a big part of that is that I don't currently have a solid
+// model for what kind of stuff this actually needs to do
+// so I'm building each additional feature in whatever manner
+// incurs the least resistance (barring conscience), with
+// the hope that one day it'll all be rewritten in a wiser
+// way.
+
+
 import * as mininpm from './mininpm'
 import transformCode from './transform/babel'
 import LoggingSyntaxTransformer from './transform/logging'
@@ -12,6 +21,7 @@ import * as _ from 'lodash'
 global.mininpm = mininpm;
 var __latestCellID;
 var inspectables = []
+var cachedTranspiledCells = {};
 
 function summarizeObject(obj, noRecurse){
     var type = typeof obj;
@@ -48,9 +58,14 @@ addEventListener('message', function(e){
     if(packet.type == 'exec'){
         __latestCellID = packet.cell;
         transpileAndRun(packet)
+            .then(function(){
+                runCachedCell(packet.cell)
+            })
             .catch(function(err){
                 postMessage({ type: 'error', error: err.toString(), cell: packet.cell })
             })
+    }else if(packet.type == 'repeat'){
+        runCachedCell(packet.cell, { interacts: packet.interacts })
     }else if(packet.type == 'inspect'){
 
     }else if(packet.type == 'queryModule'){
@@ -68,38 +83,19 @@ addEventListener('message', function(e){
 
 async function transpileAndRun(packet){
     var transpiledCode;
-    var execonf = {
-        cell: packet.cell
-    }
+    
     // postMessage({ type: 'activity', activity: 'transpiling code', cell: packet.cell})
     try{
         transpiledCode = transformCode(packet.code, {
             optional: ["runtime"],
             stage: 0,
-            acornPlugins: {
-                semilog: true
-            },
+            acornPlugins: { semilog: true },
             plugins: [
-                {
-                    transformer: LoggingSyntaxTransformer,
-                    position: 'before'
-                }, 
-                {
-                    transformer: GlobalTransformer,
-                    position: 'before'
-                }, 
-                {
-                    transformer: LooperTransformer,
-                    position: 'before'
-                },
-                {
-                    transformer: InteractTransformer,
-                    position: 'after'
-                },
-                // {
-                //     transformer: ResultTransformer,
-                //     position: 'after'
-                // },
+                { transformer: LoggingSyntaxTransformer, position: 'before' }, 
+                { transformer: GlobalTransformer, position: 'before' }, 
+                { transformer: LooperTransformer, position: 'before' },
+                { transformer: InteractTransformer, position: 'after' },
+                // { transformer: ResultTransformer, position: 'after' },
             ]
         })
     } catch (err) {
@@ -128,22 +124,26 @@ async function transpileAndRun(packet){
         })
         
     }
-    
-    var wrappedCode = __prepareExecution(transpiledCode.code, execonf)
-    postMessage({ type: 'activity', activity: '', cell: packet.cell})
+    cachedTranspiledCells[packet.cell] = transpiledCode.code
+}
+
+
+
+function runCachedCell(id, execonf){
+    if(!execonf) execonf = {};
+    execonf.cell = id;
+    var code = cachedTranspiledCells[id]
+    var wrappedCode = __prepareExecution(code, execonf)
+    postMessage({ type: 'activity', activity: '', cell: id})
     
     try{
         var result = eval.call(self, wrappedCode)
     } catch (err) {
         console.error(err)
-        postMessage({ type: 'error', error: err.toString(), cell: packet.cell })
+        postMessage({ type: 'error', error: err.toString(), cell: id })
         return
     }
-    // if(result){
-    // }
 }
-
-
 
 
 
@@ -189,11 +189,15 @@ global.__prepareExecution = function __prepareExecution(code, config){
     // guaranteed if there are conditional interactors
     // that said, it's a bit of a contrived edge case so maybe
     // it's not worth worrying about
-    interact.Slider = function(def, id){
+    interact.Slider = function(def){
+        var id = arguments[arguments.length - 1];
         interactors[id] = {
             type: 'slider',
             def: def,
             id: id
+        }
+        if(config.interacts && config.interacts[id]){
+            return config.interacts[id]
         }
         return def
     }
@@ -236,7 +240,7 @@ global.__prepareExecution = function __prepareExecution(code, config){
                 global[arguments[i]] = null;
                 declaredGlobals[arguments[i]] = 1;
             }
-            sendGlobalSnapshot()
+            // sendGlobalSnapshot()
         },
         __trackLoop(i, total, line, loop, loopTotal){
             if(Date.now() - lastProgress > 10){
