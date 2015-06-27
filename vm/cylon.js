@@ -34,7 +34,8 @@ function summarizeObject(obj, noRecurse){
         if(!noRecurse) res.values = obj.map(x => summarizeObject(x, true));
         return res;
     }else{ // object
-        var res = {type: 'object', keys: Object.keys(obj)}
+        var res = {type: 'object'}
+        if(!noRecurse) res.pairs = Object.keys(obj).map(x => [x, summarizeObject(obj[x], true)]);
         return res;
     }
 }
@@ -164,7 +165,7 @@ global.__prepareExecution = function __prepareExecution(code, config){
                 name: inst.name,
                 type: inst.type,
                 count: inst.values.length,
-                latest: summarizeObject(inst.values[inst.values.length - 1])
+                latest: summarizeObject(inst.values[inst.values.length - 1].value)
             })
         }
         send('logs', { instances: packet })
@@ -174,11 +175,16 @@ global.__prepareExecution = function __prepareExecution(code, config){
             globals: _.zipObject(Object.keys(declaredGlobals).map(x => [x, summarizeObject(global[x])]))
         })
     }
+    var interact = function Interact(def){
+        return def
+    };
+
     var varys = {
         require(name, version){
             // if(name in cachedModules && !version) return cachedModules[name];
             return mininpm.requireModule(name, version)
         },
+        Interact: interact,
         __log(value, name, type, line, instance) {
             if(!(instance in logInstances)){
                 logInstances[instance] = {

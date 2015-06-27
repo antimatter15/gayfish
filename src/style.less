@@ -43,6 +43,9 @@ h1 {
 }
 .cell-output {
     overflow: hidden;
+    &.overflowing {
+        border-bottom: 1px dashed #CACACA;
+    }
 }
 
 .CodeMirror-completion {
@@ -100,6 +103,7 @@ h1 {
         margin-bottom: 10px;
 
     }
+    overflow: hidden;
     .output {
         overflow-y: auto;
     }

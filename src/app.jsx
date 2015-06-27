@@ -37,7 +37,7 @@ class CellResult extends Component {
         }
         var globals = [];
         if(typeof cell.globals !== 'undefined'){
-            console.log(cell.globals)
+            // console.log(cell.globals)
             for(var g in cell.globals){
                 globals.push(
                     <div>
@@ -54,8 +54,12 @@ class CellResult extends Component {
                 duration = (cell.duration).toFixed(2) + 'ms'
             }
         }
+        var style = {};
+        if(this.props.preview){
+            style.maxHeight = Math.max(50, cell.height - 15) + 'px';
+        }
         return (
-            <div className={cell_classes}>
+            <div className={cell_classes} style={style}>
                 {(cell.status == 'running' && cell.progress > 0 && cell.progress <= 1) ? <progress value={cell.progress} max={1}></progress> : null}
                 {(cell.status == 'running' && cell.activity ? <span className="activity">{cell.activity}</span> : null)}
                 <div className="output">
@@ -259,6 +263,12 @@ class UnifiedPair extends Component {
         const {cell} = this.props;
         cell._pair = React.findDOMNode(this)
     }
+    componentDidUpdate(){
+        var el = React.findDOMNode(this.refs.result)
+        if(el.scrollHeight > el.offsetHeight){
+            React.findDOMNode(this.refs.output).className += " overflowing"
+        }
+    }
     handleClick = (e) => {
         const {cell} = this.props;
         cell.has_focus = true;
@@ -272,11 +282,6 @@ class UnifiedPair extends Component {
             cell.cm.focus()
             cell.cm.execCommand('goDocEnd')   
         }
-    }
-    componentDidUpdate() {
-        const {cell} = this.props;
-        cell.height = React.findDOMNode(this.refs.editor).offsetHeight;
-        // cell.update()
     }
     doubleClick = (e) => {
         // TODO: collapse the cell
@@ -300,7 +305,6 @@ class UnifiedPair extends Component {
             "collapsed": cell.collapsed
         }) + ' ' + cell.status;
 
-        const maxheight = Math.max(50, cell.height) + 'px';
         // React.findDOMNode(this.refs.editor)
 
         return connectDragPreview(
@@ -311,8 +315,8 @@ class UnifiedPair extends Component {
                         <Editor {...this.props}></Editor>
                     </div>
                 </div>)}
-                <div className="cell-output" style={{ opacity, width: ipct, maxHeight: maxheight }}>
-                    <CellResult {...this.props} cell={cell}></CellResult>
+                <div ref="output" className="cell-output" style={{ opacity, width: ipct }}>
+                    <CellResult ref="result" {...this.props} cell={cell} preview={true}></CellResult>
                 </div>
             </div>);
     } 
@@ -408,9 +412,19 @@ export default class App extends Component {
         this.defaultSize = 0.60
 
         this.state = { doc, size: this.defaultSize }
-        doc.update = () => {
+
+        var renderTick = () => {
+            this.updateQueued = false;
+
             localStorage[location.pathname] = JSON.stringify(doc.serialize())
             this.forceUpdate()
+        }
+
+        doc.update = () => {
+            if(!this.updateQueued){
+                this.updateQueued = true;
+                requestAnimationFrame(renderTick)
+            }
         }
     }
     handleKey = (e) => {

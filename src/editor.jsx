@@ -67,6 +67,11 @@ export default class Editor extends Component {
         super(props)
         this.componentDidMount = this.componentDidMount.bind(this)
     }
+    componentDidUpdate() {
+        var {doc, cell} = this.props;
+        var cm = cell.cm;
+        cell.height = cm.getWrapperElement().offsetHeight;
+    }
     componentDidMount() {        
         var {doc, cell} = this.props;
 
@@ -241,6 +246,9 @@ export default class Editor extends Component {
             cm.findMarks({line, ch: 0}, {line, ch: 1e8})
                 .filter(x => x._inlineResult)
                 .forEach(x => x.clear())
+
+            // This is kinda not super ideal
+            cell.height = cm.getWrapperElement().offsetHeight;
 
         })
         cm.on("cursorActivity", function(cm) { 

@@ -14,7 +14,7 @@ export default class CellModel {
         }
         this._collapsed = false;
         this._mounted =  []
-        this.height = 0;
+        this._height = 0;
         this.update()
     }
     serialize() {
@@ -56,18 +56,21 @@ export default class CellModel {
         
         var widget = document.createElement("span");
 
-        var counter = document.createElement('span');
-        counter.appendChild(document.createTextNode('×' + count))
-        counter.className = 'CodeMirror-counter';
-
         var summary = document.createElement('span');
         var text = JSON.stringify(value) + '';
         if(text.length > 25) text = text.slice(0, 15) + "..." + text.slice(-5);
         summary.appendChild(document.createTextNode(text))
         summary.className = 'CodeMirror-summary';
-
         widget.appendChild(summary)
-        widget.appendChild(counter)
+
+        if(count > 1){
+            var counter = document.createElement('span');
+            counter.appendChild(document.createTextNode('×' + count))
+            counter.className = 'CodeMirror-counter';
+            widget.appendChild(counter)    
+        }
+        
+
 
         if(inlineLog.length > 0){
             var marker = inlineLog[0];
@@ -107,6 +110,13 @@ export default class CellModel {
             this.cm.execCommand('unfoldAll')
         }
         this.update()
+    }
+    get height(){ return this._height; }
+    set height(val){
+        if(this._height != val){
+            this._height = val;
+            this.update()
+        }
     }
     get collapsed(){ return this._collapsed }
     get index(){ return this.doc.cells.indexOf(this) }
