@@ -6,6 +6,7 @@ import LoggingSyntaxTransformer from './transform/logging'
 import LooperTransformer from './transform/looper'
 import GlobalTransformer from './transform/globals'
 import ResultTransformer from './transform/result'
+import InteractTransformer from './transform/interact'
 import * as _ from 'lodash'
 
 global.mininpm = mininpm;
@@ -91,6 +92,10 @@ async function transpileAndRun(packet){
                     transformer: LooperTransformer,
                     position: 'before'
                 },
+                {
+                    transformer: InteractTransformer,
+                    position: 'after'
+                },
                 // {
                 //     transformer: ResultTransformer,
                 //     position: 'after'
@@ -175,10 +180,28 @@ global.__prepareExecution = function __prepareExecution(code, config){
             globals: _.zipObject(Object.keys(declaredGlobals).map(x => [x, summarizeObject(global[x])]))
         })
     }
-    var interact = function Interact(def){
-        return def
+    var interactors = {}
+    var interact = function Interact(){
+        return interact.Slider.apply(this, arguments)
     };
-
+    // the interactors need some sort of unique id which is tied
+    // to the code because the order of getting called isn't
+    // guaranteed if there are conditional interactors
+    // that said, it's a bit of a contrived edge case so maybe
+    // it's not worth worrying about
+    interact.Slider = function(def, id){
+        interactors[id] = {
+            type: 'slider',
+            def: def,
+            id: id
+        }
+        return def
+    }
+    function sendInteractSnapshot(){
+        send('interact', {
+            interactors: _.values(interactors)
+        })
+    }
     var varys = {
         require(name, version){
             // if(name in cachedModules && !version) return cachedModules[name];
@@ -228,6 +251,7 @@ global.__prepareExecution = function __prepareExecution(code, config){
         $$done(){
             sendLogSnapshot()
             sendGlobalSnapshot()
+            sendInteractSnapshot()
             send('done', {
                 duration: performance.now() - startTime
             })

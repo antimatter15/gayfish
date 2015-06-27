@@ -189,11 +189,12 @@ export default class Editor extends Component {
             },
             "Cmd-J": (cm) => {
                 var newCell = new CellModel(doc, cell.index + 1)
-                newCell.cm.focus()
+                newCell.mount(x => newCell.cm.focus())
+                
             },
             "Cmd-K": (cm) => {
                 var newCell = new CellModel(doc, cell.index)
-                newCell.cm.focus()
+                newCell.mount(x => newCell.cm.focus())
             },
             "Down": (cm) => {
                 var cursor = cm.getCursor()
@@ -273,23 +274,6 @@ export default class Editor extends Component {
                 doc.update()
             }
         })
-        cm.on('keyup', function(cm, evt){
-            // console.log(cm.type, cm, evt.keyCode)
-            // if(evt.keyCode == 190){ // i don't know why this is "."
-            //     eliot.complete(cm)
-            // }
-        })
-        // cm.on('keydown', (cm, evt) => {
-        //     // console.log(evt, cm, evt.keyCode)
-        //     if(evt.keyCode == 40 && !evt.metaKey){ // down
-                
-        //     }else if(evt.keyCode == 38 && !evt.metaKey){ // up
-                
-        //     }else if(evt.keyCode == 8) { // backspace
-                
-        //     }
-            
-        // })
     }
     render() {
         return <div></div>

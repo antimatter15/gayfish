@@ -8,6 +8,7 @@ require('./blink/treeoutline.css')
 require('./blink/inspectorCommon.css')
 require('./blink/inspectorSyntaxHighlight.css')
 
+// TODO: rewrite this so it's not a gnarly mess
 
 class ObjectPreview extends Component {
     render(){
@@ -25,7 +26,7 @@ class ObjectPreview extends Component {
                 return <span className="object-value-object">Object</span>;
             }
         }else{
-            return <span>wat?</span>
+            return <span>wat? {typeof node}</span>
         }
     }
 }
@@ -44,7 +45,21 @@ export default class ObjectTree extends Component {
         var {node} = this.props;
         var {expanded} = this.state;
         if(typeof node != "object" || node === null){
-            return <ObjectPreview node={node} />;
+            if(typeof node == "string" && node.length > 50){
+                return <ol className="tree-outline component-root platform-mac source-code object-properties-section">
+                    <li className={classNames({"parent": 1, expanded})} onClick={this.toggleExpand}>
+                        <div className="selection"></div>
+                        <content>
+                            <ObjectPreview node={JSON.stringify(node).slice(1, 50) + '...'} />
+                        </content>
+                    </li>
+                    {!expanded ? <ol className="children" /> : <ol className="children expanded">
+                        <ObjectPreview node={node} />
+                    </ol>}
+                </ol>
+            }else{
+                return <ObjectPreview node={node} />;   
+            }
         }else{
             if(Array.isArray(node)){
                 if(node.length < 100){

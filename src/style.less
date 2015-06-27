@@ -103,9 +103,27 @@ h1 {
         margin-bottom: 10px;
 
     }
+    .interactors {
+        padding: 15px;
+        display: block;
+        .widget {
+            width: 100%;
+        }
+        .name {
+            min-width: 50px;
+        }
+        .slider {
+            width: 100%;
+        }
+    }
     overflow: hidden;
     .output {
         overflow-y: auto;
+        margin: 15px;
+    }
+
+    .interactors, .global-table {
+        clear: both;
     }
 
     .timing {
@@ -123,8 +141,8 @@ h1 {
         }
         // color: gray;
     }
-    &.error {
-        // color: #BD2424;
+    .error {
+        color: #BD2424;
     }
     progress {
         width: 100%;
@@ -133,7 +151,6 @@ h1 {
         color: gray;
     }
 
-    margin: 15px;
     // margin-top: 15px;
     // margin-left: 20px;
     // margin-bottom: 30px;
@@ -144,6 +161,13 @@ h1 {
 
 
 .focused-cell-result {
+    .interactors {
+        border-bottom: 1px solid #D0D0D0;
+        margin-bottom: 10px;
+        padding-bottom: 5px;
+        padding: 15px;
+        background: #E1F1D7;
+    }
     position: absolute;
     right: 15px;
     background: white;

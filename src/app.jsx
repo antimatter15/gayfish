@@ -13,8 +13,84 @@ import Machine from './model/machine'
 import CellModel from './model/cell'
 import DocumentModel from './model/document'
 import Editor from './editor'
+import * as _ from 'lodash'
 
 var CodeMirror = require('codemirror')
+
+
+class Interactor extends Component {
+    constructor(props){
+        super(props)
+        var {doc, cell} = this.props;
+        var i = this.props.interactor;
+        this.state = {
+            value: i.def
+        }
+    }
+
+    replaceValue = (id, value) => {
+        // Yeah I know this is like the cardinal sin of parsing,
+        // that is, the lack thereof. But using a full parser
+        // would probably make this needlessly language-specific
+        // so instead it's doing a regexp to match instances of
+        // the pattern Interact(\.[A-Za-z]+)? and it's asking
+        // CodeMirror's syntax highlighting engine to make sure
+        // that that part of it isn't a comment or string
+
+        var {doc, cell} = this.props;
+        var cm = cell.cm;
+        var query = new RegExp("Interact(\\.[A-Za-z]+)?", "g")
+        var paren = new RegExp("\\(", "g");
+        var end = new RegExp(",|\\)", "g");
+        var interacts = []
+        for(var i = 0, lc = cm.lineCount(); i < lc; i++){
+            query.lastIndex = 0
+            var line = cm.getLine(i);
+            while(query.exec(line)){
+                var ch = query.lastIndex;
+                var tt = cm.getTokenTypeAt({line: i, ch: ch});
+                paren.lastIndex = ch;
+                paren.exec(line)
+                end.lastIndex = paren.lastIndex
+                end.exec(line)
+                if((tt == 'variable' || tt == 'property') && paren.lastIndex > 0 && end.lastIndex > 0){
+                    interacts.push([
+                        { line: i, ch: paren.lastIndex }, 
+                        { line: i, ch: end.lastIndex - 1 }
+                    ])
+                }
+            }
+        }
+        var target = interacts[id]
+        if(target){
+            var [from, to] = target;    
+            cm.replaceRange(value, from, to)
+        }
+    }
+
+    updateSlider = () => {
+        var value = React.findDOMNode(this.refs.slider).value;
+        this.setState({value: value})
+        this.replaceValue(this.props.interactor.id, value.toString());
+    }
+    render(){
+        var {doc, cell} = this.props;
+        var i = this.props.interactor;
+        if(i.type == 'slider'){
+            return <tr>
+                <td className="name">{this.state.value}</td>
+                <td className="widget">
+                    <input ref="slider" className="slider" type="range" onChange={this.updateSlider} defaultValue={this.state.value} />
+                </td>
+            </tr>
+        }else{
+            return <tr>
+                <td className="name">{i.type}</td>
+                <td className="widget">{i.def}</td>
+            </tr>    
+        }
+    }
+}
 
 
 class CellResult extends Component {
@@ -29,20 +105,30 @@ class CellResult extends Component {
         }) + ' ' + cell.status;
 
         if(typeof cell.output === 'undefined'){
-            var output = null;
+            var output = <div></div>;
         }else{
             var output = <div className="platform-mac source-code">
                 <ObjectTree node={cell.output} />
             </div>
+        }
+        var interactors = [];
+        if(typeof cell.interactors !== 'undefined'){
+            interactors = _.sortBy(cell.interactors, 'id').map(i => <Interactor cell={cell} doc={doc} interactor={i} />)
         }
         var globals = [];
         if(typeof cell.globals !== 'undefined'){
             // console.log(cell.globals)
             for(var g in cell.globals){
                 globals.push(
-                    <div>
-                        {g}: <div className="platform-mac source-code"><ObjectTree node={cell.globals[g]} /></div>
-                    </div>
+                    <tr key={g}>
+                        <td>
+                            <div className="platform-mac source-code">{g}</div>
+                        </td>
+                        <td>=</td>
+                        <td>
+                            <div className="platform-mac source-code"><ObjectTree node={cell.globals[g]} /></div>
+                        </td>
+                    </tr>
                 )
             }
         }
@@ -60,12 +146,19 @@ class CellResult extends Component {
         }
         return (
             <div className={cell_classes} style={style}>
+                
                 {(cell.status == 'running' && cell.progress > 0 && cell.progress <= 1) ? <progress value={cell.progress} max={1}></progress> : null}
                 {(cell.status == 'running' && cell.activity ? <span className="activity">{cell.activity}</span> : null)}
+                { interactors.length > 0 ? <table className="interactors">
+                    <tbody>{interactors}</tbody>
+                </table> : null }
+                    
                 <div className="output">
+
                     <span className="timing">{duration}</span>
+                    {cell.error ? <div className="error">{cell.error}</div> : null }
                     {output}
-                    {globals}
+                    <table className="global-table"><tbody>{globals}</tbody></table>
                     {cell.status == 'error' ? <DropdownCodeViewer code={cell.compiled} /> : null }
                 </div>
             </div>

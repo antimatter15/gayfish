@@ -1,6 +1,17 @@
 import Machine from './machine'
 import CellModel from './cell'
 
+
+// I'm really sorry for how this code has inevitably turned out
+// It's probably since devolved into some inscrutable mess of 
+// non-idiomatic esoteric and retro-futuristic ES7 with a
+// generous smearing of non-standard facebook slime (nee JSX). 
+
+// My philosophy for stuff has always been that rewrites are good
+// and my hope is that this code never gets so ridiculously
+// large that a full rewrite isn't an option.
+
+
 export default class DocumentModel { // a document is a collection of cells
     constructor() {
         this.cells = []

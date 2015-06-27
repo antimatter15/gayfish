@@ -27,7 +27,7 @@ export default class Machine {
             this._dequeue()
         }else if(data.type == 'error'){
             cell.status = 'error'
-            cell.output = data.error;
+            cell.error = data.error;
             cell.update()
             this.busy = false;
             this._dequeue()
@@ -36,12 +36,16 @@ export default class Machine {
             // cell.logAnnotate(data.line - 1, data.i, data.total)
             cell.update()
         }else if(data.type == 'logs'){
+            cell.logs = data.instances
             for(let {instance, line, name, count, type, latest} of data.instances){
                 cell.logAnnotate(line - 1, count, latest)
             }
             // cell.update()
         }else if(data.type == 'activity'){
             cell.activity = data.activity;
+            cell.update()
+        }else if(data.type == 'interact'){
+            cell.interactors = data.interactors;
             cell.update()
         }else if(data.type == 'compiled'){
             cell.compiled = data.code
@@ -69,6 +73,7 @@ export default class Machine {
         cell.oldValue = cell.value;
         cell.compiled = ''
         cell.activity = ''
+        cell.error = null
         cell.update()
         var cm = cell.cm;
         cm.getAllMarks()
@@ -78,7 +83,7 @@ export default class Machine {
         var error, code = cell.value;
         if(error){
             cell.status = 'error'
-            cell.output = error.toString()
+            cell.error = error.toString()
             cell.update()
             this.busy = false;
             this._dequeue()

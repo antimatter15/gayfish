@@ -17,7 +17,7 @@ var defaultOptions = {
 
 CodeMirror.defineExtension("showPrediction", function(options) {
 
-    // // We want a single cursor position.
+    // We want a single cursor position.
     if (this.listSelections().length > 1 || this.somethingSelected()) return;
     var cm = this;
 
@@ -38,7 +38,7 @@ CodeMirror.defineExtension("showPrediction", function(options) {
 
 
 var requestAnimationFrame = window.requestAnimationFrame || function(fn) {
-return setTimeout(fn, 1000/60);
+    return setTimeout(fn, 1000/60);
 };
 var cancelAnimationFrame = window.cancelAnimationFrame || clearTimeout;
 
@@ -76,12 +76,12 @@ function Completion(cm, options) {
     var self = this;
 
     cm.addKeyMap(this.keyMap = {
-            Tab: this.pick.bind(this),
-            End: this.pick.bind(this),
-            "Cmd-Right": this.pick.bind(this),
-            Right: this.pickOne.bind(this)
-        })
-    // cm.on("cursorActivity", this.activityFunc = function() { self.cursorActivity(); });
+        Tab: this.pick.bind(this),
+        End: this.pick.bind(this),
+        "Cmd-Right": this.pick.bind(this),
+        Right: this.pickOne.bind(this)
+    })
+    cm.on("cursorActivity", this.activityFunc = function() { self.cursorActivity(); });
 }
 
 Completion.prototype = {
@@ -130,6 +130,11 @@ Completion.prototype = {
         var completion = data.list[0]
         let {line, ch} = cm.getCursor();
         this.cm.replaceRange(completion.text.slice(0, ch - from.ch + 1), from, {line, ch})
+    },
+
+    cursorActivity: function(){
+        var cm = this.cm;
+        if (cm.listSelections().length > 1 || cm.somethingSelected()) return this.close();
     },
 
 
