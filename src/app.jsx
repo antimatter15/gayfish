@@ -18,6 +18,8 @@ import * as _ from 'lodash'
 var CodeMirror = require('codemirror')
 
 
+require('./bootstrap/carbide.less');
+
 class Interactor extends Component {
     constructor(props){
         super(props)
@@ -68,8 +70,7 @@ class Interactor extends Component {
         }
     }
 
-    updateSlider = () => {
-        var value = React.findDOMNode(this.refs.slider).value;
+    updateValue = (value) => {
         this.setState({value: value})
         var id = this.props.interactor.id
         this.replaceValue(id, value.toString());
@@ -77,22 +78,58 @@ class Interactor extends Component {
         cell.interacts[id] = +value;
         doc.vm.repeat(cell)
     }
+
+    updateSlider = () => {
+        var value = React.findDOMNode(this.refs.slider).value;
+        this.updateValue(value)
+        
+    }
+    choiceUpdater = (value) => {
+        return e => {
+            this.updateValue(value)
+        }
+    }
     render(){
+        // <td className="name">
+        //     <div className="platform-mac source-code"><ObjectTree node={+this.state.value} /></div>
+        // </td>
         var {doc, cell} = this.props;
         var i = this.props.interactor;
+
+        var widget = null;
         if(i.type == 'slider'){
-            return <tr>
-                <td className="name">{this.state.value}</td>
-                <td className="widget">
-                    <input ref="slider" className="slider" type="range" onChange={this.updateSlider} defaultValue={this.state.value} />
-                </td>
-            </tr>
-        }else{
-            return <tr>
-                <td className="name">{i.type}</td>
-                <td className="widget">{i.def}</td>
-            </tr>    
+            widget = <input 
+                ref="slider" 
+                className="slider" 
+                type="range" 
+                onChange={this.updateSlider} 
+                defaultValue={this.state.value} 
+                min={i.min || 0}
+                max={i.max || 100} />
+        }else if(i.type == 'choice'){
+            // TODO: if opts.length > 5 then present this as a dropdown
+            widget = <div className="btn-group">
+                        {
+                            i.opts.map((x, index) => <button 
+                                type="button" 
+                                className={classNames({
+                                    "btn": true,
+                                    "btn-default": true,
+                                    "active": index == this.state.value
+                                })}
+                                onClick={this.choiceUpdater(index)}>{x}</button>)
+                        }
+                    </div>
         }
+
+        return <tr>
+            <td className="name platform-mac source-code">
+                {i.name ? i.name : <ObjectTree node={+this.state.value} />}
+            </td>
+            <td className="widget">
+                {widget}
+            </td>
+        </tr>
     }
 }
 
@@ -146,13 +183,13 @@ class CellResult extends Component {
         }
         var style = {};
         if(this.props.preview){
-            style.maxHeight = Math.max(50, cell.height - 15) + 'px';
+            style.maxHeight = Math.max(40, cell.height - 15) + 'px';
         }
         return (
             <div className={cell_classes} style={style}>
                 
                 {(cell.status == 'running' && cell.progress > 0 && cell.progress <= 1) ? <progress value={cell.progress} max={1}></progress> : null}
-                {(cell.status == 'running' && cell.activity ? <span className="activity">{cell.activity}</span> : null)}
+                {(cell.status == 'running' && cell.activity ? <div className="activity">{cell.activity}</div> : null)}
                 { interactors.length > 0 ? <table className="interactors">
                     <tbody>{interactors}</tbody>
                 </table> : null }
@@ -363,7 +400,10 @@ class UnifiedPair extends Component {
     componentDidUpdate(){
         var el = React.findDOMNode(this.refs.result)
         if(el.scrollHeight > el.offsetHeight){
-            React.findDOMNode(this.refs.output).className += " overflowing"
+            var output = React.findDOMNode(this.refs.output);
+            if(output.className.indexOf('overflowing') == -1){
+                output.className += " overflowing"   
+            }
         }
     }
     handleClick = (e) => {

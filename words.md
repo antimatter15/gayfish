@@ -47,6 +47,11 @@ What's cool?
 	* Woooo
 
 
+Design Decisions:
+
+* Separation of input and output
+	* Mathematica and IPython
+
 
 TODO:
 
@@ -123,6 +128,8 @@ Inspiration (in no particular order):
 * Stephen Wolfram / Mathematica
 	* Also, Mathics (http://mathics.org/)
 * Bret Victor (http://worrydream.com/)
+	* Tangle reactive documents (http://worrydream.com/Tangle/)
+	* Interlinear Spellcheck (http://worrydream.com/#!/InlineSpellcheck)
 * Elm Debugger (http://debug.elm-lang.org/)
 * Steve Wittens 
 	* TermKit (https://github.com/unconed/TermKit)
@@ -130,6 +137,7 @@ Inspiration (in no particular order):
 * Mike Bostocks
 	* D3.js (http://d3js.org/)
 	* bl.ocks.org
+* Calca
 * Tom Lieber: Adobe Research / MIT CSAIL UID / Theseus (https://github.com/adobe-research/theseus)
 * Scott McDirmid / Microsoft Research (http://research.microsoft.com/en-us/people/smcdirm/liveprogramming.aspx)
 * Matlab
@@ -144,6 +152,7 @@ Inspiration (in no particular order):
 * Sublime Text / Github Atom
 * Facebook Nuclide
 * REPL.IT (https://github.com/replit)
+
 
 
 Cool things I've discovered along the way:

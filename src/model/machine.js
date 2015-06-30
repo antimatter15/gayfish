@@ -75,11 +75,12 @@ export default class Machine {
         cell.error = null
         cell.progress = 0;
         var cm = cell.cm;
-        cm.getAllMarks()
-            .filter(x => x._inlineResult)
-            .forEach(x => x.clear());
 
         if(type == 'run'){
+            cm.getAllMarks()
+                .filter(x => x._inlineResult)
+                .forEach(x => x.clear());
+
             cell.compiled = ''    
             cell.update()
             var error, code = cell.value;

@@ -65,6 +65,7 @@ addEventListener('message', function(e){
                 postMessage({ type: 'error', error: err.toString(), cell: packet.cell })
             })
     }else if(packet.type == 'repeat'){
+        console.log('interacts', packet.interacts)
         runCachedCell(packet.cell, { interacts: packet.interacts })
     }else if(packet.type == 'inspect'){
 
@@ -181,26 +182,38 @@ global.__prepareExecution = function __prepareExecution(code, config){
         })
     }
     var interactors = {}
-    var interact = function Interact(){
-        return interact.Slider.apply(this, arguments)
-    };
-    // the interactors need some sort of unique id which is tied
-    // to the code because the order of getting called isn't
-    // guaranteed if there are conditional interactors
-    // that said, it's a bit of a contrived edge case so maybe
-    // it's not worth worrying about
-    interact.Slider = function(def){
-        var id = arguments[arguments.length - 1];
-        interactors[id] = {
-            type: 'slider',
-            def: def,
-            id: id
+
+    var interact = {
+        Slider(id, name){
+            return function(def, min, max){
+                interactors[id] = {
+                    type: 'slider',
+                    name: name,
+                    def: def,
+                    id: id,
+                    min: min,
+                    max: max
+                }
+                if(config.interacts && id in config.interacts) return config.interacts[id];
+                return def;
+            }
+        },
+        Choice(id, name){
+            return function(def, opts) {
+                interactors[id] = {
+                    type: 'choice',
+                    name: name,
+                    opts: opts,
+                    def: def,
+                    id: id
+                }
+                if(config.interacts && id in config.interacts) return config.interacts[id];
+                return def
+            }
         }
-        if(config.interacts && config.interacts[id]){
-            return config.interacts[id]
-        }
-        return def
     }
+    interact.def = interact.Slider;
+
     function sendInteractSnapshot(){
         send('interact', {
             interactors: _.values(interactors)
@@ -211,7 +224,7 @@ global.__prepareExecution = function __prepareExecution(code, config){
             // if(name in cachedModules && !version) return cachedModules[name];
             return mininpm.requireModule(name, version)
         },
-        Interact: interact,
+        __interact: interact,
         __log(value, name, type, line, instance) {
             if(!(instance in logInstances)){
                 logInstances[instance] = {
@@ -249,9 +262,6 @@ global.__prepareExecution = function __prepareExecution(code, config){
                 lastProgress = Date.now();    
             }
         },
-        $$start(){
-            startTime = performance.now()
-        },
         $$done(){
             sendLogSnapshot()
             sendGlobalSnapshot()
@@ -267,9 +277,12 @@ global.__prepareExecution = function __prepareExecution(code, config){
         }
     }
     if(typeof code == 'string'){
-        return `(function ExecutionClosure(${Object.keys(varys).join(', ')}){$$start();
+        // don't stick anything before the code because "use strict" needs to be at top
+        return `(function ExecutionClosure(${Object.keys(varys).join(', ')}){
             \n${code}\n
         \n}).apply(null, __prepareExecution(0, ${JSON.stringify(config)}));`
+    }else{
+        startTime = performance.now()
+        return Object.keys(varys).map(x => varys[x])
     }
-    return Object.keys(varys).map(x => varys[x])
 }
