@@ -73,21 +73,25 @@ class Interactor extends Component {
     updateValue = (value) => {
         this.setState({value: value})
         var id = this.props.interactor.id
-        this.replaceValue(id, value.toString());
+        this.replaceValue(id, JSON.stringify(value));
         var {doc, cell} = this.props;
-        cell.interacts[id] = +value;
+        cell.interacts[id] = value;
         doc.vm.repeat(cell)
     }
 
     updateSlider = () => {
         var value = React.findDOMNode(this.refs.slider).value;
-        this.updateValue(value)
+        this.updateValue(+value)
         
     }
     choiceUpdater = (value) => {
         return e => {
-            this.updateValue(value)
+            this.updateValue(+value)
         }
+    }
+    updateText = () => {
+        var value = React.findDOMNode(this.refs.text).value;
+        this.updateValue(value)
     }
     render(){
         // <td className="name">
@@ -120,11 +124,13 @@ class Interactor extends Component {
                                 onClick={this.choiceUpdater(index)}>{x}</button>)
                         }
                     </div>
+        }else if(i.type == 'text'){
+            widget = <input ref="text" type="text" onChange={this.updateText} defaultValue={this.state.value} />
         }
 
         return <tr>
             <td className="name platform-mac source-code">
-                {i.name ? i.name : <ObjectTree node={+this.state.value} />}
+                {i.name ? i.name : null }
             </td>
             <td className="widget">
                 {widget}
@@ -223,7 +229,7 @@ class FocusedCellResult extends Component {
         })  + ' ' + cell.status;
         return (
             <div className={cn} style={{width: ipct, top: cell._pair.offsetTop + 'px'}} >
-                <CellResult cell={cell} doc={doc} />
+                <CellResult key={cell.id} cell={cell} doc={doc} />
             </div>
         )
     }

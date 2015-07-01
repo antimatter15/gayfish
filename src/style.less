@@ -103,19 +103,9 @@ h1 {
         margin-bottom: 10px;
 
     }
+
     .interactors {
-        padding: 15px;
-        display: block;
-        .widget {
-            width: 100%;
-            text-align: right;
-        }
-        .name {
-            min-width: 50px;
-        }
-        .slider {
-            width: 100%;
-        }
+        display: none;
     }
     overflow: hidden;
     .output {
@@ -169,6 +159,30 @@ h1 {
         padding-bottom: 5px;
         padding: 15px;
         background: #E1F1D7;
+    }
+
+    .interactors {
+        padding: 15px;
+        display: block;
+        .widget {
+            width: 100%;
+            text-align: right;
+        }
+        input[type=text] {
+            padding: 10px;
+            border: 1px solid #D0D0D0;
+            border-radius: 5px;
+            padding-right: 15px;
+            padding-left: 15px;
+            width: 100%;
+        }
+        .name {
+            min-width: 50px;
+            padding-right: 10px;
+        }
+        .slider {
+            width: 100%;
+        }
     }
     position: absolute;
     right: 15px;

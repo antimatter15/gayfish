@@ -210,6 +210,18 @@ global.__prepareExecution = function __prepareExecution(code, config){
                 if(config.interacts && id in config.interacts) return config.interacts[id];
                 return def
             }
+        },
+        Text(id, name){
+            return function(def) {
+                interactors[id] = {
+                    type: 'text',
+                    name: name,
+                    def: def,
+                    id: id
+                }
+                if(config.interacts && id in config.interacts) return config.interacts[id];
+                return def
+            }
         }
     }
     interact.def = interact.Slider;
