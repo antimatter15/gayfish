@@ -150,13 +150,25 @@ class CellResult extends Component {
             "cell-result": true,
             "focused": cell.has_focus
         }) + ' ' + cell.status;
-
-        if(typeof cell.output === 'undefined'){
-            var output = <div></div>;
-        }else{
-            var output = <div className="platform-mac source-code">
-                <ObjectTree node={cell.output} />
-            </div>
+        var output = <div></div>;
+        // <td>{x.type}</td>
+        if(typeof cell.logs !== 'undefined' && cell.logs.length > 0){
+            // console.log('merp logs', cell.logs)
+            output = <table className="platform-mac source-code log-table">
+            <tbody>
+            {
+                cell.logs.map(x => {
+                    return <tr>
+                        <td>{x.name}</td>
+                        <td>= <ObjectTree node={x.latest} /></td>
+                    </tr>
+                })
+            }
+            </tbody>
+            </table>
+            // var output = <div className="platform-mac source-code">
+            //     <ObjectTree node={cell.output} />
+            // </div>
         }
         var interactors = [];
         if(typeof cell.interactors !== 'undefined'){
