@@ -160,7 +160,8 @@ class CellResult extends Component {
                 cell.logs.map(x => {
                     return <tr>
                         <td>{x.name}</td>
-                        <td>= <ObjectTree node={x.latest} /></td>
+                        <td>=</td>
+                        <td><ObjectTree node={x.latest} /></td>
                     </tr>
                 })
             }
@@ -206,7 +207,9 @@ class CellResult extends Component {
         return (
             <div className={cell_classes} style={style}>
                 
-                {(cell.status == 'running' && cell.progress > 0 && cell.progress <= 1) ? <progress value={cell.progress} max={1}></progress> : null}
+                {(cell.status == 'running' && cell.progress > 0 && cell.progress <= 1) ? <div className="progress-container">
+                    <progress value={cell.progress} max={1} />
+                </div> : null}
                 {(cell.status == 'running' && cell.activity ? <div className="activity">{cell.activity}</div> : null)}
                 { interactors.length > 0 ? <table className="interactors">
                     <tbody>{interactors}</tbody>
