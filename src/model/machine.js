@@ -28,6 +28,7 @@ export default class Machine {
         }else if(data.type == 'error'){
             cell.status = 'error'
             cell.error = data.error;
+            console.log('oh look ites an error', data)
             if(typeof data.line !== 'undefined'){
                 var msg = document.createElement("div");
                 var icon = msg.appendChild(document.createElement("span"));
@@ -35,7 +36,11 @@ export default class Machine {
                 icon.className = "lint-error-icon";
                 msg.appendChild(document.createTextNode(data.error));
                 msg.className = "lint-error";
-                cell.cm.addLineWidget(data.line - 1, msg, {coverGutter: false, noHScroll: true});
+                cell.errorWidgets.push(
+                    cell.cm.addLineWidget(
+                        Math.min(cell.cm.lineCount(), data.line) - 1, 
+                        msg, 
+                        {coverGutter: false, noHScroll: true}));
             }
             cell.update()
             this.busy = false;
@@ -89,6 +94,11 @@ export default class Machine {
             cm.getAllMarks()
                 .filter(x => x._inlineResult)
                 .forEach(x => x.clear());
+
+            for(let erw of cell.errorWidgets){
+                cm.removeLineWidget(erw)
+            }
+            cell.errorWidgets = [];
 
             cell.compiled = ''    
             cell.update()

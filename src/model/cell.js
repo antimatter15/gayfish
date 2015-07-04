@@ -16,6 +16,7 @@ export default class CellModel {
         this._mounted =  []
         this._height = 0;
         this.interacts = {}
+        this.errorWidgets = []
         this.update()
     }
     serialize() {
@@ -57,12 +58,15 @@ export default class CellModel {
         
         var widget = document.createElement("span");
 
-        var summary = document.createElement('span');
-        var text = JSON.stringify(value) + '';
-        if(text.length > 25) text = text.slice(0, 15) + "..." + text.slice(-5);
-        summary.appendChild(document.createTextNode(text))
-        summary.className = 'CodeMirror-summary';
-        widget.appendChild(summary)
+        if(value.type != 'undefined'){
+            var summary = document.createElement('span');
+            var text = JSON.stringify(value) + '';
+            if(text.length > 25) text = text.slice(0, 15) + "..." + text.slice(-5);
+            summary.appendChild(document.createTextNode(text))
+            summary.className = 'CodeMirror-summary';
+            widget.appendChild(summary)    
+        }
+        
 
         if(count > 1){
             var counter = document.createElement('span');
@@ -71,8 +75,6 @@ export default class CellModel {
             widget.appendChild(counter)    
         }
         
-
-
         if(inlineLog.length > 0){
             var marker = inlineLog[0];
             marker.widgetNode.replaceChild(widget, marker.widgetNode.firstChild)

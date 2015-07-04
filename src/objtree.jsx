@@ -113,8 +113,8 @@ export default class ObjectTree extends Component {
                     </li>
                     {!expanded ? <ol className="children" /> : <ol className="children expanded">
                         {
-                            Object.getOwnPropertyNames(node).map((key, i, a) => {
-                                return <ObjectSubtree key={key} name={key} parent={node} />
+                            keys.map((key, i, a) => {
+                                return <ObjectSubtree key={key} name={key} parent={obj} />
                             })
                         }
                     </ol>}
@@ -124,6 +124,8 @@ export default class ObjectTree extends Component {
                     <span className="cm-js-keyword">function</span>{" "}
                     <span className="cm-js-variable">{node.name || 'anonymous'}</span>(){}
                 </span>
+            }else if(node.type == 'undefined'){
+                return <span className="object-value-undefined source-code">undefined</span>
             }else{
                 return <span>wat?</span>
             }

@@ -66,7 +66,7 @@ addEventListener('message', function(e){
                 runCachedCell(packet.cell)
             })
             .catch(function(err){
-                postMessage({ type: 'error', error: err.toString(), cell: packet.cell })
+                // postMessage({ type: 'error', error: err.toString(), cell: packet.cell })
             })
     }else if(packet.type == 'repeat'){
         console.log('interacts', packet.interacts)
@@ -105,9 +105,19 @@ async function transpileAndRun(packet){
             ]
         })
     } catch (err) {
+
         console.error(err)
-        postMessage({ type: 'error', error: err.toString(), cell: packet.cell })
-        return
+        
+        var loc = /\((\d+):(\d+)\)/g.exec(err.toString())
+        console.log(loc, parseInt(loc[1]))
+        postMessage({ 
+            type: 'error', 
+            error: err.toString(), 
+            line: parseInt(loc[1]), 
+            column: parseInt(loc[2]), 
+            cell: packet.cell
+        })
+        throw err;
     }
     console.log( transpiledCode.code)
     postMessage({ type: 'compiled', code: transpiledCode.code, cell: packet.cell})
@@ -317,6 +327,7 @@ function runCachedCell(cell_id, config){
 
         console.error(err)
         send('error', { error: err.toString(), line: locs[0].line, column: locs[0].column })
+        sendLogSnapshot()
         return
     }
 }
