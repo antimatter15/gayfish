@@ -17,11 +17,11 @@ class ObjectPreview extends Component {
         if(typeof node == "undefined" || node === null){
             return <span className="object-value-null">{node + ''}</span>
         }else if(typeof node == "string"){
-            if(node.length < 50){
+            // if(node.length < 50){
                 return <span className="cm-js-string">{'"' + node + '"'}</span>
-            }else{
-                return <span className="cm-js-string">{'"' + node.slice(0, 50) + '..."'}</span>
-            }
+            // }else{
+            //     return <span className="cm-js-string">{'"' + node.slice(0, 50) + '..."'}</span>
+            // }
             
         }else if(typeof node == "number"){
             return <span className="object-value-number">{node}</span>

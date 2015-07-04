@@ -75,11 +75,10 @@ module.exports = {
     }, {
       test: /\.jsx?$/,
       include: [
-                path.join(__dirname, 'node_modules/react-split-pane'),
                 path.join(__dirname, 'node_modules/acorn'),
                 path.join(__dirname, 'node_modules/tern'),
                ],
-      loader: 'babel?optional[]=runtime'
+      loader: 'babel'
     }, {
       test: /\.(less|css)$/,
       loader: "style-loader!css-loader!less-loader"
