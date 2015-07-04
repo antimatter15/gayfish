@@ -8,14 +8,17 @@
     "codemirror": "^5.3.0",
     "css-loader": "^0.14.5",
     "falafel": "^1.1.0",
+    "file-loader": "^0.8.4",
     "imports-loader": "^0.6.4",
     "json-loader": "^0.5.2",
     "less": "^2.5.1",
     "less-loader": "^2.2.0",
     "lodash": "^3.9.3",
+    "pako": "^0.2.7",
     "react-split-pane": "git://github.com/tomkp/react-split-pane",
     "style-loader": "^0.12.3",
-    "tern": "^0.11.0"
+    "tern": "^0.11.0",
+    "url-loader": "^0.5.6"
   },
   "devDependencies": {
     "babel-core": "^5.4.7",

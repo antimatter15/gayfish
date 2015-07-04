@@ -444,6 +444,10 @@ class UnifiedPair extends Component {
         cell.collapsed = !cell.collapsed
 
     }
+    stopEvent = (e) => {
+        e.stopPropagation()
+        e.preventDefault()
+    }
     render() {
         const { doc, cell, size } = this.props;
 
@@ -465,7 +469,7 @@ class UnifiedPair extends Component {
         return connectDragPreview(
             <div className={classNames({"cell-cluster": 1, "focused": doc.vm.latestRunCell == cell})}>
                 {connectDropTarget(<div style={{width: pct}} className={cell_classes} onClick={this.handleClick}>
-                    {connectDragSource(<div className="cell-handle" style={{ opacity }} onDoubleClick={this.doubleClick}></div>)}
+                    {connectDragSource(<div className="cell-handle" style={{ opacity }} onClick={this.stopEvent} onDoubleClick={this.doubleClick}></div>)}
                     <div ref="editor" className="cell-editor" style={{ opacity }}>
                         <Editor {...this.props}></Editor>
                     </div>
@@ -598,6 +602,7 @@ export default class App extends Component {
         }else{
             // console.log(e.keyCode)
         }
+        
     }
     resetResize = (e) => {
         e.preventDefault()

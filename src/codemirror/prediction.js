@@ -102,9 +102,7 @@ Completion.prototype = {
     },
 
     pick: function() {
-        // console.log("pick", data, i)
         var data = this.data;
-        
         let {from, to, list} = data;
 
         var com = data.list[0]

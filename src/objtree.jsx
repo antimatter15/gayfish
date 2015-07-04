@@ -26,7 +26,7 @@ class ObjectPreview extends Component {
         }else if(typeof node == "number"){
             return <span className="object-value-number">{node}</span>
         }else if(typeof node == "object"){
-            if(Array.isArray(node)){
+            if(Array.isArray(node) || node.type == 'array'){
                 return <span className="value object-value-array">Array[{node.length}]</span>;
             }else{
                 return <span className="object-value-object">Object</span>;

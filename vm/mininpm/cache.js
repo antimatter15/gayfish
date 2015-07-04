@@ -1,7 +1,8 @@
 // simple memoized package management stuff
 import semver from 'semver';
 import {untar} from 'untar.js';
-import {unzip} from 'gzip-js';
+// import {unzip} from 'gzip-js';
+import {inflate} from 'pako';
 
 var npm_package_cache = {};
 var npm_tarball_cache = {};
@@ -79,7 +80,7 @@ export async function tarball_fetch(id){
 	let pkg = await version_fetch(...id.split('@')); // the id is in the form of carbide@1.0.4
 	let data = new Uint8Array(await fetch(pkg.dist.tarball, 'arraybuffer'))
 	let files = {};
-	untar(unzip(data)).filter(x => x).forEach(e => {
+	untar(inflate(data)).filter(x => x).forEach(e => {
 		// turns out it's not always in a folder named "package"
 		let filename = e.filename.split('/').slice(1).join('/');
 		files[filename] = {

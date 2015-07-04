@@ -26,9 +26,13 @@ export default class Machine {
             this.busy = false;
             this._dequeue()
         }else if(data.type == 'error'){
+            // TODO: mark the line at the column where the error is
+            // based off the Codemirror linter demo
+            // from https://codemirror.net/addon/lint/lint.css
+            // and https://codemirror.net/addon/lint/lint.js
             cell.status = 'error'
             cell.error = data.error;
-            console.log('oh look ites an error', data)
+            // console.log('oh look ites an error', data)
             if(typeof data.line !== 'undefined'){
                 var msg = document.createElement("div");
                 var icon = msg.appendChild(document.createElement("span"));
