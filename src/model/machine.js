@@ -28,6 +28,15 @@ export default class Machine {
         }else if(data.type == 'error'){
             cell.status = 'error'
             cell.error = data.error;
+            if(typeof data.line !== 'undefined'){
+                var msg = document.createElement("div");
+                var icon = msg.appendChild(document.createElement("span"));
+                icon.innerHTML = "!!";
+                icon.className = "lint-error-icon";
+                msg.appendChild(document.createTextNode(data.error));
+                msg.className = "lint-error";
+                cell.cm.addLineWidget(data.line - 1, msg, {coverGutter: false, noHScroll: true});
+            }
             cell.update()
             this.busy = false;
             this._dequeue()

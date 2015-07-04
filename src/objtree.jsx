@@ -1,5 +1,6 @@
 import React, { Component, PropTypes } from 'react/addons';
 import classNames from 'classnames'
+import * as _ from 'lodash'
 
 require('./blink/consoleView.css')
 require('./blink/objectValue.css')
@@ -16,7 +17,12 @@ class ObjectPreview extends Component {
         if(typeof node == "undefined" || node === null){
             return <span className="object-value-null">{node + ''}</span>
         }else if(typeof node == "string"){
-            return <span className="cm-js-string">{'"' + node + '"'}</span>
+            if(node.length < 50){
+                return <span className="cm-js-string">{'"' + node + '"'}</span>
+            }else{
+                return <span className="cm-js-string">{'"' + node.slice(0, 50) + '..."'}</span>
+            }
+            
         }else if(typeof node == "number"){
             return <span className="object-value-number">{node}</span>
         }else if(typeof node == "object"){
@@ -44,13 +50,15 @@ export default class ObjectTree extends Component {
     render() {
         var {node} = this.props;
         var {expanded} = this.state;
+
+
         if(typeof node != "object" || node === null){
             if(typeof node == "string" && node.length > 50){
                 return <ol className="tree-outline component-root platform-mac source-code object-properties-section">
                     <li className={classNames({"parent": 1, expanded})} onClick={this.toggleExpand}>
                         <div className="selection"></div>
                         <content>
-                            <ObjectPreview node={JSON.stringify(node).slice(1, 50) + '...'} />
+                            <ObjectPreview node={JSON.stringify(node).slice(1, 150) + '...'} />
                         </content>
                     </li>
                     {!expanded ? <ol className="children" /> : <ol className="children expanded">
@@ -61,11 +69,13 @@ export default class ObjectTree extends Component {
                 return <ObjectPreview node={node} />;   
             }
         }else{
-            if(Array.isArray(node)){
+            if(node.type == "array"){
+                
+                
                 if(node.length < 100){
                     return (
                         <span className="object-value-array">
-                            [{node.map((x, k) => [
+                            [{node.values.map((x, k) => [
                                 <ObjectTree node={x} />, 
                                 k == node.length - 1 ?  "" : ", "
                             ])}]
@@ -76,7 +86,11 @@ export default class ObjectTree extends Component {
                         <ObjectPreview node={node} />
                     </span>;
                 }
-            }else{
+            }else if(node.type == "object"){
+                var keys = _.pluck(node.pairs, 0),
+                    obj  = _.object(node.pairs);
+                // var keys = node.
+
                 return <ol className="tree-outline component-root platform-mac source-code object-properties-section">
                     <li className={classNames({"parent": 1, expanded})} onClick={this.toggleExpand}>
                         <div className="selection"></div>
@@ -84,11 +98,11 @@ export default class ObjectTree extends Component {
                             <span className="console-object-preview">
                                 Object {"{"}
                                 {
-                                    Object.keys(node).map((key, i, a) => {
+                                    keys.map((key, i, a) => {
                                         return [
                                             <span className="name">{key}</span>,
                                             ": ",
-                                            <ObjectPreview node={node[key]} />,
+                                            <ObjectPreview node={obj[key]} />,
                                             i == a.length - 1 ? "" : ", "
                                         ]
                                     })
@@ -105,6 +119,13 @@ export default class ObjectTree extends Component {
                         }
                     </ol>}
                 </ol>
+            }else if(node.type == 'function'){
+                return <span className="console-message-text source-code">
+                    <span className="cm-js-keyword">function</span>{" "}
+                    <span className="cm-js-variable">{node.name || 'anonymous'}</span>(){}
+                </span>
+            }else{
+                return <span>wat?</span>
             }
         }
         return <div>hi</div>

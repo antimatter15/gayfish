@@ -16,12 +16,16 @@ import LooperTransformer from './transform/looper'
 import GlobalTransformer from './transform/globals'
 import ResultTransformer from './transform/result'
 import InteractTransformer from './transform/interact'
+import {parse as parseStacktrace} from 'stacktrace-parser'
+import {SourceMapConsumer} from 'source-map'
+
 import * as _ from 'lodash'
 
 global.mininpm = mininpm;
 var __latestCellID;
 var inspectables = []
 var cachedTranspiledCells = {};
+
 
 function summarizeObject(obj, noRecurse){
     var type = typeof obj;
@@ -90,6 +94,7 @@ async function transpileAndRun(packet){
         transpiledCode = transformCode(packet.code, {
             optional: ["runtime"],
             stage: 0,
+            sourceMaps: true,
             acornPlugins: { semilog: true },
             plugins: [
                 { transformer: LoggingSyntaxTransformer, position: 'before' }, 
@@ -125,35 +130,27 @@ async function transpileAndRun(packet){
         })
         
     }
-    cachedTranspiledCells[packet.cell] = transpiledCode.code
+    cachedTranspiledCells[packet.cell] = transpiledCode
 }
 
 
+global.__execArgs = {};
 
-function runCachedCell(id, execonf){
-    if(!execonf) execonf = {};
-    execonf.cell = id;
-    var code = cachedTranspiledCells[id]
-    var wrappedCode = __prepareExecution(code, execonf)
-    postMessage({ type: 'activity', activity: '', cell: id})
-    
-    try{
-        var result = eval.call(self, wrappedCode)
-    } catch (err) {
-        console.error(err)
-        postMessage({ type: 'error', error: err.toString(), cell: id })
-        return
-    }
-}
+function runCachedCell(cell_id, config){
+    if(!config) config = {};
 
+    config.cell = cell_id;
 
+    var {code, map} = cachedTranspiledCells[cell_id];
 
-global.__prepareExecution = function __prepareExecution(code, config){
     function send(type, obj){
-        obj.cell = config.cell;
+        obj.cell = cell_id;
         obj.type = type;
         postMessage(obj)
     }
+
+    send('activity', { activity: '' })
+
     var finalLog;
     var lastProgress = 0;
     var declaredGlobals = {};
@@ -288,13 +285,39 @@ global.__prepareExecution = function __prepareExecution(code, config){
             },
         }
     }
-    if(typeof code == 'string'){
-        // don't stick anything before the code because "use strict" needs to be at top
-        return `(function ExecutionClosure(${Object.keys(varys).join(', ')}){
-            \n${code}\n
-        \n}).apply(null, __prepareExecution(0, ${JSON.stringify(config)}));`
-    }else{
+
+    var argIndex = cell_id + ':' + Date.now();
+
+    __execArgs[argIndex] = Object.keys(varys).map(x => varys[x]);
+
+    var wrappedCode = `(function ExecutionClosure(${Object.keys(varys).join(', ')}){\n\n${code}\n
+    \n}).apply(null, __execArgs[${JSON.stringify(argIndex)}]);
+    \n//# sourceURL=carbide:///${argIndex}?`;
+    
+    // console.log(wrappedCode);
+
+    try{
         startTime = performance.now()
-        return Object.keys(varys).map(x => varys[x])
+        var result = eval.call(self, wrappedCode)
+
+    } catch (err) {
+        var smc = new SourceMapConsumer(map);
+    
+        var locs = parseStacktrace(err.stack).filter(function(e){
+            return e.file.startsWith('carbide://')
+        }).map(function(e){
+            return smc.originalPositionFor({
+                column: e.column,
+                line: e.lineNumber - 2
+            }); //loc.line, loc.column
+            // console.log(e, loc)
+        })
+
+        // console.log(locs[0])
+
+        console.error(err)
+        send('error', { error: err.toString(), line: locs[0].line, column: locs[0].column })
+        return
     }
 }
+

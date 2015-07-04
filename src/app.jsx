@@ -159,9 +159,9 @@ class CellResult extends Component {
             {
                 cell.logs.map(x => {
                     return <tr>
-                        <td>{x.name}</td>
-                        <td>=</td>
-                        <td><ObjectTree node={x.latest} /></td>
+                        <td className="name">{x.name}</td>
+                        <td className="equal">=</td>
+                        <td className="object"><ObjectTree node={x.latest} /></td>
                     </tr>
                 })
             }
@@ -181,11 +181,9 @@ class CellResult extends Component {
             for(var g in cell.globals){
                 globals.push(
                     <tr key={g}>
-                        <td>
-                            <div className="platform-mac source-code">{g}</div>
-                        </td>
-                        <td>=</td>
-                        <td>
+                        <td className="name"><div className="platform-mac source-code">{g}</div></td>
+                        <td className="equal">=</td>
+                        <td className="object">
                             <div className="platform-mac source-code"><ObjectTree node={cell.globals[g]} /></div>
                         </td>
                     </tr>
@@ -218,7 +216,6 @@ class CellResult extends Component {
                 <div className="output">
 
                     <span className="timing">{duration}</span>
-                    {cell.error ? <div className="error">{cell.error}</div> : null }
                     {output}
                     <table className="global-table"><tbody>{globals}</tbody></table>
                     {cell.status == 'error' ? <DropdownCodeViewer code={cell.compiled} /> : null }

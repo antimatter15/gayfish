@@ -93,6 +93,15 @@ export default class Editor extends Component {
             scrollbarStyle: null
         });
 
+        // http://codemirror.net/demo/indentwrap.html
+        // indented wrapped lines
+        // var charWidth = editor.defaultCharWidth(), basePadding = 4;
+        // editor.on("renderLine", function(cm, line, elt) {
+        // var off = CodeMirror.countColumn(line.text, null, cm.getOption("tabSize")) * charWidth;
+        // elt.style.textIndent = "-" + off + "px";
+        // elt.style.paddingLeft = (basePadding + off) + "px";
+        // });
+        // editor.refresh();
 
         // cm.foldCode(CodeMirror.Pos(0, 0));
         if(cell.collapsed){

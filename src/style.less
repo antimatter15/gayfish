@@ -140,6 +140,7 @@ h1 {
     }
     .error {
         color: #BD2424;
+        padding-bottom: 10px;
     }
     progress {
         width: 100%;
@@ -224,13 +225,31 @@ h1 {
     border-bottom: 1px solid #ddd;
     padding-bottom: 10px;
     margin-bottom: 10px;
-    display: block;
+    // display: block;
 }
 // @-webkit-keyframes "pulse" {
 //  0% { border-color: #CA7474; }
 //  50% { border-color: #E0AA3D; }
 //  100% { border-color: #CA7474; }
 // }
+
+
+
+table {
+    table-layout: fixed;
+    width: 100%;
+    td {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .name {
+        width: 20%;
+    }
+    .equal {
+        width: 15px;
+    }
+}
 
 
 .cell-input {
