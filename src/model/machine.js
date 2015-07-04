@@ -4,6 +4,9 @@ export default class Machine {
         this.doc = doc;
         this.worker = new Worker('/static/cylon.bundle.js')
         this.worker.onmessage = this._onmessage.bind(this)
+        this.worker.addEventListener('error', function(e){
+            console.log(e)
+        }, false)
         this._queue = []
         this.latestQueuedCell = null;
         this.busy = false
@@ -13,6 +16,11 @@ export default class Machine {
         if(data.type == 'queryModule'){
             this.queryModule[data.name] = data.code;
             return
+        }
+
+        if(data.type == 'echo'){
+            console.log(data)    
+            return;
         }
         var cell = this.doc.find(data.cell);
         if(!cell){

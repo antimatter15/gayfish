@@ -55,14 +55,20 @@ function summarizeObject(obj, noRecurse){
     }
 }
 
+onerror = function(e){
+    postMessage({ type: 'echo', text: e.toString()});
+}
 
 addEventListener('message', function(e){
     var packet = e.data;
+    postMessage({ type: 'echo', text: "asjdfoiasjdfoijasdf"});
+
     // console.log(packet)
     if(packet.type == 'exec'){
         __latestCellID = packet.cell;
         transpileAndRun(packet)
             .then(function(){
+                postMessage({ type: 'echo', text: "running chached"});
                 runCachedCell(packet.cell)
             })
             .catch(function(err){
@@ -143,6 +149,16 @@ async function transpileAndRun(packet){
     cachedTranspiledCells[packet.cell] = transpiledCode
 }
 
+function now(){
+    if(typeof perforamnce != 'undefined'){
+        return performance.now()
+    }else{
+        return Date.now()
+    }
+}
+
+
+
 
 global.__execArgs = {};
 
@@ -160,6 +176,7 @@ function runCachedCell(cell_id, config){
     }
 
     send('activity', { activity: '' })
+    postMessage({ type: 'echo', text: "wau such act"});
 
     var finalLog;
     var lastProgress = 0;
@@ -189,7 +206,7 @@ function runCachedCell(cell_id, config){
         })
     }
     var interactors = {}
-    
+
     var interact = {
         Slider(id, name){
             return function(def, min, max){
@@ -293,7 +310,7 @@ function runCachedCell(cell_id, config){
             sendGlobalSnapshot()
             sendInteractSnapshot()
             send('done', {
-                duration: performance.now() - startTime
+                duration: now() - startTime
             })
         },
         console: {
@@ -310,14 +327,18 @@ function runCachedCell(cell_id, config){
     var wrappedCode = `(function ExecutionClosure(${Object.keys(varys).join(', ')}){\n\n${code}\n
     \n}).apply(null, __execArgs[${JSON.stringify(argIndex)}]);
     \n//# sourceURL=carbide:///${argIndex}?`;
+
+    postMessage({ type: 'echo', text: "very code", code: wrappedCode});
     
     // console.log(wrappedCode);
 
     try{
-        startTime = performance.now()
-        var result = eval.call(self, wrappedCode)
+        startTime = now()
+        eval.call(self, wrappedCode)
 
     } catch (err) {
+        postMessage({ type: 'echo', text: "error", code: err.toString() });
+
         var smc = new SourceMapConsumer(map);
     
         var locs = parseStacktrace(err.stack).filter(function(e){
@@ -331,6 +352,7 @@ function runCachedCell(cell_id, config){
         })
 
         // console.log(locs[0])
+
 
         console.error(err)
         send('error', { error: err.toString(), line: locs[0].line, column: locs[0].column })
