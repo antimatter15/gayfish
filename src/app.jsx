@@ -145,7 +145,9 @@ class InteractorTable extends Component {
         var {doc, cell} = this.props;
         var interactors = [];
         if(typeof cell.interactors !== 'undefined'){
-            interactors = _.sortBy(cell.interactors, 'id').map(i => <Interactor cell={cell} doc={doc} interactor={i} />)
+            interactors = _.sortBy(cell.interactors, 'id').map(i => 
+                <Interactor key={i.id} cell={cell} doc={doc} interactor={i} />
+            )
         }
         return (
             interactors.length > 0 ? 
@@ -170,8 +172,8 @@ class LogTable extends Component {
             <tbody>
             {
                 cell.logs.map(x => {
-                    return <tr>
-                        <td className="name line">{x.name}</td>
+                    return <tr key={x.instance}>
+                        <td className="name line" title={x.name}>{x.name}</td>
                         <td className="equal">=</td>
                         <td className="object"><ObjectTree node={x.latest} /></td>
                     </tr>
@@ -193,7 +195,7 @@ class GlobalTable extends Component {
             for(var g in cell.globals){
                 globals.push(
                     <tr key={g}>
-                        <td className="name line"><div className="platform-mac source-code">{g}</div></td>
+                        <td className="name line" title={g}><div className="platform-mac source-code">{g}</div></td>
                         <td className="equal">=</td>
                         <td className="object">
                             <div className="platform-mac source-code"><ObjectTree node={cell.globals[g]} /></div>
@@ -227,6 +229,7 @@ class CellResult extends Component {
         if(this.props.preview){
             style.maxHeight = Math.max(40, cell.height - 15) + 'px';
         }
+        // <span className="timing">{duration}</span>
         return (
             <div className={cell_classes} style={style}>
                 
@@ -237,7 +240,7 @@ class CellResult extends Component {
                 
                 <InteractorTable cell={cell} doc={doc} />
                 <div className="output">
-                    <span className="timing">{duration}</span>
+                    
                     <LogTable cell={cell} doc={doc} />
                     <GlobalTable cell={cell} doc={doc} />
                     {cell.status == 'error' ? <DropdownCodeViewer code={cell.compiled} /> : null }

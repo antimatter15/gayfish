@@ -13,6 +13,12 @@ Problems
 * It's really weird when the output card is blank. Hide it or fill it with something.
 
 
+Inspirational Quotes
+
+* The most effective debugging tool is still careful thought, coupled with judiciously placed print statements. 
+	* Brian Kernighan "Unix for Beginners" (1979)
+
+
 
 What's cool?
 * 2Panez

@@ -55,13 +55,8 @@ function summarizeObject(obj, noRecurse){
     }
 }
 
-onerror = function(e){
-    postMessage({ type: 'echo', text: e.toString()});
-}
-
 addEventListener('message', function(e){
     var packet = e.data;
-    postMessage({ type: 'echo', text: "asjdfoiasjdfoijasdf"});
 
     // console.log(packet)
     if(packet.type == 'exec'){
@@ -176,7 +171,6 @@ function runCachedCell(cell_id, config){
     }
 
     send('activity', { activity: '' })
-    postMessage({ type: 'echo', text: "wau such act"});
 
     var finalLog;
     var lastProgress = 0;
@@ -328,7 +322,6 @@ function runCachedCell(cell_id, config){
     \n}).apply(null, __execArgs[${JSON.stringify(argIndex)}]);
     \n//# sourceURL=carbide:///${argIndex}?`;
 
-    postMessage({ type: 'echo', text: "very code", code: wrappedCode});
     
     // console.log(wrappedCode);
 
@@ -337,25 +330,20 @@ function runCachedCell(cell_id, config){
         eval.call(self, wrappedCode)
 
     } catch (err) {
-        postMessage({ type: 'echo', text: "error", code: err.toString() });
+        postMessage({ type: 'echo', text: "error", code: err.toString(), stack: err.stack, line: err.line, column: err.column });
 
         var smc = new SourceMapConsumer(map);
-    
-        var locs = parseStacktrace(err.stack).filter(function(e){
+        
+        var things = parseStacktrace(err.stack).filter(function(e){
             return e.file.startsWith('carbide://')
-        }).map(function(e){
-            return smc.originalPositionFor({
-                column: e.column,
-                line: e.lineNumber - 2
-            }); //loc.line, loc.column
-            // console.log(e, loc)
-        })
+        })[0];
 
-        // console.log(locs[0])
+        var [line, col] = things ? [things.lineNumber, things.column] : [err.line, err.column];
 
+        var loc = smc.originalPositionFor({line: line - 2, column: col})
 
         console.error(err)
-        send('error', { error: err.toString(), line: locs[0].line, column: locs[0].column })
+        send('error', { error: err.toString(), line: loc.line, column: loc.column })
         sendLogSnapshot()
         return
     }
