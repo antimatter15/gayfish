@@ -1,5 +1,6 @@
 'use strict';
 
+
 import React, { Component, PropTypes } from 'react/addons';
 import classNames from 'classnames'
 // import update from 'react/lib/update';
@@ -132,34 +133,45 @@ class Interactor extends Component {
             <td className="name platform-mac source-code">
                 {i.name ? i.name : null }
             </td>
-            <td className="widget">
+            <td className="object">
                 {widget}
             </td>
         </tr>
     }
 }
 
-
-class CellResult extends Component {
-    render() {
+class InteractorTable extends Component {
+    render(){
         var {doc, cell} = this.props;
-        // if(cell.has_focus){
-        //     return <div className="active-result">omg has focus</div>
-        // }
-        const cell_classes = classNames({
-            "cell-result": true,
-            "focused": cell.has_focus
-        }) + ' ' + cell.status;
+        var interactors = [];
+        if(typeof cell.interactors !== 'undefined'){
+            interactors = _.sortBy(cell.interactors, 'id').map(i => <Interactor cell={cell} doc={doc} interactor={i} />)
+        }
+        return (
+            interactors.length > 0 ? 
+                <table className="interactors">
+                    <tbody>{interactors}</tbody>
+                </table> : null
+        )
+    }
+}
+
+// TODO: figure out a way to define the table row height by the right column
+// and have the name cells overflow with ellipsis rather than constraining the
+// name cells to have a height of one line
+
+class LogTable extends Component {
+    render(){
+        var {doc, cell} = this.props;
+
         var output = <div></div>;
-        // <td>{x.type}</td>
         if(typeof cell.logs !== 'undefined' && cell.logs.length > 0){
-            // console.log('merp logs', cell.logs)
             output = <table className="platform-mac source-code log-table">
             <tbody>
             {
                 cell.logs.map(x => {
                     return <tr>
-                        <td className="name">{x.name}</td>
+                        <td className="name line">{x.name}</td>
                         <td className="equal">=</td>
                         <td className="object"><ObjectTree node={x.latest} /></td>
                     </tr>
@@ -167,21 +179,21 @@ class CellResult extends Component {
             }
             </tbody>
             </table>
-            // var output = <div className="platform-mac source-code">
-            //     <ObjectTree node={cell.output} />
-            // </div>
         }
-        var interactors = [];
-        if(typeof cell.interactors !== 'undefined'){
-            interactors = _.sortBy(cell.interactors, 'id').map(i => <Interactor cell={cell} doc={doc} interactor={i} />)
-        }
+        return output;
+    }
+}
+
+
+class GlobalTable extends Component {
+    render(){
+        var {doc, cell} = this.props;
         var globals = [];
         if(typeof cell.globals !== 'undefined'){
-            // console.log(cell.globals)
             for(var g in cell.globals){
                 globals.push(
                     <tr key={g}>
-                        <td className="name"><div className="platform-mac source-code">{g}</div></td>
+                        <td className="name line"><div className="platform-mac source-code">{g}</div></td>
                         <td className="equal">=</td>
                         <td className="object">
                             <div className="platform-mac source-code"><ObjectTree node={cell.globals[g]} /></div>
@@ -190,6 +202,19 @@ class CellResult extends Component {
                 )
             }
         }
+        return <table className="global-table"><tbody>{globals}</tbody></table>
+    }
+}
+
+class CellResult extends Component {
+    render() {
+        var {doc, cell} = this.props;
+
+        const cell_classes = classNames({
+            "cell-result": true,
+            "focused": cell.has_focus
+        }) + ' ' + cell.status;
+        
         var duration = null;
         if(cell.duration){
             if(cell.duration > 500){
@@ -209,15 +234,12 @@ class CellResult extends Component {
                     <progress value={cell.progress} max={1} />
                 </div> : null}
                 {(cell.status == 'running' && cell.activity ? <div className="activity">{cell.activity}</div> : null)}
-                { interactors.length > 0 ? <table className="interactors">
-                    <tbody>{interactors}</tbody>
-                </table> : null }
-                    
+                
+                <InteractorTable cell={cell} doc={doc} />
                 <div className="output">
-
                     <span className="timing">{duration}</span>
-                    {output}
-                    <table className="global-table"><tbody>{globals}</tbody></table>
+                    <LogTable cell={cell} doc={doc} />
+                    <GlobalTable cell={cell} doc={doc} />
                     {cell.status == 'error' ? <DropdownCodeViewer code={cell.compiled} /> : null }
                 </div>
             </div>

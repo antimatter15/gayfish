@@ -8,7 +8,7 @@
 // the hope that one day it'll all be rewritten in a wiser
 // way.
 
-
+require("babel-core/polyfill")
 import * as mininpm from './mininpm'
 import transformCode from './transform/babel'
 import LoggingSyntaxTransformer from './transform/logging'
@@ -69,7 +69,7 @@ addEventListener('message', function(e){
                 // postMessage({ type: 'error', error: err.toString(), cell: packet.cell })
             })
     }else if(packet.type == 'repeat'){
-        console.log('interacts', packet.interacts)
+        // console.log('interacts', packet.interacts)
         runCachedCell(packet.cell, { interacts: packet.interacts })
     }else if(packet.type == 'inspect'){
 
@@ -109,7 +109,7 @@ async function transpileAndRun(packet){
         console.error(err)
         
         var loc = /\((\d+):(\d+)\)/g.exec(err.toString())
-        console.log(loc, parseInt(loc[1]))
+        // console.log(loc, parseInt(loc[1]))
         postMessage({ 
             type: 'error', 
             error: err.toString(), 
@@ -189,7 +189,7 @@ function runCachedCell(cell_id, config){
         })
     }
     var interactors = {}
-
+    
     var interact = {
         Slider(id, name){
             return function(def, min, max){
@@ -203,6 +203,13 @@ function runCachedCell(cell_id, config){
                 }
                 if(config.interacts && id in config.interacts) return config.interacts[id];
                 return def;
+            }
+        },
+        Label(id) {
+            return function(name){
+                return _.object(Object.keys(interact).map(x => [x, function(...args){
+                    interact[x](id, name)(...args)
+                }]));
             }
         },
         Choice(id, name){

@@ -1,6 +1,5 @@
 var path = require('path');
 var webpack = require('webpack');
-// var StringReplacePlugin = require("string-replace-webpack-plugin");
 
 module.exports = {
   devtool: 'eval',
@@ -27,10 +26,11 @@ module.exports = {
     publicPath: '/static/'
   },
   plugins: [
-      // new StringReplacePlugin(),
+      // this is for tern.js
       new webpack.NormalModuleReplacementPlugin(/acorn\/dist\/acorn\.js/, "../src/index.js"),
       new webpack.NormalModuleReplacementPlugin(/acorn\/dist\/acorn_loose\.js/, "../src/loose/index.js"),
       new webpack.NormalModuleReplacementPlugin(/acorn\/dist\/walk\.js/, "../src/walk/index.js"),
+
       new webpack.HotModuleReplacementPlugin(),
       new webpack.NoErrorsPlugin(),
       new webpack.ProgressPlugin(function(percentage, msg) {
@@ -63,44 +63,23 @@ module.exports = {
       loader: 'json'
     }, {
       test: /\.jsx?$/,
-      loaders: ['babel?stage=0&optional=runtime'],
+      loaders: ['babel?stage=0&optional[]=runtime'],
       include: path.join(__dirname, 'vm')
     },
     { test: /\.(md|jpe?g|gif|png|woff|woff2|eot|ttf|svg)$/, loader: 'url-loader?limit=100000' },
     { test: /semver\.browser\.js/, loaders: ['imports?define=>undefined'] },
     {
       test: /\.jsx?$/,
-      loaders: ['react-hot', 'babel?stage=0'],
+      loaders: ['react-hot', 'babel?stage=0&optional[]=runtime'],
       include: path.join(__dirname, 'src')
     }, {
       test: /\.jsx?$/,
       include: [
+                path.join(__dirname, 'node_modules/react-split-pane'),
+                path.join(__dirname, 'node_modules/acorn'),
                 path.join(__dirname, 'node_modules/tern'),
                ],
-      // loader: StringReplacePlugin.replace({
-      //   replacements: [
-      //       {
-      //         pattern: /acorn\/dist\/acorn/g,
-      //         replacement: function(){ return "acorn"}
-      //       },
-      //       {
-      //         pattern: /acorn\/dist\/walk/g,
-      //         replacement: function(){ return "acorn/src/walk"}
-      //       },
-      //       {
-      //         pattern: /acorn\/dist\/acorn_loose/g,
-      //         replacement: function(){ return "acorn/src/loose" }
-      //       }
-      //   ]
-      // })
-      loader: 'babel'
-    }, {
-      test: /\.jsx?$/,
-      include: [
-                path.join(__dirname, 'node_modules/react-split-pane'),
-                path.join(__dirname, 'node_modules/acorn')
-               ],
-      loader: 'babel'
+      loader: 'babel?optional[]=runtime'
     }, {
       test: /\.(less|css)$/,
       loader: "style-loader!css-loader!less-loader"

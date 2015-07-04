@@ -121,8 +121,7 @@ export default class ObjectTree extends Component {
                 </ol>
             }else if(node.type == 'function'){
                 return <span className="console-message-text source-code">
-                    <span className="cm-js-keyword">function</span>{" "}
-                    <span className="cm-js-variable">{node.name || 'anonymous'}</span>(){}
+                    <span className="object-value-function">{node.name || 'anonymous'}</span>()
                 </span>
             }else if(node.type == 'undefined'){
                 return <span className="object-value-undefined source-code">undefined</span>

@@ -62,6 +62,7 @@ h1 {
 
 .cell-cluster {
     display: flex;
+display: -webkit-flex;
     
     // border-top: 1px solid transparent;
     // border-bottom: 1px solid transparent;
@@ -159,6 +160,25 @@ h1 {
 }
 
 
+table {
+    table-layout: fixed;
+    width: 100%;
+    td.line {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .zero {
+        height: 0;
+    }
+    .name {
+        width: 20%;
+    }
+    .equal {
+        width: 15px;
+    }
+}
+
 .focused-cell-result {
     .interactors {
         border-bottom: 1px solid #D0D0D0;
@@ -170,7 +190,8 @@ h1 {
 
     .interactors {
         padding: 15px;
-        display: block;
+        display: table;
+        // display: block;
         .widget {
             width: 100%;
             text-align: right;
@@ -183,9 +204,12 @@ h1 {
             padding-left: 15px;
             width: 100%;
         }
-        .name {
-            min-width: 50px;
-            padding-right: 10px;
+        // .name {
+        //     min-width: 50px;
+        //     padding-right: 10px;
+        // }
+        .object {
+            padding-right: 5px;
         }
         .slider {
             width: 100%;
@@ -235,25 +259,11 @@ h1 {
 
 
 
-table {
-    table-layout: fixed;
-    width: 100%;
-    td {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    .name {
-        width: 20%;
-    }
-    .equal {
-        width: 15px;
-    }
-}
 
 
 .cell-input {
     display: flex;
+    display: -webkit-flex;
     padding-bottom: 10px;
     padding-top: 10px;
     // margin: 10px;
@@ -509,6 +519,7 @@ table {
     }
     .cell-input {
         display: flex;
+display: -webkit-flex;
         padding-bottom: 15px;
         padding-top: 15px;
         /* display: block; */
