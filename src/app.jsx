@@ -42,28 +42,61 @@ class Interactor extends Component {
 
         var {doc, cell} = this.props;
         var cm = cell.cm;
-        var query = new RegExp("Interact\\s*\\.\\s*[A-Za-z]+", "g")
-        var paren = new RegExp("\\(", "g");
-        var end = new RegExp(",|\\)", "g");
-        var interacts = []
+
+        var allTokens = [];
         for(var i = 0, lc = cm.lineCount(); i < lc; i++){
-            query.lastIndex = 0
-            var line = cm.getLine(i);
-            while(query.exec(line)){
-                var ch = query.lastIndex;
-                var tt = cm.getTokenTypeAt({line: i, ch: ch});
-                paren.lastIndex = ch;
-                paren.exec(line)
-                end.lastIndex = paren.lastIndex
-                end.exec(line)
-                if((tt == 'variable' || tt == 'property') && paren.lastIndex > 0 && end.lastIndex > 0){
-                    interacts.push([
-                        { line: i, ch: paren.lastIndex }, 
-                        { line: i, ch: end.lastIndex - 1 }
-                    ])
-                }
-            }
+            allTokens = allTokens.concat(cm.getLineTokens(i));
         }
+
+        function getDepth(tok){
+            if(tok.state && tok.state.jsState && tok.state.jsState.cc){
+                return tok.state.jsState.cc.length
+            }
+            return 0
+        }
+        var interacts = []
+        allTokens.forEach((tok, i) => {
+            if(tok.type == "comment" && 
+                tok.string.startsWith("/*") &&
+                tok.string.slice(2).trim().startsWith("Interact")){
+                var s = i + 1;
+                while(allTokens[s].type == null) s++;
+                var e = s;
+                var startDepth = getDepth(allTokens[s]);
+                if(getDepth(allTokens[e]) > startDepth){
+                    while(getDepth(allTokens[e]) > startDepth) e++;    
+                }
+                interacts.push([ 
+                    cm.posFromIndex(allTokens[s].start), 
+                    cm.posFromIndex(allTokens[e].end)
+                ])
+            }
+        })
+
+
+
+        // var query = new RegExp("Interact\\s*\\.\\s*[A-Za-z]+", "g")
+        // var paren = new RegExp("\\(", "g");
+        // var end = new RegExp(",|\\)", "g");
+        // var interacts = []
+        // for(var i = 0, lc = cm.lineCount(); i < lc; i++){
+        //     query.lastIndex = 0
+        //     var line = cm.getLine(i);
+        //     while(query.exec(line)){
+        //         var ch = query.lastIndex;
+        //         var tt = cm.getTokenTypeAt({line: i, ch: ch});
+        //         paren.lastIndex = ch;
+        //         paren.exec(line)
+        //         end.lastIndex = paren.lastIndex
+        //         end.exec(line)
+        //         if((tt == 'variable' || tt == 'property') && paren.lastIndex > 0 && end.lastIndex > 0){
+        //             interacts.push([
+        //                 { line: i, ch: paren.lastIndex }, 
+        //                 { line: i, ch: end.lastIndex - 1 }
+        //             ])
+        //         }
+        //     }
+        // }
         var target = interacts[id]
         if(target){
             var [from, to] = target;    

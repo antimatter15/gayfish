@@ -202,8 +202,8 @@ function runCachedCell(cell_id, config){
     var interactors = {}
 
     var interact = {
-        Slider(id, name){
-            return function(def, min, max){
+        Slider(def, id, name){
+            return function(min, max){
                 interactors[id] = {
                     type: 'slider',
                     name: name,
@@ -216,15 +216,15 @@ function runCachedCell(cell_id, config){
                 return def;
             }
         },
-        Label(id) {
-            return function(name){
-                return _.object(Object.keys(interact).map(x => [x, function(...args){
-                    interact[x](id, name)(...args)
-                }]));
-            }
-        },
-        Choice(id, name){
-            return function(def, opts) {
+        // Label(id) {
+        //     return function(name){
+        //         return _.object(Object.keys(interact).map(x => [x, function(...args){
+        //             interact[x](id, name)(...args)
+        //         }]));
+        //     }
+        // },
+        Choice(def, id, name){
+            return function(opts) {
                 interactors[id] = {
                     type: 'choice',
                     name: name,
@@ -236,8 +236,8 @@ function runCachedCell(cell_id, config){
                 return def
             }
         },
-        Text(id, name){
-            return function(def) {
+        Text(def, id, name){
+            return function() {
                 interactors[id] = {
                     type: 'text',
                     name: name,
@@ -249,7 +249,7 @@ function runCachedCell(cell_id, config){
             }
         }
     }
-    interact.def = interact.Slider;
+    interact.Default = interact.Slider;
 
     function sendInteractSnapshot(){
         send('interact', {

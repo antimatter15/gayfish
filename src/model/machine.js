@@ -19,7 +19,7 @@ export default class Machine {
         }
 
         if(data.type == 'echo'){
-            console.log(data)    
+            console.log(data)
             return;
         }
         var cell = this.doc.find(data.cell);
