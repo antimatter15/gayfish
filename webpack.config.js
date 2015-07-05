@@ -71,12 +71,14 @@ module.exports = {
     {
       test: /\.jsx?$/,
       loaders: ['react-hot', 'babel?stage=0&optional[]=runtime'],
-      include: path.join(__dirname, 'src')
+      include: [
+        path.join(__dirname, 'src'),
+        path.join(__dirname, 'node_modules/tern')
+      ]
     }, {
       test: /\.jsx?$/,
       include: [
                 path.join(__dirname, 'node_modules/acorn'),
-                path.join(__dirname, 'node_modules/tern'),
                ],
       loader: 'babel'
     }, {

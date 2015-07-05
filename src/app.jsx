@@ -42,7 +42,7 @@ class Interactor extends Component {
 
         var {doc, cell} = this.props;
         var cm = cell.cm;
-        var query = new RegExp("Interact(\\.[A-Za-z]+)?", "g")
+        var query = new RegExp("Interact\\s*\\.\\s*[A-Za-z]+", "g")
         var paren = new RegExp("\\(", "g");
         var end = new RegExp(",|\\)", "g");
         var interacts = []

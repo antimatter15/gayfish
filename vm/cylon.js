@@ -98,10 +98,10 @@ async function transpileAndRun(packet){
             sourceMaps: true,
             acornPlugins: { semilog: true },
             plugins: [
+                { transformer: InteractTransformer, position: 'before' },
                 { transformer: LoggingSyntaxTransformer, position: 'before' }, 
                 { transformer: GlobalTransformer, position: 'before' }, 
                 { transformer: LooperTransformer, position: 'before' },
-                { transformer: InteractTransformer, position: 'after' },
                 // { transformer: ResultTransformer, position: 'after' },
             ]
         })
