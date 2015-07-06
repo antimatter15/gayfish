@@ -9,6 +9,8 @@
 // way.
 
 require("babel-core/polyfill")
+require('../src/workerception/worker')
+
 import * as mininpm from './mininpm'
 import transformCode from './transform/babel'
 import LoggingSyntaxTransformer from './transform/logging'

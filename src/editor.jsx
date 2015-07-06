@@ -168,6 +168,26 @@ export default class Editor extends Component {
             "Cmd-.": (cm) => {
                 doc.restart()
             },
+            "Cmd-I": (cm) => {
+                var pos = cm.getCursor("from")
+                var tok = cm.getTokenAt(pos);
+                var line = cm.getLine(pos.line);
+                
+                if(tok.type == "comment" && tok.string.slice(2).trim().startsWith('Interact')){
+                    cm.replaceRange('',
+                                    { line: pos.line, ch: tok.start},
+                                    { line: pos.line, ch: tok.end})
+                }else{
+
+                    var inserted = "/* Interact */";
+                    if(!/\s/.test(line[pos.ch])) inserted += " ";
+                    if(!/\s/.test(line[pos.ch-1])) inserted = " " + inserted;
+
+                    cm.replaceRange(inserted, pos)
+                    cm.setCursor({ line: pos.line, ch: pos.ch + inserted.indexOf(" *") })    
+                }
+                
+            },
             "Shift-Enter": (cm) => {
                 // var auto_advance = !(
                 //     doc &&

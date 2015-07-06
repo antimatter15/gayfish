@@ -15,6 +15,9 @@ export default class Machine {
         if(data.type == 'queryModule'){
             this.queryModule[data.name] = data.code;
             return
+        }else if(data.type == 'workerception'){
+
+            return;
         }
 
         if(data.type == 'echo'){
