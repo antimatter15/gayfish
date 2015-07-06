@@ -165,23 +165,33 @@ export default class Editor extends Component {
             },
             "Cmd-I": (cm) => {
                 var pos = cm.getCursor("from")
-                var tok = cm.getTokenAt(pos);
+                var tok = cm.getTokenAt(pos),
+                    next_tok = cm.getTokenAt({ line: pos.line, ch: pos.ch + 1});
 
-                var def = ''
-                if(tok.type == 'string'){
-                    pos.ch = tok.start;
-                    def = '.Text'
-                }else if(tok.type == 'number'){
-                    pos.ch = tok.start;
-                    def = '.Slider'
+                function is_interact(tok){
+                    return tok.type == "comment" && 
+                        tok.string.slice(2).split("::").slice(-1)[0].trim().startsWith('Interact')
                 }
+
+                if(tok.type != "comment" && is_interact(next_tok)) tok = next_tok;
+
                 var line = cm.getLine(pos.line);
 
-                if(tok.type == "comment" && tok.string.slice(2).split("::").slice(-1)[0].trim().startsWith('Interact')){
+                if(is_interact(tok)){
                     cm.replaceRange('',
                                     { line: pos.line, ch: tok.start},
                                     { line: pos.line, ch: tok.end})
                 }else{
+
+                    var def = ''
+                    if(tok.type == 'string'){
+                        pos.ch = tok.start;
+                        def = '.Text'
+                    }else if(tok.type == 'number'){
+                        pos.ch = tok.start;
+                        def = '.Slider'
+                    }
+
                     var inserted = "/* Interact$ */";
                     if(pos.ch > 0 && !/\s/.test(line[pos.ch])) inserted += " ";
                     if(pos.ch > 0 && !/\s|\(/.test(line[pos.ch-1])) inserted = " " + inserted;
