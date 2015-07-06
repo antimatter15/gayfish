@@ -31,6 +31,8 @@ class ObjectPreview extends Component {
             }else{
                 return <span className="object-value-object">Object</span>;
             }
+        }else if(typeof node == "boolean"){
+            return <span className="object-value-boolean source-code">{JSON.stringify(node)}</span>
         }else{
             return <span>wat? {typeof node}</span>
         }
@@ -50,7 +52,6 @@ export default class ObjectTree extends Component {
     render() {
         var {node} = this.props;
         var {expanded} = this.state;
-
 
         if(typeof node != "object" || node === null){
             if(typeof node == "string" && node.length > 50){
