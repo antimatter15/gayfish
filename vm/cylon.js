@@ -93,7 +93,7 @@ async function transpileAndRun(packet){
     // postMessage({ type: 'activity', activity: 'transpiling code', cell: packet.cell})
     try{
         transpiledCode = transformCode(packet.code, {
-            optional: ["runtime"],
+            optional: ["runtime", "asyncToGenerator"],
             stage: 0,
             sourceMaps: true,
             acornPlugins: { semilog: true },

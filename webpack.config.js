@@ -70,7 +70,7 @@ module.exports = {
     { test: /semver\.browser\.js/, loaders: ['imports?define=>undefined'] },
     {
       test: /\.jsx?$/,
-      loaders: ['react-hot', 'babel?stage=0&optional[]=runtime'],
+      loaders: ['react-hot', 'babel?stage=0&optional[]=runtime'], // &optional[]=asyncToGenerator
       include: [
         path.join(__dirname, 'src'),
         path.join(__dirname, 'node_modules/tern')
