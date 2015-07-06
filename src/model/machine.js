@@ -8,7 +8,6 @@ export default class Machine {
             console.log(e)
         }, false)
         this._queue = []
-        this.latestQueuedCell = null;
         this.busy = false
     }
     _onmessage(e) {
@@ -136,6 +135,16 @@ export default class Machine {
         cell.status = 'queued'
         // this.latestQueuedCell = cell
         if(!this.busy) this._dequeue();
+    }
+    stop(){
+        this.worker.terminate()
+        if(this.latestRunCell){
+            this.latestRunCell.status = ''
+            // this.latestRunCell.error = 'Terminated'
+        }
+        for(let {cell} of this._queue){
+            cell.status = ''
+        }
     }
     repeat(cell) {
         if(!cell.compiled) throw "oh noes this cell isn't compiled yet";

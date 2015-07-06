@@ -165,6 +165,9 @@ export default class Editor extends Component {
                 cell.run()
                 cell.checkNext();
             },
+            "Cmd-.": (cm) => {
+                doc.restart()
+            },
             "Shift-Enter": (cm) => {
                 // var auto_advance = !(
                 //     doc &&

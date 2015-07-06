@@ -36,5 +36,10 @@ export default class DocumentModel { // a document is a collection of cells
             cell._collapsed = !!c.collapsed;
         }
     }
+    restart(){
+        this.vm.stop()
+        this.vm = new Machine(this)
+        this.update()
+    }
     get focused() { return this.cells.filter(x => x.has_focus)[0] }
 }

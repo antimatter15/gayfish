@@ -45,30 +45,30 @@ class Interactor extends Component {
 
         var allTokens = [];
         for(var i = 0, lc = cm.lineCount(); i < lc; i++){
-            allTokens = allTokens.concat(cm.getLineTokens(i));
+            allTokens = allTokens.concat(cm.getLineTokens(i).map(token => ({token, line: i})));
         }
 
-        function getDepth(tok){
-            if(tok.state && tok.state.jsState && tok.state.jsState.cc){
-                return tok.state.jsState.cc.length
-            }
+        function getDepth({token: tok}){
+            if(tok.state && tok.state.jsState && tok.state.jsState.cc)
+                return tok.state.jsState.cc.length;
             return 0
         }
         var interacts = []
-        allTokens.forEach((tok, i) => {
+        allTokens.forEach((block, i) => {
+            var tok = block.token;
             if(tok.type == "comment" && 
                 tok.string.startsWith("/*") &&
                 tok.string.slice(2).trim().startsWith("Interact")){
                 var s = i + 1;
-                while(allTokens[s].type == null) s++;
+                while(allTokens[s].token.type == null) s++;
                 var e = s;
                 var startDepth = getDepth(allTokens[s]);
                 if(getDepth(allTokens[e]) > startDepth){
-                    while(getDepth(allTokens[e]) > startDepth) e++;    
+                    while(getDepth(allTokens[e]) > startDepth) e++;
                 }
-                interacts.push([ 
-                    cm.posFromIndex(allTokens[s].start), 
-                    cm.posFromIndex(allTokens[e].end)
+                interacts.push([
+                    { line: allTokens[s].line, ch: allTokens[s].token.start },
+                    { line: allTokens[e].line, ch: allTokens[e].token.end } 
                 ])
             }
         })

@@ -1,6 +1,10 @@
 import BabelTransformer from "babel-core/lib/babel/transformation/transformer";
 import * as t from "babel-core/lib/babel/types";
 
+// Perhaps this should only run for things which have a length < 1e6
+// because otherwise this logging incurs a significant performance penalty
+// relative to the speed of the loop
+
 var Looper = new BabelTransformer("Looper", {
     ForStatement(node, parent, scope){
         if(!scope.parent.parent &&

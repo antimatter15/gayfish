@@ -70,9 +70,7 @@ export default class ObjectTree extends Component {
             }
         }else{
             if(node.type == "array"){
-                
-                
-                if(node.length < 100){
+                if(node.length < 100 && node.values){
                     return (
                         <span className="object-value-array">
                             [{node.values.map((x, k) => [
