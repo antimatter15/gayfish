@@ -103,15 +103,14 @@ export default class Machine {
         cell.error = null
         cell.progress = 0;
         var cm = cell.cm;
-
+        for(let erw of cell.errorWidgets){
+            cm.removeLineWidget(erw)
+        }
         if(type == 'run'){
             cm.getAllMarks()
                 .filter(x => x._inlineResult)
                 .forEach(x => x.clear());
 
-            for(let erw of cell.errorWidgets){
-                cm.removeLineWidget(erw)
-            }
             cell.errorWidgets = [];
 
             cell.compiled = ''    

@@ -58,7 +58,7 @@ class Interactor extends Component {
             var tok = block.token;
             if(tok.type == "comment" && 
                 tok.string.startsWith("/*") &&
-                tok.string.slice(2).trim().startsWith("Interact")){
+                tok.string.slice(2).split("::").slice(-1)[0].trim().startsWith('Interact')){
                 var s = i + 1;
                 while(allTokens[s].token.type == null) s++;
                 var e = s;
@@ -120,7 +120,7 @@ class Interactor extends Component {
     }
     choiceUpdater = (value) => {
         return e => {
-            this.updateValue(+value)
+            this.updateValue(value)
         }
     }
     updateText = () => {
@@ -153,9 +153,9 @@ class Interactor extends Component {
                                 className={classNames({
                                     "btn": true,
                                     "btn-default": true,
-                                    "active": index == this.state.value
+                                    "active": x == this.state.value
                                 })}
-                                onClick={this.choiceUpdater(index)}>{x}</button>)
+                                onClick={this.choiceUpdater(x)}>{x}</button>)
                         }
                     </div>
         }else if(i.type == 'text'){

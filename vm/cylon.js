@@ -227,6 +227,9 @@ function runCachedCell(cell_id, config){
         // },
         Choice(def, id, name){
             return function(opts) {
+                if(!opts){
+                    throw new Error("Interact.Choice requires list of options")
+                }
                 interactors[id] = {
                     type: 'choice',
                     name: name,

@@ -153,14 +153,9 @@ export default class Editor extends Component {
             "Ctrl-Space": function(cm) { eliot.complete(cm); },
             "Alt-.": function(cm) { eliot.jumpToDef(cm); },
             "Alt-,": function(cm) { eliot.jumpBack(cm); },
-            "Ctrl-Q": function(cm) { eliot.rename(cm); },
-            // "Ctrl-Space": function(cm) { eliot.complete(cm); },
-            // "Ctrl-I": function(cm) { eliot.showType(cm); },
-            // "Ctrl-O": function(cm) { eliot.showDocs(cm); },
-            // "Alt-.": function(cm) { eliot.jumpToDef(cm); },
-            // "Alt-,": function(cm) { eliot.jumpBack(cm); },
-            // "Ctrl-Q": function(cm) { eliot.rename(cm); },
-            // "Ctrl-.": function(cm) { eliot.selectName(cm); },
+            "Cmd-Left": (cm) => {
+                cm.execCommand("goLineStartSmart")
+            },
             "Cmd-Enter": (cm) => {
                 cell.run()
                 cell.checkNext();
@@ -171,20 +166,30 @@ export default class Editor extends Component {
             "Cmd-I": (cm) => {
                 var pos = cm.getCursor("from")
                 var tok = cm.getTokenAt(pos);
+
+                var def = ''
+                if(tok.type == 'string'){
+                    pos.ch = tok.start;
+                    def = '.Text'
+                }else if(tok.type == 'number'){
+                    pos.ch = tok.start;
+                    def = '.Slider'
+                }
                 var line = cm.getLine(pos.line);
-                
-                if(tok.type == "comment" && tok.string.slice(2).trim().startsWith('Interact')){
+
+                if(tok.type == "comment" && tok.string.slice(2).split("::").slice(-1)[0].trim().startsWith('Interact')){
                     cm.replaceRange('',
                                     { line: pos.line, ch: tok.start},
                                     { line: pos.line, ch: tok.end})
                 }else{
+                    var inserted = "/* Interact$ */";
+                    if(pos.ch > 0 && !/\s/.test(line[pos.ch])) inserted += " ";
+                    if(pos.ch > 0 && !/\s|\(/.test(line[pos.ch-1])) inserted = " " + inserted;
 
-                    var inserted = "/* Interact */";
-                    if(!/\s/.test(line[pos.ch])) inserted += " ";
-                    if(!/\s/.test(line[pos.ch-1])) inserted = " " + inserted;
-
-                    cm.replaceRange(inserted, pos)
-                    cm.setCursor({ line: pos.line, ch: pos.ch + inserted.indexOf(" *") })    
+                    cm.replaceRange(inserted.replace('$', def), pos)
+                    cm.setSelection({ line: pos.line, ch: pos.ch + inserted.indexOf("$") }, 
+                                    {line: pos.line, ch: pos.ch + inserted.indexOf("$") + def.length })
+                    // cm.setCursor({ line: pos.line, ch: pos.ch + inserted.indexOf(" *") })    
                 }
                 
             },
