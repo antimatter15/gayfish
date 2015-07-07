@@ -136,10 +136,6 @@ class FocusedCellResult extends Component {
     }
 }
 
-RegExp.escape = function(s) {
-    return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-};
-
 class Palette extends Component {
     constructor(props) {
         super(props);
@@ -189,19 +185,25 @@ class Palette extends Component {
 
     }
     handleInput = (e) => {
-        this.setState({ query: React.findDOMNode(this.refs.input).value.trim() })
+        var el = React.findDOMNode(this.refs.input);
+        var query = el.value.trim();
+        this.setState({ query: query })
     }
     handleKey = (e) => {
         const {doc} = this.props;
         
         var matches = this.runQuery()
         var el = React.findDOMNode(this.refs.input);
+        var index = Math.min(matches.length - 1, Math.max(0, this.state.index));
+
         if(e.keyCode == 27){ // esc
             this.setState({ show: false })
         }else if(e.keyCode == 38) { // up
-            this.setState({ index: Math.max(0, this.state.index - 1) })
+            this.setState({ index: Math.max(0, index - 1) })
+            e.preventDefault()
         }else if(e.keyCode == 40) { // down
-            this.setState({ index: Math.min(matches.length - 1, this.state.index + 1) })
+            this.setState({ index: Math.min(matches.length - 1, index + 1) })
+            e.preventDefault()
         }else if(e.keyCode == 9){ // tab
             // console.log(e.keyCode)
             var sel = matches[this.state.index];
@@ -210,6 +212,7 @@ class Palette extends Component {
                 el.value = ''
                 this.handleInput()    
             }
+            e.preventDefault()
         }else if(e.keyCode == 13){ // enter
             var sel = matches[this.state.index];
             if(sel.level == 0){
@@ -217,7 +220,7 @@ class Palette extends Component {
                 el.value = ''
                 this.handleInput()    
             }
-            
+            e.preventDefault()
         }else if(e.keyCode == 8){ // backspace
             if(el.value == ''){ // TODO: check instead that the cursor is at the beginning
                 this.setState({ head: '' })
@@ -263,8 +266,9 @@ class Palette extends Component {
         if(matches.length == 0){
             var results = <div className="no-results">(no matches)</div>
         }else{
+            var index = Math.min(matches.length - 1, Math.max(0, this.state.index));
             var results = <div className="results">
-                {matches.map((x, i) => <div className={classNames({ result: true, selected: i == this.state.index })}>
+                {matches.map((x, i) => <div className={classNames({ result: true, selected: i == index })}>
                     <div className="token">{x.head}</div>
                     {x.level > 0 ? <div className="name">{x.name}</div> : null }
                 </div>)}
@@ -281,7 +285,7 @@ class Palette extends Component {
                     { head ? <div className="token">{head}</div> : null }
                     <input type="text" ref="input" onChange={this.handleInput} onKeyDown={this.handleKey}></input>
                 </div>
-                {results}            
+                {results}
             </div>
         )
     }

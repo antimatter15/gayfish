@@ -51,6 +51,9 @@ function summarizeObject(obj, noRecurse){
         if(!noRecurse) res.values = obj.map(x => summarizeObject(x, true));
         return res;
     }else{ // object
+        if(obj instanceof RegExp){
+            return { type: 'regexp', code: obj.toString() }
+        }
         var res = {type: 'object'}
         if(!noRecurse) res.pairs = Object.keys(obj).map(x => [x, summarizeObject(obj[x], true)]);
         return res;
