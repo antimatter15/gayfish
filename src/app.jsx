@@ -136,31 +136,94 @@ class FocusedCellResult extends Component {
     }
 }
 
-
+RegExp.escape = function(s) {
+    return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+};
 
 class Palette extends Component {
     constructor(props) {
         super(props);
         this.state = {
             show: false,
-            query: ''
+            query: '',
+            head: '',
+            index: 0
         }
+        var source = [
+            ['Cell', [
+                "Type: Code",
+                "Type: Markdown"
+            ]],
+            ['Document', [
+                "Save",
+                "Publish"
+            ]],
+            ['Kernel', [
+                "Restart"
+            ]],
+            ['Settings', [
+                "Theme"
+            ]],
+            ['Help', [
+                "About"
+            ]],
+        ]
+        this.source = []
+        for(var [head, list] of source){
+            this.source.push({
+                name: head,
+                head: head,
+                level: 0
+            })
+        }
+        for(var [head, list] of source){
+            
+            for(var name of list){
+                this.source.push({
+                    name: name,
+                    head: head,
+                    level: 1
+                })
+            }
+        }
+
     }
     handleInput = (e) => {
-        this.setState({ query: React.findDOMNode(this.refs.input).value })
+        this.setState({ query: React.findDOMNode(this.refs.input).value.trim() })
     }
     handleKey = (e) => {
         const {doc} = this.props;
-
+        
+        var matches = this.runQuery()
+        var el = React.findDOMNode(this.refs.input);
         if(e.keyCode == 27){ // esc
             this.setState({ show: false })
         }else if(e.keyCode == 38) { // up
-
+            this.setState({ index: Math.max(0, this.state.index - 1) })
         }else if(e.keyCode == 40) { // down
-
-        }else if(e.keyCode == 13){ // enter
+            this.setState({ index: Math.min(matches.length - 1, this.state.index + 1) })
+        }else if(e.keyCode == 9){ // tab
             // console.log(e.keyCode)
+            var sel = matches[this.state.index];
+            if(sel.level == 0){
+                this.setState({ head: sel.head })
+                el.value = ''
+                this.handleInput()    
+            }
+        }else if(e.keyCode == 13){ // enter
+            var sel = matches[this.state.index];
+            if(sel.level == 0){
+                this.setState({ head: sel.head })
+                el.value = ''
+                this.handleInput()    
+            }
+            
+        }else if(e.keyCode == 8){ // backspace
+            if(el.value == ''){ // TODO: check instead that the cursor is at the beginning
+                this.setState({ head: '' })
+            }
         }
+        // TODO: tab
     }
     focus = () => {
         React.findDOMNode(this.refs.input).focus()
@@ -172,21 +235,39 @@ class Palette extends Component {
             const {doc} = this.props;
             doc.focused.cm.focus();
         }
-
     }
+
+    runQuery() {
+        var {query, head} = this.state;
+        if(head){
+            var regex = new RegExp(query.split('').map(RegExp.escape).join('.*'), 'i');
+            var matches = this.source.filter(x => x.head == head && x.level > 0).filter(x => regex.test(x.name))
+        }else{
+            if(query.length == 0){
+                var matches = this.source.filter(x => x.level == 0)
+            }else{
+                var regex = new RegExp(query.split('').map(RegExp.escape).join('.*'), 'i');
+                var matches = this.source.filter(x => regex.test(x.head + ' ' + x.name))
+            }    
+        }
+        
+        return matches
+    }
+
     render() {
         if(!this.state.show) return null;
-        var source = []
-        for(var i = 0; i < 500; i++){
-            source.push(i)
-        }
-        var matches = source.filter(x => x % this.state.query.length == 0);
+
+        var matches = this.runQuery();
+        var {query, head} = this.state;
 
         if(matches.length == 0){
             var results = <div className="no-results">(no matches)</div>
         }else{
             var results = <div className="results">
-                {matches.map(x => <div>{x}</div>)}
+                {matches.map((x, i) => <div className={classNames({ result: true, selected: i == this.state.index })}>
+                    <div className="token">{x.head}</div>
+                    {x.level > 0 ? <div className="name">{x.name}</div> : null }
+                </div>)}
             </div>
         }
         var width = 0.35;
@@ -196,7 +277,10 @@ class Palette extends Component {
         }
         return (
             <div className="palette" style={style}>
-                <input type="text" ref="input" onChange={this.handleInput} onKeyDown={this.handleKey}></input>
+                <div className="input">
+                    { head ? <div className="token">{head}</div> : null }
+                    <input type="text" ref="input" onChange={this.handleInput} onKeyDown={this.handleKey}></input>
+                </div>
                 {results}            
             </div>
         )
