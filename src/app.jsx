@@ -15,6 +15,7 @@ import DocumentModel from './model/document'
 import Editor from './editor'
 import * as _ from 'lodash'
 import {InteractorTable} from './interact'
+import {DropdownCodeViewer, CodeViewer} from './codemirror/viewer'
 
 var CodeMirror = require('codemirror')
 
@@ -132,42 +133,6 @@ class FocusedCellResult extends Component {
                 <CellResult key={cell.id} cell={cell} doc={doc} />
             </div>
         )
-    }
-}
-
-class DropdownCodeViewer extends Component {
-    constructor() {
-        super()
-        this.state = {
-            expanded: false
-        }
-    }
-    toggleExpand = () => {
-        this.setState({ expanded: !this.state.expanded })
-    }
-    render() {
-        // var {node} = this.props;
-        var {expanded} = this.state;
-        return <div className="dropdown-code-viewer">
-            <ol className="tree-outline">
-                <li className={classNames({"parent": 1, expanded})} onClick={this.toggleExpand}>
-                    Show Transpiled Code
-                </li>
-            </ol>
-            {expanded? <CodeViewer code={this.props.code} /> : null}
-        </div>
-    }
-}
-
-class CodeViewer extends Component {
-    componentDidMount(){
-        CodeMirror.runMode(this.props.code, "javascript", React.findDOMNode(this))
-    }
-    componentDidUpdate(){
-        CodeMirror.runMode(this.props.code, "javascript", React.findDOMNode(this))
-    }
-    render() {
-        return <pre className="mini-me cm-s-default" />
     }
 }
 
@@ -520,17 +485,7 @@ export default class App extends Component {
         this.state.doc.cells[0].cm.focus()
     }
 
-
-    // componentWillUnmount() {
-    //     document.removeEventListener('mouseup', this.up);
-    //     document.removeEventListener('mousemove', this.move);
-    // },
-
     render() {
-        // <SplitPane orientation="horizontal" minSize={250}>
-        //     <EditPane doc={this.state.doc}></EditPane>
-        //     <OutPane  doc={this.state.doc}></OutPane>
-        // </SplitPane>
         var {doc} = this.state;
         var pct = (this.state.size * 100) + '%',
             ipct = (100 - this.state.size * 100) + '%';
