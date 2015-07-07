@@ -65,7 +65,6 @@ addEventListener('message', function(e){
         __latestCellID = packet.cell;
         transpileAndRun(packet)
             .then(function(){
-                postMessage({ type: 'echo', text: "running chached"});
                 runCachedCell(packet.cell)
             })
             .catch(function(err){
@@ -167,6 +166,7 @@ function runCachedCell(cell_id, config){
     var {code, map} = cachedTranspiledCells[cell_id];
 
     function send(type, obj){
+        console.log('sending', type, obj)
         obj.cell = cell_id;
         obj.type = type;
         postMessage(obj)
@@ -226,9 +226,9 @@ function runCachedCell(cell_id, config){
         //     }
         // },
         Choice(def, id, name){
-            return function(opts) {
-                if(!opts){
-                    throw new Error("Interact.Choice requires list of options")
+            return function(...opts) {
+                if(!opts.length){
+                    throw new Error("Interact.Choice requires at least one option")
                 }
                 interactors[id] = {
                     type: 'choice',
