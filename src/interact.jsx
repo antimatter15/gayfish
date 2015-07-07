@@ -55,7 +55,8 @@ export class Interactor extends Component {
         var target = interacts[id]
         if(target){
             var [from, to] = target;    
-            cm.replaceRange(value, from, to)
+            cm.replaceRange(value, from, to, "*interact")
+
         }
     }
 
@@ -116,6 +117,7 @@ export class Interactor extends Component {
         }else if(i.type == 'text'){
             widget = <input ref="text" type="text" onChange={this.updateText} defaultValue={this.state.value} />
         }else if(i.type == 'textarea'){
+            // TODO: https://github.com/andreypopp/react-textarea-autosize
             widget = <textarea ref="text" onChange={this.updateText} defaultValue={this.state.value} />
         }
 

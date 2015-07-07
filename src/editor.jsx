@@ -283,7 +283,7 @@ export default class Editor extends Component {
             cell.collapsed = false
         })
 
-        cm.on('changes', (cm) => {
+        cm.on('changes', (cm, changes) => {
             cell.value = cm.getValue()    
             
             cell.checkNext();
@@ -291,9 +291,12 @@ export default class Editor extends Component {
             cm.showPrediction({ ts: eliot })
 
             let {line, ch} = cm.getCursor();
-            cm.findMarks({line, ch: 0}, {line, ch: 1e8})
-                .filter(x => x._inlineResult)
-                .forEach(x => x.clear())
+
+            if(!changes.some(x => x.origin == '*interact')){
+                cm.findMarks({line, ch: 0}, {line, ch: 1e8})
+                    .filter(x => x._inlineResult)
+                    .forEach(x => x.clear())
+            }
 
             // This is kinda not super ideal
             cell.height = cm.getWrapperElement().offsetHeight;
