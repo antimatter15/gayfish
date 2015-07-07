@@ -33,20 +33,41 @@ class LogTable extends Component {
         var output = <div></div>;
         if(typeof cell.logs !== 'undefined' && cell.logs.length > 0){
             output = <table className="platform-mac source-code log-table">
-            <tbody>
-            {
-                cell.logs.map(x => {
-                    return <tr key={x.instance}>
-                        <td className="name line" title={x.name}>{x.name}</td>
-                        <td className="equal">=</td>
-                        <td className="object"><ObjectTree node={x.latest} /></td>
-                    </tr>
-                })
-            }
-            </tbody>
+            <tbody>{
+                cell.logs.map(x => <LogLine doc={doc} cell={cell} log={x} />)
+            }</tbody>
             </table>
         }
         return output;
+    }
+}
+
+
+// TODO: highlight the line in the code which does the thing when it's the thing
+class LogLine extends Component {
+    hoverStop = (e) => {
+        var {doc, cell} = this.props;
+        let cm = cell.cm;
+        let x = this.props.log;
+
+        cm.removeLineClass(x.line - 1, "background", "CodeMirror-log-background")
+    }
+    hoverStart = (e) => {
+        var {doc, cell} = this.props;
+        let cm = cell.cm;
+        let x = this.props.log;
+
+        cm.addLineClass(x.line - 1, "background", "CodeMirror-log-background")
+    }
+    render(){
+        // cm.addLineClass(
+        var {doc, cell} = this.props;
+        let x = this.props.log;
+        return <tr key={x.instance} onMouseEnter={this.hoverStart} onMouseLeave={this.hoverStop}>
+            <td className="name line" title={x.name}>{x.name}</td>
+            <td className="equal">=</td>
+            <td className="object"><ObjectTree node={x.latest} /></td>
+        </tr>
     }
 }
 
@@ -147,21 +168,22 @@ class Palette extends Component {
         }
         var source = [
             ['Cell', [
-                "Type: Code",
-                "Type: Markdown"
+                {name: "Type: Code"},
+                {name: "Type: Markdown"},
+                {name: "Run", key: "Cmd-Enter"},
             ]],
             ['Document', [
-                "Save",
-                "Publish"
+                {name: "Save", key: "Cmd-S"},
+                {name: "Publish"}
             ]],
             ['Kernel', [
-                "Restart"
+                {name: "Restart"}
             ]],
             ['Settings', [
-                "Theme"
+                {name: "Theme"}
             ]],
             ['Help', [
-                "About"
+                {name: "About"}
             ]],
         ]
         this.source = []
@@ -173,13 +195,11 @@ class Palette extends Component {
             })
         }
         for(var [head, list] of source){
-            
-            for(var name of list){
-                this.source.push({
-                    name: name,
+            for(var action of list){
+                this.source.push(_.assign({
                     head: head,
                     level: 1
-                })
+                }, action))
             }
         }
 
@@ -206,7 +226,7 @@ class Palette extends Component {
             e.preventDefault()
         }else if(e.keyCode == 9){ // tab
             // console.log(e.keyCode)
-            var sel = matches[this.state.index];
+            var sel = matches[index];
             if(sel.level == 0){
                 this.setState({ head: sel.head })
                 el.value = ''
@@ -214,7 +234,7 @@ class Palette extends Component {
             }
             e.preventDefault()
         }else if(e.keyCode == 13){ // enter
-            var sel = matches[this.state.index];
+            var sel = matches[index];
             if(sel.level == 0){
                 this.setState({ head: sel.head })
                 el.value = ''
@@ -226,7 +246,6 @@ class Palette extends Component {
                 this.setState({ head: '' })
             }
         }
-        // TODO: tab
     }
     focus = () => {
         React.findDOMNode(this.refs.input).focus()
@@ -253,7 +272,7 @@ class Palette extends Component {
                 var matches = this.source.filter(x => regex.test(x.head + ' ' + x.name))
             }    
         }
-        
+        // TODO: if there's nothing then you should be able to 
         return matches
     }
 
@@ -267,12 +286,31 @@ class Palette extends Component {
             var results = <div className="no-results">(no matches)</div>
         }else{
             var index = Math.min(matches.length - 1, Math.max(0, this.state.index));
-            var results = <div className="results">
-                {matches.map((x, i) => <div className={classNames({ result: true, selected: i == index })}>
-                    <div className="token">{x.head}</div>
-                    {x.level > 0 ? <div className="name">{x.name}</div> : null }
-                </div>)}
-            </div>
+            if(head){
+                var results = <div className="results">
+                    {matches.map((x, i) => <div className={classNames({ result: true, selected: i == index })}>
+                        <div className="token"><u>{x.head}</u></div>
+                        {x.level > 0 ? <div className="name">
+                            <Emboldinator str={x.name} query={query} />
+                        </div> : null }
+                    </div>)}
+                </div>
+            }else{
+                var results = <div className="results">
+                    {matches.map((x, i) => <div className={classNames({ result: true, selected: i == index })}>
+                        <div className="token">
+                            <Emboldinator str={x.head + ' ' + x.name} query={query} range={[0, x.head.length]} />
+                        </div>
+                        {x.level > 0 ? <div className="name">
+                            <Emboldinator str={x.head + ' ' + x.name} query={query} range={[x.head.length]} />
+                        </div> : <div className="chevron">›</div> }
+                        {x.level > 0 && x.key ? <div className="key">
+                            {x.key}
+                        </div> : null }
+                    </div>)}
+                </div>
+            }
+            
         }
         var width = 0.35;
         var style = {
@@ -290,6 +328,40 @@ class Palette extends Component {
         )
     }
 }
+
+
+// TODO: some sort of smarter fuzzy search like sublime
+// so that Markdown still shows up if I accidentally type
+// it as Mkardown or Markdwon 
+
+class Emboldinator extends Component {
+    render(){
+        let {query, str, range} = this.props;
+        var regex = new RegExp(query
+                               .split('')
+                               .map(RegExp.escape)
+                               .map(x => `(${x})`)
+                               .join('.*?'), 'i');
+
+        let res = regex.exec(str) || [];
+        let lastIndex = 0, chunks = [];
+
+        var start = 0, end = undefined;
+        if(range) var [start, end] = range;
+        if(typeof end == 'undefined') end = str.length;
+
+        for(let sub of res.slice(1)){
+            let nextIndex = str.indexOf(sub, lastIndex)
+            chunks.push(str.slice(Math.max(start, lastIndex), Math.min(end, nextIndex)))
+            chunks.push(<u>{str.slice(Math.max(start, nextIndex), Math.min(end, nextIndex + sub.length))}</u>)
+            lastIndex = nextIndex + sub.length
+        }
+        chunks.push(str.slice(Math.max(start, lastIndex), end))
+
+        return <span>{chunks}</span>
+    }
+}
+
 
 
 const cardSource = {

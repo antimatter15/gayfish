@@ -63,7 +63,7 @@ export default class ObjectTree extends Component {
                         </content>
                     </li>
                     {!expanded ? <ol className="children" /> : <ol className="children expanded">
-                        <ObjectPreview node={node} />
+                        <span className="cm-js-string">{node}</span>
                     </ol>}
                 </ol>
             }else{
