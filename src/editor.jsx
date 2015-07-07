@@ -193,7 +193,7 @@ export default class Editor extends Component {
                     }
 
                     var inserted = "/* Interact$ */";
-                    if(pos.ch > 0 && !/\s/.test(line[pos.ch])) inserted += " ";
+                    if(!/\s/.test(line[pos.ch])) inserted += " ";
                     if(pos.ch > 0 && !/\s|\(/.test(line[pos.ch-1])) inserted = " " + inserted;
 
                     cm.replaceRange(inserted.replace('$', def), pos)

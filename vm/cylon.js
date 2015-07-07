@@ -252,6 +252,19 @@ function runCachedCell(cell_id, config){
                 if(config.interacts && id in config.interacts) return config.interacts[id];
                 return def
             }
+        },
+        Textarea(def, id, name){
+            return function(language) {
+                interactors[id] = {
+                    type: 'textarea',
+                    language: language,
+                    name: name,
+                    def: def,
+                    id: id
+                }
+                if(config.interacts && id in config.interacts) return config.interacts[id];
+                return def
+            }
         }
     }
     interact.Default = interact.Slider;
