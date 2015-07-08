@@ -283,7 +283,7 @@ class Palette extends Component {
             e.preventDefault()
         }else if(e.keyCode == 8){ // backspace
             if(el.selectionEnd == 0){ // TODO: check instead that the cursor is at the beginning
-                this.setState({ head: '', index: this.state.head ? this.state.rootIndex : 0 })
+                this.setState({ head: '', index: this.state.head ? this.state.rootIndex : this.state.index })
             }
         }
     }
@@ -321,6 +321,23 @@ class Palette extends Component {
         return matches
     }
 
+    selectIndex(index) {
+        this.setState({ index: index })
+    }
+
+    clickIndex(index) {
+        var matches = this.runQuery()
+        var sel = matches[index];
+        var el = React.findDOMNode(this.refs.input);
+        if(sel.level == 0){
+            this.setState({ index: index, head: sel.head, query: '' })
+            el.value = ''
+        }else{
+            this.setState({ index: index })
+        }
+        
+    }
+
     render() {
         if(!this.state.show) return null;
 
@@ -344,7 +361,11 @@ class Palette extends Component {
                 // colors[i]
                 
                 var results = <div className="results">
-                    {matches.map((x, i) => <div className={classNames({ result: true, selected: i == index })}>
+                    {matches.map((x, i) => <div 
+                        key={i}
+                        className={classNames({ result: true, selected: i == index })}
+                        onMouseEnter={e => this.selectIndex(i)}
+                        onClick={e => this.clickIndex(i)}>
                         <div className="token" style={{background: headColor}}>{x.head}</div>
                         {x.level > 0 ? <div className="name">
                             <Emboldinator str={x.name} query={query} />
@@ -359,7 +380,10 @@ class Palette extends Component {
                     {matches.map((x, i) => {
                         if(x.level > 0){
                             return (
-                                <div className={classNames({ result: true, selected: i == index })}>
+                                <div key={i}
+                                     className={classNames({ result: true, selected: i == index })} 
+                                     onMouseEnter={e => this.selectIndex(i)}
+                                     onClick={e => this.clickIndex(i)}>
                                     <div className={classNames({token: true, root: x.level == 0})} style={{background: colors[heads.indexOf(x.head)]}}>
                                         <Emboldinator str={x.head + ' ' + x.name} query={query} range={[0, x.head.length]} />
                                     </div>
@@ -371,7 +395,11 @@ class Palette extends Component {
                             );
                         }else{
                             return (
-                                <div className={classNames({ result: true, selected: i == index })}  style={{background: colors[heads.indexOf(x.head)]}}>
+                                <div key={i}
+                                     className={classNames({ result: true, selected: i == index })} 
+                                     style={{background: colors[heads.indexOf(x.head)]}}
+                                     onMouseEnter={e => this.selectIndex(i)}
+                                     onClick={e => this.clickIndex(i)}>
                                     <Emboldinator str={x.head + ' ' + x.name} query={query} range={[0, x.head.length]} /> ›
                                 </div>
                             );
