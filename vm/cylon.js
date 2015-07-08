@@ -244,6 +244,22 @@ function runCachedCell(cell_id, config){
                 return def
             }
         },
+        Index(def, id, name){
+            return function(...opts) {
+                if(!opts.length){
+                    throw new Error("Interact.Index requires at least one option")
+                }
+                interactors[id] = {
+                    type: 'index',
+                    name: name,
+                    opts: opts,
+                    def: def,
+                    id: id
+                }
+                if(config.interacts && id in config.interacts) return config.interacts[id];
+                return def
+            }
+        },
         Text(def, id, name){
             return function() {
                 interactors[id] = {

@@ -79,6 +79,11 @@ export class Interactor extends Component {
             this.updateValue(value)
         }
     }
+    indexUpdater = (index) => {
+        return e => {
+            this.updateValue(+index)
+        }
+    }
     updateText = () => {
         var value = React.findDOMNode(this.refs.text).value;
         this.updateValue(value)
@@ -100,7 +105,7 @@ export class Interactor extends Component {
                 defaultValue={this.state.value} 
                 min={i.min || 0}
                 max={i.max || 100} />
-        }else if(i.type == 'choice'){
+        }else if(i.type == 'choice' || i.type == 'index'){
             // TODO: if opts.length > 5 then present this as a dropdown
             widget = <div className="btn-group">
                         {
@@ -109,9 +114,14 @@ export class Interactor extends Component {
                                 className={classNames({
                                     "btn": true,
                                     "btn-default": true,
-                                    "active": x == this.state.value
+                                    "active": i.type == 'choice' ? 
+                                                (x == this.state.value) :
+                                                (index == this.state.value)
                                 })}
-                                onClick={this.choiceUpdater(x)}>{x}</button>)
+                                onClick={i.type == 'choice' ? 
+                                    this.choiceUpdater(x) :
+                                    this.indexUpdater(index)
+                                }>{x}</button>)
                         }
                     </div>
         }else if(i.type == 'text'){

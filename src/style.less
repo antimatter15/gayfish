@@ -377,8 +377,8 @@ table {
     z-index: 94;
     top: 15px;
     border-radius: 10px;
-    // border-bottom-right-radius: 0;
-    // border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
     box-shadow: 0 0 10px rgba(0,0,0,0.2);
     // border: 1px solid #D6D6D6;
     // border-top: none;
@@ -393,9 +393,11 @@ table {
         // border: 1px solid #D6D6D6;
         .token {
             display: inline-block;
-            background: #D9D7F9;
+            // background: #D9D7F9;
+            // background: #D7F9E0;
             padding: 5px;
             margin: -5px;
+            // color: white;
             margin-right: 5px;
             border-radius: 5px;
         }
@@ -404,6 +406,7 @@ table {
             outline: 0;
             color: white;
             font-size: 18px;
+            // width: 100%;
             background: transparent;
         }
     }
@@ -413,6 +416,9 @@ table {
         text-align: center;
         // font-style: italic;
         color: gray;
+    }
+    u {
+        text-decoration-color: red;    
     }
     .results {
         max-height: 300px;
@@ -425,8 +431,12 @@ table {
             // &:last-child {
             //     border-bottom: none;
             // }
+            border-left: 10px solid transparent;
+            background: #F5F5F5;
             &.selected {
-                background: #EAEAEA;
+                background: white;
+                border-left: 10px solid #C34040;
+                box-shadow: 0 0 5px rgba(128, 128, 128, 0.24);
             }
             .token {
                 display: inline-block;
@@ -434,8 +444,14 @@ table {
                 padding: 5px;
                 margin: -5px;
                 border-radius: 5px;
-                color: black;
+                // color: white;
+                box-shadow: 0 0 2px rgba(0, 0, 0, 0.1) inset;
+                // &.root {
+                //     background: #D7F9E0;
+                // }
             }
+            
+            
             .chevron {
                 margin-left: 10px;
                 display: inline-block;;
@@ -451,6 +467,7 @@ table {
                 margin: -5px;
                 border-radius: 5px;
                 float: right;
+                box-shadow: 0 0 2px rgba(0, 0, 0, 0.1) inset;
             }
         }
     }

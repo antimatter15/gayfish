@@ -117,7 +117,6 @@ class CellResult extends Component {
         // <span className="timing">{duration}</span>
         return (
             <div className={cell_classes} style={style}>
-                
                 {(cell.status == 'running' && cell.progress > 0 && cell.progress <= 1) ? <div className="progress-container">
                     <progress value={cell.progress} max={1} />
                 </div> : null}
@@ -164,26 +163,33 @@ class Palette extends Component {
             show: false,
             query: '',
             head: '',
-            index: 0
+            index: 0,
+            rootIndex: 0
         }
         var source = [
             ['Cell', [
                 {name: "Type: Code"},
                 {name: "Type: Markdown"},
                 {name: "Run", key: "Cmd-Enter"},
+                {name: "Run and Advance", key: "Shift-Enter"},
             ]],
             ['Document', [
                 {name: "Save", key: "Cmd-S"},
+                {name: "New"},
                 {name: "Publish"}
             ]],
             ['Kernel', [
-                {name: "Restart"}
+                {name: "Restart"},
+                {name: "Interrupt"}
             ]],
             ['Settings', [
-                {name: "Theme"}
+                {name: "Theme: Dark"},
+                {name: "Theme: Light"}
             ]],
             ['Help', [
-                {name: "About"}
+                {name: "About"},
+                {name: "Github"},
+                {name: "Documentation"}
             ]],
         ]
         this.source = []
@@ -204,17 +210,36 @@ class Palette extends Component {
         }
 
     }
+    toggleShow(){
+        this.setState({
+            show: !this.state.show
+        })
+    }
     handleInput = (e) => {
         var el = React.findDOMNode(this.refs.input);
         var query = el.value.trim();
-        this.setState({ query: query })
+        this.setState({ 
+            query: query, 
+            index: 0,
+            // rootIndex: this.state.rootIndex
+            // rootIndex: query && !this.state.head ? 0 : this.state.rootIndex
+        })
     }
     handleKey = (e) => {
         const {doc} = this.props;
+        // TODO: some complicated way to keep track of state
+        // like in a hierarchical menu system such that it 
+        // preserves all the expected invariants
+
+        // eg. down -> right -> left should return to same position (not top)
+        //     down -> type should send cursor to top
+
         
         var matches = this.runQuery()
         var el = React.findDOMNode(this.refs.input);
         var index = Math.min(matches.length - 1, Math.max(0, this.state.index));
+        var heads = this.source.filter(x => x.level == 0).map(x => x.name);
+
 
         if(e.keyCode == 27){ // esc
             this.setState({ show: false })
@@ -224,11 +249,26 @@ class Palette extends Component {
         }else if(e.keyCode == 40) { // down
             this.setState({ index: Math.min(matches.length - 1, index + 1) })
             e.preventDefault()
+        }else if(e.keyCode == 39){ // right?
+            if(el.selectionEnd == el.value.length){
+                var sel = matches[index];
+                if(sel.level == 0){
+                    this.setState({ head: sel.head, rootIndex: heads.indexOf(sel.head), index: 0 })
+                    el.value = ''
+                    this.handleInput()    
+                }
+                e.preventDefault()    
+            }
+        }else if(e.keyCode == 37){ // left
+            if(el.selectionEnd == 0 && this.state.head){
+                this.setState({ head: '', index: this.state.rootIndex })
+                e.preventDefault()
+            }
         }else if(e.keyCode == 9){ // tab
             // console.log(e.keyCode)
             var sel = matches[index];
             if(sel.level == 0){
-                this.setState({ head: sel.head })
+                this.setState({ head: sel.head, rootIndex: heads.indexOf(sel.head), index: 0 })
                 el.value = ''
                 this.handleInput()    
             }
@@ -236,14 +276,14 @@ class Palette extends Component {
         }else if(e.keyCode == 13){ // enter
             var sel = matches[index];
             if(sel.level == 0){
-                this.setState({ head: sel.head })
+                this.setState({ head: sel.head, rootIndex: heads.indexOf(sel.head), index: 0 })
                 el.value = ''
                 this.handleInput()    
             }
             e.preventDefault()
         }else if(e.keyCode == 8){ // backspace
-            if(el.value == ''){ // TODO: check instead that the cursor is at the beginning
-                this.setState({ head: '' })
+            if(el.selectionEnd == 0){ // TODO: check instead that the cursor is at the beginning
+                this.setState({ head: '', index: this.state.head ? this.state.rootIndex : 0 })
             }
         }
     }
@@ -258,6 +298,11 @@ class Palette extends Component {
             doc.focused.cm.focus();
         }
     }
+    
+    // TODO: some sort of smarter fuzzy search like sublime
+    // so that Markdown still shows up if I accidentally type
+    // it as Mkardown or Markdwon 
+
 
     runQuery() {
         var {query, head} = this.state;
@@ -269,10 +314,10 @@ class Palette extends Component {
                 var matches = this.source.filter(x => x.level == 0)
             }else{
                 var regex = new RegExp(query.split('').map(RegExp.escape).join('.*'), 'i');
-                var matches = this.source.filter(x => regex.test(x.head + ' ' + x.name))
+                var matches = this.source.filter(x => regex.test(x.level == 0 ? x.head : (x.head + ' ' + x.name)))
             }    
         }
-        // TODO: if there's nothing then you should be able to 
+        // TODO: if there's nothing then you should be able to see things anyway
         return matches
     }
 
@@ -282,32 +327,57 @@ class Palette extends Component {
         var matches = this.runQuery();
         var {query, head} = this.state;
 
+        var colors = ["#D7F9E0", "#E9E8F1", "#D7F5F9", "#F0F9D7", "#F9E5D7", "#F9DCD7", "#F9D7F1"];
+        // var colors = ["#399852", "#DC2FAF", "#C57D3B", "#3B92C5", "#A63BC5", "#2CADA8"]
+
+        var heads = this.source.filter(x => x.level == 0).map(x => x.name);
+        if(head){
+            var headColor = colors[heads.indexOf(head)]    
+        }
+        
+
         if(matches.length == 0){
             var results = <div className="no-results">(no matches)</div>
         }else{
             var index = Math.min(matches.length - 1, Math.max(0, this.state.index));
             if(head){
+                // colors[i]
+                
                 var results = <div className="results">
                     {matches.map((x, i) => <div className={classNames({ result: true, selected: i == index })}>
-                        <div className="token"><u>{x.head}</u></div>
+                        <div className="token" style={{background: headColor}}>{x.head}</div>
                         {x.level > 0 ? <div className="name">
                             <Emboldinator str={x.name} query={query} />
+                        </div> : null }
+                        {x.level > 0 && x.key ? <div className="key">
+                            {x.key}
                         </div> : null }
                     </div>)}
                 </div>
             }else{
                 var results = <div className="results">
-                    {matches.map((x, i) => <div className={classNames({ result: true, selected: i == index })}>
-                        <div className="token">
-                            <Emboldinator str={x.head + ' ' + x.name} query={query} range={[0, x.head.length]} />
-                        </div>
-                        {x.level > 0 ? <div className="name">
-                            <Emboldinator str={x.head + ' ' + x.name} query={query} range={[x.head.length]} />
-                        </div> : <div className="chevron">›</div> }
-                        {x.level > 0 && x.key ? <div className="key">
-                            {x.key}
-                        </div> : null }
-                    </div>)}
+                    {matches.map((x, i) => {
+                        if(x.level > 0){
+                            return (
+                                <div className={classNames({ result: true, selected: i == index })}>
+                                    <div className={classNames({token: true, root: x.level == 0})} style={{background: colors[heads.indexOf(x.head)]}}>
+                                        <Emboldinator str={x.head + ' ' + x.name} query={query} range={[0, x.head.length]} />
+                                    </div>
+                                    <div className="name">
+                                        <Emboldinator str={x.head + ' ' + x.name} query={query} range={[x.head.length]} />
+                                    </div>
+                                    {x.key ? <div className="key">{x.key}</div> : null }
+                                </div>
+                            );
+                        }else{
+                            return (
+                                <div className={classNames({ result: true, selected: i == index })}  style={{background: colors[heads.indexOf(x.head)]}}>
+                                    <Emboldinator str={x.head + ' ' + x.name} query={query} range={[0, x.head.length]} /> ›
+                                </div>
+                            );
+                        }
+
+                    })}
                 </div>
             }
             
@@ -317,10 +387,17 @@ class Palette extends Component {
             right: `${-(this.props.size + width - 1)*100/2}%`,
             width: `${width*100}%`
         }
+        var headtoken = null;
+        if(head){
+            headtoken = <div className="token" style={{background: headColor}} defaultValue={query}>
+                {head}
+            </div>;
+        }
+        
         return (
             <div className="palette" style={style}>
                 <div className="input">
-                    { head ? <div className="token">{head}</div> : null }
+                    { headtoken }
                     <input type="text" ref="input" onChange={this.handleInput} onKeyDown={this.handleKey}></input>
                 </div>
                 {results}
@@ -330,9 +407,8 @@ class Palette extends Component {
 }
 
 
-// TODO: some sort of smarter fuzzy search like sublime
-// so that Markdown still shows up if I accidentally type
-// it as Mkardown or Markdwon 
+// TODO: try to optimize the display such that it favors
+// contiguous runs of text
 
 class Emboldinator extends Component {
     render(){
@@ -602,7 +678,7 @@ export default class App extends Component {
     handleKey = (e) => {
         if(e.keyCode == 80 && e.metaKey){ // Cmd-P
             e.preventDefault();
-            this.refs.palette.setState({ show: !this.refs.palette.state.show })
+            this.refs.palette.toggleShow()
         }else if(e.keyCode == 82 && e.metaKey){ // Cmd-R
             // e.preventDefault();
             // this.refs.palette.setState({ show: true })
