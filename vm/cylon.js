@@ -169,7 +169,7 @@ function runCachedCell(cell_id, config){
     var {code, map} = cachedTranspiledCells[cell_id];
 
     function send(type, obj){
-        console.log('sending', type, obj)
+        // console.log('sending', type, obj)
         obj.cell = cell_id;
         obj.type = type;
         postMessage(obj)
