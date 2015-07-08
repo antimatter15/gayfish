@@ -70,6 +70,11 @@ export default class Editor extends Component {
     componentDidUpdate() {
         var {doc, cell} = this.props;
         var cm = cell.cm;
+        if(cell.markdown){
+            cm.setOption("mode", "markdown")
+        }else{
+            cm.setOption("mode", "javascript")
+        }
         cell.height = cm.getWrapperElement().offsetHeight;
     }
     componentDidMount() {        

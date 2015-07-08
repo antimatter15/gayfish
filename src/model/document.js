@@ -31,9 +31,7 @@ export default class DocumentModel { // a document is a collection of cells
         for(let c of state.cells){
             if(typeof c.index != 'number') throw 'Cell index must be number';
             var cell = new CellModel(this, c.index)
-            if(typeof c.value != 'string') throw 'Cell value must be string';
-            cell.value = c.value
-            cell._collapsed = !!c.collapsed;
+            cell.restore(c)
         }
     }
     restart(){

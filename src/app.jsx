@@ -274,7 +274,7 @@ class UnifiedPair extends Component {
         // React.findDOMNode(this.refs.editor)
 
         return connectDragPreview(
-            <div className={classNames({"cell-cluster": 1, "focused": doc.vm.latestRunCell == cell})}>
+            <div className={classNames({"cell-cluster": 1, "focused": doc.vm.latestRunCell == cell, "markdown": cell.markdown})}>
                 {connectDropTarget(<div style={{width: pct}} className={cell_classes} onClick={this.handleClick}>
                     {connectDragSource(<div className="cell-handle" style={{ opacity }} onClick={this.stopEvent} onDoubleClick={this.doubleClick}></div>)}
                     <div ref="editor" className="cell-editor" style={{ opacity }}>

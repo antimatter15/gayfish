@@ -14,10 +14,13 @@ export class Palette extends Component {
             index: 0,
             rootIndex: 0
         }
+        var {doc} = this.props;
         var source = [
             ['Cell', [
                 {name: "Type: Code"},
-                {name: "Type: Markdown"},
+                {name: "Type: Markdown", action: () => {
+                    doc.focused.markdown = true;
+                }},
                 {name: "Run", key: "Cmd-Enter"},
                 {name: "Run and Advance", key: "Shift-Enter"},
             ]],
@@ -144,6 +147,8 @@ export class Palette extends Component {
                 el.value = ''
                 this.handleInput()    
             }else{
+                this.setState({ lastRun: sel })
+                if(sel.action) sel.action();
                 this.hide()
             }
             e.preventDefault()
@@ -163,7 +168,8 @@ export class Palette extends Component {
             this.setState({ index: index, head: sel.head, query: '' })
             el.value = ''
         }else{
-            this.setState({ index: index })
+            this.setState({ index: index, lastRun: sel })
+            if(sel.action) sel.action();
             this.hide()
         }
         
@@ -187,17 +193,29 @@ export class Palette extends Component {
 
     runQuery() {
         var {query, head} = this.state;
+        var regex = new RegExp(query.split('').map(RegExp.escape).join('.*'), 'i');
+
         if(head){
             var regex = new RegExp(query.split('').map(RegExp.escape).join('.*'), 'i');
             var matches = this.source.filter(x => x.head == head && x.level > 0).filter(x => regex.test(x.name))
         }else{
             if(query.length == 0){
                 var matches = this.source.filter(x => x.level == 0)
+                if(this.state.lastRun){
+                    matches.unshift(this.state.lastRun)
+                }
             }else{
-                var regex = new RegExp(query.split('').map(RegExp.escape).join('.*'), 'i');
                 var matches = this.source.filter(x => regex.test(x.level == 0 ? x.head : (x.head + ' ' + x.name)))
+                if(this.state.lastRun){
+                    if(matches.indexOf(this.state.lastRun) != -1){
+                        matches.unshift(matches.splice(matches.indexOf(this.state.lastRun), 1)[0])
+                    }
+                }
             }    
         }
+        // if(this.state.lastRun && regex.test(this.state.lastRun.head + ' ' + this.state.lastRun.name)){
+        //     matches.unshift(this.state.lastRun)
+        // }
         // TODO: if there's nothing then you should be able to see things anyway
         return matches
     }
@@ -269,7 +287,8 @@ export class Palette extends Component {
                                      style={{background: colors[heads.indexOf(x.head)]}}
                                      onMouseEnter={e => this.selectIndex(i)}
                                      onClick={e => this.clickIndex(i)}>
-                                    <Emboldinator str={x.head + ' ' + x.name} query={query} range={[0, x.head.length]} /> ›
+                                    <Emboldinator str={x.head + ' ' + x.name} query={query} range={[0, x.head.length]} />
+                                    <span style={{'float': 'right'}}>›</span>
                                 </div>
                             );
                         }

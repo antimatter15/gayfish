@@ -79,7 +79,7 @@ function Completion(cm, options) {
         Tab: this.pick.bind(this),
         End: this.pick.bind(this),
         "Cmd-Right": this.pick.bind(this),
-        Right: this.pickOne.bind(this)
+        // Right: this.pickOne.bind(this)
     })
     cm.on("cursorActivity", this.activityFunc = function() { self.cursorActivity(); });
 }
@@ -89,7 +89,7 @@ Completion.prototype = {
         if (!this.active()) return;
         this.cm.state.predictionActive = null;
         // this.tick = null;
-        // this.cm.off("cursorActivity", this.activityFunc);
+        this.cm.off("cursorActivity", this.activityFunc);
         this.cm.removeKeyMap(this.keyMap)
 
         this.cm.getAllMarks()
@@ -120,19 +120,26 @@ Completion.prototype = {
 
         this.close();
     },
-    pickOne: function(){
-        var data = this.data;
-        let {from, to, list} = data;
+    // pickOne: function(){
+    //     var data = this.data;
+    //     let {from, to, list} = data;
 
-        var cm = this.cm;
-        var completion = data.list[0]
-        let {line, ch} = cm.getCursor();
-        this.cm.replaceRange(completion.text.slice(0, ch - from.ch + 1), from, {line, ch})
-    },
+    //     var cm = this.cm;
+    //     var completion = data.list[0]
+    //     let {line, ch} = cm.getCursor();
+    //     this.cm.replaceRange(completion.text.slice(0, ch - from.ch + 1), from, {line, ch})
+    // },
 
     cursorActivity: function(){
         var cm = this.cm;
         if (cm.listSelections().length > 1 || cm.somethingSelected()) return this.close();
+
+        var pos = this.cm.getCursor(), line = this.cm.getLine(pos.line);
+        if (pos.line != this.startPos.line || line.length - pos.ch != this.startLen - this.startPos.ch ||
+            pos.ch < this.startPos.ch || this.cm.somethingSelected() ||
+            (pos.ch && this.options.closeCharacters.test(line.charAt(pos.ch - 1)))) {
+          this.close();
+        }
     },
 
 

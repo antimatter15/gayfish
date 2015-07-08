@@ -23,8 +23,15 @@ export default class CellModel {
         return {
             value: this.value,
             index: this.index,
-            collapsed: this.collapsed
+            collapsed: this.collapsed,
+            markdown: this.markdown
         }
+    }
+    restore(c) {
+        if(typeof c.value != 'string') throw 'Cell value must be string';
+        this.value = c.value
+        this._collapsed = !!c.collapsed;
+        this._markdown = !!c.markdown;
     }
     mount = (x) => {
         if(typeof x == 'function'){
@@ -113,6 +120,13 @@ export default class CellModel {
             this.cm.execCommand('unfoldAll')
         }
         this.update()
+    }
+    get markdown() { return !!this._markdown }
+    set markdown(val){
+        if(this._markdown != val){
+            this._markdown = val;
+            this.update()    
+        }
     }
     get height(){ return this._height; }
     set height(val){
