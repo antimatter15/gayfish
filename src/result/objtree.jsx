@@ -1,6 +1,7 @@
 import React, { Component, PropTypes } from 'react/addons';
 import classNames from 'classnames'
 import * as _ from 'lodash'
+import {array_join} from '../util.js'
 
 require('./blink/consoleView.css')
 require('./blink/objectValue.css')
@@ -14,28 +15,48 @@ require('./blink/inspectorSyntaxHighlight.css')
 class ObjectPreview extends Component {
     render(){
         var {node} = this.props;
-        if(typeof node == "undefined" || node === null){
-            return <span className="object-value-null">{node + ''}</span>
-        }else if(typeof node == "string"){
-            // if(node.length < 50){
-                return <span className="cm-js-string">{'"' + node + '"'}</span>
-            // }else{
-            //     return <span className="cm-js-string">{'"' + node.slice(0, 50) + '..."'}</span>
-            // }
-            
-        }else if(typeof node == "number"){
-            return <span className="object-value-number">{node}</span>
-        }else if(typeof node == "object"){
-            if(Array.isArray(node) || node.type == 'array'){
+        if(typeof node == "object"){
+            if(node.type == 'array'){
                 return <span className="value object-value-array">Array[{node.length}]</span>;
-            }else{
+            }else if(node.type == 'object'){
                 return <span className="object-value-object">Object</span>;
+            }else if(node.type == 'null'){
+                return <span className="object-value-null">null</span>
+            }else if(node.type == 'undefined'){
+                return <span className="object-value-undefined">undefined</span>
+            }else if(node.type == 'number'){
+                return <span className="object-value-number">{node.value}</span>
+            }else if(node.type == 'string'){
+                return <span className="cm-js-string">{'"' + node.value + '"'}</span>
+            }else if(node.type == 'boolean'){
+                return <span className="object-value-boolean source-code">{node.value ? 'true' : 'false'}</span>
+            }else{
+                return <span>Unhandled Type: {node.type}</span>
             }
-        }else if(typeof node == "boolean"){
-            return <span className="object-value-boolean source-code">{JSON.stringify(node)}</span>
         }else{
-            return <span>wat? {typeof node}</span>
+            return <span>Warning: Unwrapped Object</span>
         }
+
+
+
+
+        // if(typeof node == "undefined" || node === null){
+        //     return <span className="object-value-null">{node + ''}</span>
+        // }else if(typeof node == "string"){
+            
+        // }else if(typeof node == "number"){
+            
+        // }else if(typeof node == "object"){
+        //     if(Array.isArray(node) || node.type == 'array'){
+        //         return <span className="value object-value-array">Array[{node.length}]</span>;
+        //     }else{
+        //         return <span className="object-value-object">Object</span>;
+        //     }
+        // }else if(typeof node == "boolean"){
+            
+        // }else{
+        //     return <span>wat? {typeof node}</span>
+        // }
     }
 }
 

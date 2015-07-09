@@ -77,8 +77,8 @@ function Completion(cm, options) {
 
     cm.addKeyMap(this.keyMap = {
         Tab: this.pick.bind(this),
-        End: this.pick.bind(this),
-        "Cmd-Right": this.pick.bind(this),
+        // End: this.pick.bind(this),
+        // "Cmd-Right": this.pick.bind(this),
         // Right: this.pickOne.bind(this)
     })
     cm.on("cursorActivity", this.activityFunc = function() { self.cursorActivity(); });
@@ -134,6 +134,7 @@ Completion.prototype = {
         var cm = this.cm;
         if (cm.listSelections().length > 1 || cm.somethingSelected()) return this.close();
 
+
         var pos = this.cm.getCursor(), line = this.cm.getLine(pos.line);
         if (pos.line != this.startPos.line || line.length - pos.ch != this.startLen - this.startPos.ch ||
             pos.ch < this.startPos.ch || this.cm.somethingSelected() ||
@@ -161,6 +162,8 @@ Completion.prototype = {
         }
 
         if(com.text.length == to.ch - from.ch) return this.close();
+
+        if(to.ch != ch) return this.close();
 
         var prefixWidget = document.createElement("span")
         prefixWidget.appendChild(document.createTextNode(prefix.slice(to.ch - from.ch)))

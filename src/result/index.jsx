@@ -4,16 +4,7 @@ import {DropdownCodeViewer, CodeViewer} from '../codemirror/viewer'
 import ObjectTree from './objtree'
 import classNames from 'classnames'
 import * as _ from 'lodash'
-
-function array_join(array, glue){
-    var new_array = []
-    for(var i = 0; i < array.length; i++){
-        new_array.push(array[i])
-        if(i != array.length - 1) new_array.push(glue);
-    }
-    return new_array
-}
-
+import {array_join} from '../util.js'
 
 // TODO: figure out a way to define the table row height by the right column
 // and have the name cells overflow with ellipsis rather than constraining the
