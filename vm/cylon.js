@@ -346,7 +346,9 @@ function runCachedCell(cell_id, config){
         },
         console: {
             log(){
-                // console.log.apply(console, arguments)
+                send('console', {
+                    arguments: Array.from(arguments).map(x => summarizeObject(x))
+                })
             },
         }
     }
