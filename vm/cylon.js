@@ -300,6 +300,7 @@ function runCachedCell(cell_id, config){
         sendGlobalSnapshot()
         sendInteractSnapshot()
     }
+    // TODO: optimize this more so it's not calling cleartimeout and settimeout all the time
     function queueFinal(){
         clearTimeout(lastUpdateTimeout)
         lastUpdateTimeout = setTimeout(doLastUpdate, 50)

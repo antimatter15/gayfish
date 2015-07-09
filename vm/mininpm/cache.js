@@ -1,8 +1,13 @@
 // simple memoized package management stuff
+
 import semver from 'semver';
 import {untar} from 'untar.js';
-// import {unzip} from 'gzip-js';
 import {inflate} from 'pako';
+import IDBStore from 'idb-wrapper';
+
+var network_cache = new IDBStore({
+	storeName: 'NetCache'
+});
 
 var npm_package_cache = {};
 var npm_tarball_cache = {};
@@ -26,7 +31,7 @@ npm_tarball_cache['_empty@1.0.0'] = {
 	}
 }
 
-function fetch(url, type = 'json'){
+function fetchXHR(url, type = 'json'){
 	var gretchen = new XMLHttpRequest();
 	gretchen.responseType = type
 	gretchen.open('GET', url, true)
@@ -41,6 +46,45 @@ function fetch(url, type = 'json'){
 	gretchen.send(null)
 	return promise;
 }
+
+function fetchCache(url){
+	return new Promise((resolve, reject) => {
+		network_cache.get(url, resolve, reject)
+	})
+}
+
+function fetch(url, type = 'json'){
+	return new Promise(function(resolve, reject){
+		function loadNetwork(){
+			// console.log("got error", url)
+			fetchXHR(url, type).then(function(response){
+				resolve(response)
+
+				// console.log('got from xhr', response)
+				network_cache.put({
+					id: url, 
+					data: response,
+					type: type
+				}, function(){
+					// console.log('put success')
+				}, function(err){
+					// console.log('put fail', err)
+				})
+				
+			}).catch(reject)
+		}
+		network_cache.get(url, function(response, derp){
+			// console.log('got resposne', url, response, derp)
+			if(response){
+				resolve(response.data)	
+			}else{
+				loadNetwork()
+			}
+		}, loadNetwork)	
+	})
+}
+
+// var fetch = fetchXHR;
 
 export async function package_fetch(name){
 	// be somewhat efficient and memoize it

@@ -1,3 +1,10 @@
+// TODO: what this thing should to
+// is it should have a cache powered by indexeddb
+// and simultaneously check to make sure the stuff is up to date
+// and if there's something newer out there then present
+// some sort of warning to the user so that the next time
+// the cell is executed, it's on the latest version
+
 import path from 'path';
 var browserifyBuiltins = require('./builtins.json')
 import lookup_path from './lookup';
