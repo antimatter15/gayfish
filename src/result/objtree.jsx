@@ -12,7 +12,6 @@ require('./blink/inspectorSyntaxHighlight.css')
 
 // TODO: rewrite this so it's not a gnarly mess
 
-
 // this shows shallow object descriptions
 class ObjectPreview extends Component {
     render(){

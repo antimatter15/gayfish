@@ -150,6 +150,8 @@ export default class Editor extends Component {
                         cell.prev.cm.focus()
                     })
                 }
+            }else{
+                cell.cm.setCursor(0, 0)
             }
         }
 
