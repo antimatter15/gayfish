@@ -105,7 +105,7 @@ async function transpileAndRun(packet){
                 { transformer: InteractTransformer, position: 'before' },
                 { transformer: LoggingSyntaxTransformer, position: 'before' }, 
                 { transformer: GlobalTransformer, position: 'before' }, 
-                { transformer: LooperTransformer, position: 'before' },
+                { transformer: LooperTransformer, position: 'after' },
                 // { transformer: ResultTransformer, position: 'after' },
             ]
         })
@@ -346,7 +346,7 @@ function runCachedCell(cell_id, config){
         },
         console: {
             log(){
-                console.log.apply(console, arguments)
+                // console.log.apply(console, arguments)
             },
         }
     }

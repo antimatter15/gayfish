@@ -151,7 +151,12 @@ export default class CellModel {
         if(!this.next && this.value) new CellModel(this.doc);
     }
     run() {
-        this.doc.vm.queue(this)
+        if(this.markdown){
+            
+        }else{
+            this.doc.vm.queue(this)
+        }
+        
         this.update()
     }
 }

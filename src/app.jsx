@@ -18,10 +18,13 @@ import {InteractorTable} from './interact'
 import {DropdownCodeViewer, CodeViewer} from './codemirror/viewer'
 import {Palette} from './palette'
 
-var CodeMirror = require('codemirror')
-
+var CodeMirror = require('codemirror');
 
 require('./bootstrap/carbide.less');
+
+
+let wumbology = module;
+console.log(wumbology);
 
 // TODO: figure out a way to define the table row height by the right column
 // and have the name cells overflow with ellipsis rather than constraining the

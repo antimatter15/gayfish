@@ -58,7 +58,30 @@ acorn.plugins.semilog = function(instance){
             return this.finishNode(node, "VariableDeclaration")
         }
     })
+    //  this.semicolon => if (!this.eat(tt.semi) && !this.insertSemicolon()) this.unexpected()
+    instance.extend("parseReturnStatement", function(inner){
+        return function(node){
+            if (!this.inFunction && !this.options.allowReturnOutsideFunction)
+                this.raise(this.start, "'return' outside of function")          
+            this.next()
+
+            // In `return` (and `break`/`continue`), the keywords with
+            // optional arguments, we eagerly look for a semicolon or the
+            // possibility to insert one.
+
+            if (this.eat(acorn.tokTypes.semi) || this.insertSemicolon()) node.argument = null
+            else { 
+                node.argument = this.parseExpression(); 
+                if(this.canInsertSemicolon()){
+                    node.logStatement = true;
+                }else if(!this.eat(acorn.tokTypes.semi)) this.unexpected();
+            }
+            return this.finishNode(node, "ReturnStatement")
+        }
+    })
 }
+
+// TODO: figure out return
 
 // TODO: use source maps instead of passing the source line in the function call
 var LoggingSyntax = new BabelTransformer("logging-syntax", {
@@ -88,9 +111,18 @@ var LoggingSyntax = new BabelTransformer("logging-syntax", {
             )
         }
     },
+    ReturnStatement(node, parent, scope){
+        if(node.logStatement){
+            node.argument = t.callExpression(t.identifier('__log'), [
+                node.argument,
+                t.literal(BabelGenerator(node.argument).code),
+                t.literal('return'),
+                t.literal(node.loc.end.line)
+            ])
+        }
+    },
     ExpressionStatement(node, parent, scope){
         if(node.logStatement){
-            console.log('expression statement', node)
             node.expression =  t.callExpression(t.identifier('__log'), [
                 node.expression, 
                 t.literal(BabelGenerator(node.expression).code),

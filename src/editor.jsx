@@ -8,6 +8,7 @@ global.CodeMirror = CodeMirror;
 require("codemirror/lib/codemirror.css");
 require("codemirror/mode/xml/xml")
 require("codemirror/mode/python/python")
+require("codemirror/mode/markdown/markdown")
 
 require("./codemirror/codemirror.less");
 require("./codemirror/javascript")
