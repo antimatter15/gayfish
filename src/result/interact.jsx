@@ -1,5 +1,6 @@
 import React, { Component, PropTypes } from 'react/addons';
 import classNames from 'classnames'
+require('./bootstrap/carbide.less');
 
 export class Interactor extends Component {
     constructor(props){

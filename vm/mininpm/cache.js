@@ -79,12 +79,28 @@ export async function tarball_fetch(id){
 	if(id in npm_tarball_cache) return npm_tarball_cache[id];
 	let pkg = await version_fetch(...id.split('@')); // the id is in the form of carbide@1.0.4
 	let data = new Uint8Array(await fetch(pkg.dist.tarball, 'arraybuffer'))
+	let inflated = inflate(data);
 	let files = {};
-	untar(inflate(data)).filter(x => x).forEach(e => {
+	untar(inflated).filter(x => x).forEach(e => {
 		// turns out it's not always in a folder named "package"
 		let filename = e.filename.split('/').slice(1).join('/');
+		
+		// if(filename.endsWith(".jar")) return;
+		// based on http://stackoverflow.com/a/13533390/205784
+		var ascii = 0, other = 0;
+		for(var i = Math.min(e.fileData.length, 1024); i--;){
+			var b = e.fileData[i];
+			(b === 0x09 || b === 0x0A || b === 0x0C || b === 0x0D || 
+				(b >= 32 && b <= 126)) ? (ascii++) : (other++);
+		}
+		var isText = 100 * ascii / (ascii + other) > 90;
+		// console.log(filename, ascii, other)
+		if(!isText) return;
+
 		files[filename] = {
 			filename,
+			// For some reason, for idb-wrapper's bundled copy of closure.jar
+			// this thing freezes or locks up or something
 			data: new Buffer(e.fileData).toString('utf8')
 		}
 	})

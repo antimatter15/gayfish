@@ -140,6 +140,7 @@ async function transpileAndRun(packet){
                 seen_deps[id] = 1;
             },
             error(err){
+                console.error('error acquiring dep', err)
                 // postMessage({ type: 'activity', activity: 'error ' + err, cell: packet.cell})
             }
         })

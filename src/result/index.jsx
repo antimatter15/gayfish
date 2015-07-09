@@ -1,6 +1,6 @@
 import React, { Component, PropTypes } from 'react/addons';
 import {InteractorTable} from './interact'
-import {DropdownCodeViewer, CodeViewer} from './codemirror/viewer'
+import {DropdownCodeViewer, CodeViewer} from '../codemirror/viewer'
 import ObjectTree from './objtree'
 import classNames from 'classnames'
 import * as _ from 'lodash'

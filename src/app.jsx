@@ -20,8 +20,6 @@ import {FocusedCellResult, CellResult} from './result'
 
 var CodeMirror = require('codemirror');
 
-require('./bootstrap/carbide.less');
-
 
 
 const cardSource = {
