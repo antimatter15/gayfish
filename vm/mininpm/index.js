@@ -5,6 +5,11 @@
 // some sort of warning to the user so that the next time
 // the cell is executed, it's on the latest version
 
+
+// TODO: load modules directly from github somehow
+// there has to be some way of getting a tarball 
+// with teh github api
+
 import path from 'path';
 var browserifyBuiltins = require('./builtins.json')
 import lookup_path from './lookup';

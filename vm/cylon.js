@@ -113,7 +113,10 @@ async function transpileAndRun(packet){
 
         console.error(err)
         
-        var loc = /\((\d+):(\d+)\)/g.exec(err.toString())
+        var loc = /\((\d+):(\d+)\)/.exec(err.toString())
+        if(!loc){
+            loc = /Line (\d+)/.exec(err.toString())
+        }
         // console.log(loc, parseInt(loc[1]))
         postMessage({ 
             type: 'error', 
@@ -132,6 +135,9 @@ async function transpileAndRun(packet){
     
     var seen_deps = {}
     for(let dep of deps){
+        // TODO: do something reasonable besides hanging when a module
+        // isn't actually found on NPM
+
         await mininpm.recursiveResolve(dep, 'latest', {
             callback(subdep, version){
                 var id = subdep.replace(/\/.*$/, '') + '@' + version
