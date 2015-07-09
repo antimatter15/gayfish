@@ -5,6 +5,15 @@ import ObjectTree from './objtree'
 import classNames from 'classnames'
 import * as _ from 'lodash'
 
+function array_join(array, glue){
+    var new_array = []
+    for(var i = 0; i < array.length; i++){
+        new_array.push(array[i])
+        if(i != array.length - 1) new_array.push(glue);
+    }
+    return new_array
+}
+
 
 // TODO: figure out a way to define the table row height by the right column
 // and have the name cells overflow with ellipsis rather than constraining the
@@ -108,10 +117,54 @@ export class CellResult extends Component {
                 
                 <InteractorTable cell={cell} doc={doc} />
                 <div className="output">
-                    
                     <LogTable cell={cell} doc={doc} />
                     <GlobalTable cell={cell} doc={doc} />
                     {cell.status == 'error' ? <DropdownCodeViewer code={cell.compiled} /> : null }
+                </div>
+
+                <ConsoleWidget cell={cell} doc={doc} />
+            </div>
+        )
+    }
+}
+
+class ConsoleWidget extends Component {
+    render(){
+        var {doc, cell} = this.props;
+
+        var messages = cell.console.map(c => {
+            // <div className="console-message-wrapper console-error-level">
+            //     <div className="console-message">
+            //         <span className="console-message-text source-code">
+            //             <a href="http://static.adzerk.net/Extensions/adFeedback.js" 
+            //                 className="console-message-url webkit-html-resource-link" 
+            //                 title="http://static.adzerk.net/Extensions/adFeedback.js">
+            //                 {"http://static.adzerk.net/Extensions/adFeedback.js"}
+            //             </a>
+            //             <span>Failed to load resource: net::ERR_BLOCKED_BY_CLIENT</span>
+            //         </span>
+            //     </div>
+            // </div>
+            if(c.type == 'log'){
+                // <a className="console-message-url webkit-html-resource-link" title=":2">VM240:2 </a>
+                return (
+                    <div className="console-message-wrapper console-log-level">
+                        <div className="console-message">
+                            <span className="console-message-text source-code">
+                                
+                                <span>
+                                    {array_join(c.arguments.map(k => <ObjectTree node={k} />), ' ')}
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+                );
+            }
+        });
+        return (
+            <div className="monospace console-widget">
+                <div className="console-group console-group-messages">
+                    {messages}
                 </div>
             </div>
         )

@@ -5,7 +5,7 @@ export default class CellModel {
         this.value = ""
         this.oldValue = ""
         this.output = undefined;
-
+        this.console = []
         this.cm = null
         if(typeof index === 'undefined'){
             doc.cells.push(this)
@@ -40,6 +40,18 @@ export default class CellModel {
             this.cm = x;
             while(this._mounted.length)
                 this._mounted.shift()();
+        }
+    }
+    preflight(){
+        this.status = 'running';
+        this.oldValue = this.value;
+        this.activity = ''
+        this.error = null
+        this.progress = 0;
+        this.console = [];
+        var cm = this.cm;
+        for(let erw of this.errorWidgets){
+            cm.removeLineWidget(erw)
         }
     }
     remove() {

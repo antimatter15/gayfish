@@ -63,6 +63,12 @@ export default class Machine {
             cell.progress = data.frac;
             // cell.logAnnotate(data.line - 1, data.i, data.total)
             cell.update()
+        }else if(data.type == 'console'){
+            cell.console.push({
+                arguments: data.arguments,
+                type: 'log'
+            })
+            cell.update()
         }else if(data.type == 'logs'){
             cell.logs = data.instances
             for(let {instance, line, name, count, type, latest} of data.instances){
@@ -97,22 +103,14 @@ export default class Machine {
         var {cell, type} = this._queue.shift()
         this.busy = true;
         this.latestRunCell = cell;
-        cell.status = 'running';
-        cell.oldValue = cell.value;
-        cell.activity = ''
-        cell.error = null
-        cell.progress = 0;
+        cell.preflight()
         var cm = cell.cm;
-        for(let erw of cell.errorWidgets){
-            cm.removeLineWidget(erw)
-        }
         if(type == 'run'){
             cm.getAllMarks()
                 .filter(x => x._inlineResult)
                 .forEach(x => x.clear());
 
             cell.errorWidgets = [];
-
             cell.compiled = ''    
             cell.update()
             var error, code = cell.value;

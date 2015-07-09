@@ -94,7 +94,7 @@ export default class ObjectTree extends Component {
                     <li className={classNames({"parent": 1, expanded})} onClick={this.toggleExpand}>
                         <div className="selection"></div>
                         <content>
-                            <span className="console-object-preview">
+                            <span className="console-object-preview console-line">
                                 Object {"{"}
                                 {
                                     keys.map((key, i, a) => {
