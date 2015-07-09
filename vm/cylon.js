@@ -170,7 +170,7 @@ function runCachedCell(cell_id, config){
     var {code, map} = cachedTranspiledCells[cell_id];
 
     function send(type, obj){
-        // console.log('sending', type, obj)
+        console.log('sending', type, obj)
         obj.cell = cell_id;
         obj.type = type;
         postMessage(obj)
@@ -294,6 +294,16 @@ function runCachedCell(cell_id, config){
             interactors: _.values(interactors)
         })
     }
+    var lastUpdateTimeout;
+    function doLastUpdate(){
+        sendLogSnapshot()
+        sendGlobalSnapshot()
+        sendInteractSnapshot()
+    }
+    function queueFinal(){
+        clearTimeout(lastUpdateTimeout)
+        lastUpdateTimeout = setTimeout(doLastUpdate, 50)
+    }
     var varys = {
         require(name, version){
             // if(name in cachedModules && !version) return cachedModules[name];
@@ -320,6 +330,8 @@ function runCachedCell(cell_id, config){
             if(Date.now() - lastLogSnapshot > 20){
                 lastLogSnapshot = Date.now();
                 sendLogSnapshot()
+            }else{
+                queueFinal()
             }
             return value
         },
@@ -338,9 +350,7 @@ function runCachedCell(cell_id, config){
             }
         },
         $$done(){
-            sendLogSnapshot()
-            sendGlobalSnapshot()
-            sendInteractSnapshot()
+            doLastUpdate()
             send('done', {
                 duration: now() - startTime
             })
