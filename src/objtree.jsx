@@ -124,10 +124,12 @@ export default class ObjectTree extends Component {
                 </span>
             }else if(node.type == 'undefined'){
                 return <span className="object-value-undefined source-code">undefined</span>
+            }else if(node.type == 'null'){
+                return <span className="object-value-null source-code">null</span>
             }else if(node.type == "regexp"){
                 return <span className="object-value-regexp source-code">{node.code}</span>
             }else{
-                return <span>wat?</span>
+                return <span>wat? {JSON.stringify(node)}</span>
             }
         }
         return <div>hi</div>
