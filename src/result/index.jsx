@@ -87,7 +87,7 @@ class GlobalTable extends Component {
 export class CellResult extends Component {
     clickStop = () => {
         var {doc, cell} = this.props;
-        doc.vm.stop()
+        doc.restart()
     }
     render() {
         var {doc, cell} = this.props;

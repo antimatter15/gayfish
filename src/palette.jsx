@@ -24,6 +24,7 @@ export class Palette extends Component {
                     doc.focused.markdown = true;
                 }},
                 {name: "Run", key: "Cmd-Enter"},
+                {name: "Archive"},
                 {name: "Run and Advance", key: "Shift-Enter"},
             ]],
             ['Document', [

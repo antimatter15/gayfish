@@ -75,7 +75,7 @@ export default class Editor extends Component {
         if(cell.markdown){
             cm.setOption("mode", "markdown")
         }else{
-            cm.setOption("mode", "javascript")
+            cm.setOption("mode", "jsx")
         }
         cell.height = cm.getWrapperElement().offsetHeight;
     }
