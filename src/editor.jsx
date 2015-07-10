@@ -1,6 +1,7 @@
 import React, { Component, PropTypes } from 'react/addons';
 import classNames from 'classnames'
 import CellModel from './model/cell'
+import ObjectTree from './result/objtree'
 
 var CodeMirror = require('codemirror')
 global.CodeMirror = CodeMirror;
@@ -78,6 +79,7 @@ export default class Editor extends Component {
         }
         cell.height = cm.getWrapperElement().offsetHeight;
     }
+
     componentDidMount() {        
         var {doc, cell} = this.props;
 
@@ -116,6 +118,7 @@ export default class Editor extends Component {
         }
 
         cell.mount(cm);
+        cell.editor = this;
 
         eliot.addDoc('cell' + cell.id, cm);
 
@@ -332,6 +335,51 @@ export default class Editor extends Component {
                 doc.update()
             }
         })
+    }
+    logAnnotate(line, count, value){
+        var {doc, cell} = this.props;
+
+        var cm = cell.cm;
+
+        var inlineLog = cm.findMarks({ line, ch: 0 }, { line, ch: 1e3 })
+            .filter(x => x._inlineResult);
+        inlineLog.slice(1).forEach(x => x.clear());
+        
+        // var text = '×' + count
+        
+        var widget = document.createElement("span");
+
+        if(value.type != 'undefined'){
+            var summary = document.createElement('span');
+            // var text = JSON.stringify(value) + '';
+            // if(text.length > 25) text = text.slice(0, 15) + "..." + text.slice(-5);
+            // summary.appendChild(document.createTextNode(text))
+            summary.innerHTML = React.renderToString(<ObjectTree preview={true} node={value} />)
+            summary.className = 'CodeMirror-summary';
+            widget.appendChild(summary)    
+        }
+        
+
+        if(count > 1){
+            var counter = document.createElement('span');
+            counter.appendChild(document.createTextNode('×' + count))
+            counter.className = 'CodeMirror-counter';
+            widget.appendChild(counter)    
+        }
+        
+        if(inlineLog.length > 0){
+            var marker = inlineLog[0];
+            marker.widgetNode.replaceChild(widget, marker.widgetNode.firstChild)
+        }else{
+            var marker = cm.setBookmark({ line, ch: 1e3 }, {
+                widget: widget,
+                insertLeft: true,
+                handleMouseEvents: true
+            })
+        }
+
+        marker._inlineResult = true;
+        marker._originalLine = line;
     }
     render() {
         return <div></div>

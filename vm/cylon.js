@@ -34,7 +34,6 @@ function summarizeObject(obj, noRecurse){
     if(type == 'function'){
         return {type: 'function', name: obj.name}
     }else if(type == 'number'){
-        // return obj;
         return {type: 'number', value: obj, isNaN: isNaN(obj), isFinite: isFinite(obj)}
     }else if(obj === null){
         return {type: 'null'}
@@ -42,10 +41,8 @@ function summarizeObject(obj, noRecurse){
         return {type: 'undefined'}
     }else if(type == 'string'){
         return {type: 'string', value: obj}
-        // return obj
     }else if(type == 'boolean'){
         return {type: 'boolean', value: obj}
-        // return obj
     }else if(Array.isArray(obj)){
         var res = {type: 'array', length: obj.length}
         if(!noRecurse) res.values = obj.map(x => summarizeObject(x, true));

@@ -61,7 +61,6 @@ export default class Machine {
             this._dequeue()
         }else if(data.type == 'progress'){
             cell.progress = data.frac;
-            // cell.logAnnotate(data.line - 1, data.i, data.total)
             cell.update()
         }else if(data.type == 'console'){
             cell.console.push({
@@ -72,7 +71,7 @@ export default class Machine {
         }else if(data.type == 'logs'){
             cell.logs = data.instances
             for(let {instance, line, name, count, type, latest} of data.instances){
-                cell.logAnnotate(line - 1, count, latest)
+                cell.editor.logAnnotate(line - 1, count, latest)
             }
             // cell.update()
         }else if(data.type == 'activity'){
