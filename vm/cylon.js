@@ -195,13 +195,15 @@ function runCachedCell(cell_id, config){
         var packet = []
         for(var i in logInstances){
             var inst = logInstances[i];
+            var value = inst.values[inst.values.length - 1].value;
+
             packet.push({
                 instance: i,
                 line: inst.line,
                 name: inst.name,
                 type: inst.type,
                 count: inst.values.length,
-                latest: summarizeObject(inst.values[inst.values.length - 1].value)
+                latest: summarizeObject(value)
             })
         }
         send('logs', { instances: packet })

@@ -31,6 +31,12 @@ class ObjectPreview extends Component {
                 return <span className="cm-js-string">{'"' + node.value + '"'}</span>
             }else if(node.type == 'boolean'){
                 return <span className="object-value-boolean">{node.value ? 'true' : 'false'}</span>
+            }else if(node.type == 'function'){
+                return <span className="console-message-text source-code">
+                    <span className="object-value-function">{node.name || 'anonymous'}</span>()
+                </span>
+            }else if(node.type == "regexp"){
+                return <span className="object-value-regexp source-code">{node.code}</span>
             }else{
                 return <span>Unhandled Type: {node.type}</span>
             }
@@ -107,7 +113,7 @@ export class LabelPair extends Component {
         var node = parent[name];
         var {expanded} = this.state;
         var desc = { enumerable: true };
-        if(node.type == 'array' || node.type == 'object'){
+        if(node.type == 'array' || node.type == 'object' || (node.type == 'string' && node.value.length > 50)){
             return (
                 <div>
                     <li className={classNames({"parent": 1, expanded})} onClick={this.toggleExpand}>
