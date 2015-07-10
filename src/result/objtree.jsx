@@ -32,16 +32,16 @@ export default class ObjectTree3 extends Component {
         }else if(node.type == 'boolean'){
             return <span className="object-value-boolean">{node.value ? 'true' : 'false'}</span>
         }else if(node.type == 'function'){
-            return <span className="console-message-text source-code">
+            return <span>
                 <span className="object-value-function">{node.name || 'anonymous'}</span>()
             </span>
         }else if(node.type == 'null'){
             return <span className="object-value-null">null</span>
         }else if(node.type == "regexp"){
-            return <span className="object-value-regexp source-code">{node.code}</span>
+            return <span className="object-value-regexp">{node.code}</span>
         }else if(node.type == "date"){
             return <span>
-                <span className="object-value-regexp source-code">
+                <span className="object-value-regexp">
                     {moment(node.unix).format('MMMM Do YYYY, h:mm:ss a')}
                 </span>
                 {" "}({moment(node.unix).fromNow()})
@@ -58,7 +58,15 @@ export default class ObjectTree3 extends Component {
             }
         }else if(node.type == 'array'){
             if(preview){
-                return <span className="value object-value-array">Array[{node.length}]</span>;
+                if(node.values){
+                    return (
+                        <span className="object-value-array">[{
+                            array_join(node.values.map(x => <ObjectTree3 preview={true} node={x} />), ', ')
+                        }]</span>
+                    )
+                }else{
+                    return <span className="value object-value-array">Array[{node.length}]</span>;   
+                }
             }else if(node.length < 100 && node.values){
                 return (
                     <span className="object-value-array">[{
@@ -135,7 +143,7 @@ export default class ObjectTree3 extends Component {
         }else{
             if(typeof result == 'function'){
                 return (
-                    <ol className="tree-outline component-root platform-mac source-code object-properties-section">
+                    <ol className="tree-outline component-root platform-mac object-properties-section">
                         <li className={classNames({"parent": 1, expanded})} onClick={this.toggleExpand}>
                             <div className="selection"></div>
                             <content><ObjectTree3 preview={true} node={node} /></content>

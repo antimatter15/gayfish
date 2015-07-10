@@ -354,8 +354,14 @@ export default class Editor extends Component {
             // var text = JSON.stringify(value) + '';
             // if(text.length > 25) text = text.slice(0, 15) + "..." + text.slice(-5);
             // summary.appendChild(document.createTextNode(text))
-            summary.innerHTML = React.renderToString(<ObjectTree preview={true} node={value} />)
+            summary.innerHTML = React.renderToStaticMarkup(<ObjectTree preview={true} node={value} />)
             summary.className = 'CodeMirror-summary';
+
+            var width = cm.getWrapperElement().offsetWidth,
+                textwidth = cm.getLine(line).length * cm.defaultCharWidth();
+
+            summary.style.maxWidth = (width - textwidth - 100) + 'px'
+
             widget.appendChild(summary)    
         }
         
