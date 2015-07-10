@@ -2,6 +2,7 @@ import React, { Component, PropTypes } from 'react/addons';
 import classNames from 'classnames'
 import * as _ from 'lodash'
 import {array_join} from '../util'
+import moment from 'moment'
 
 require('./blink/consoleView.css')
 require('./blink/objectValue.css')
@@ -24,7 +25,38 @@ export default class ObjectTree3 extends Component {
         var {node, preview, label} = this.props;
         var {expanded} = this.state;
 
-        if(node.type == 'array'){
+        if(node.type == 'undefined'){
+            return <span className="object-value-undefined">undefined</span>
+        }else if(node.type == 'number'){
+            return <span className="object-value-number">{node.value}</span>
+        }else if(node.type == 'boolean'){
+            return <span className="object-value-boolean">{node.value ? 'true' : 'false'}</span>
+        }else if(node.type == 'function'){
+            return <span className="console-message-text source-code">
+                <span className="object-value-function">{node.name || 'anonymous'}</span>()
+            </span>
+        }else if(node.type == 'null'){
+            return <span className="object-value-null">null</span>
+        }else if(node.type == "regexp"){
+            return <span className="object-value-regexp source-code">{node.code}</span>
+        }else if(node.type == "date"){
+            return <span>
+                <span className="object-value-regexp source-code">
+                    {moment(node.unix).format('MMMM Do YYYY, h:mm:ss a')}
+                </span>
+                {" "}({moment(node.unix).fromNow()})
+            </span>
+        }else if(node.type == 'string'){
+            if(preview){
+                return <span className="cm-js-string">{JSON.stringify(node.value)}</span>
+            }else if(node.value.split("\n").length == 1 && node.value < 50){
+                return <span className="cm-js-string">{'"' + node.value + '"'}</span>
+            }else{
+                return () => {
+                    return <span className="cm-js-string">{node.value}</span>
+                }
+            }
+        }else if(node.type == 'array'){
             if(preview){
                 return <span className="value object-value-array">Array[{node.length}]</span>;
             }else if(node.length < 100 && node.values){
@@ -36,16 +68,6 @@ export default class ObjectTree3 extends Component {
             }else if(node.values){
                 return () => {
                     return node.values.map((v, i) => <ObjectTree3 label={i} node={v} />)
-                }
-            }
-        }else if(node.type == 'string'){
-            if(preview){
-                return <span className="cm-js-string">{'"' + node.value + '"'}</span>
-            }else if(node.value.split("\n").length == 1 && node.value < 50){
-                return <span className="cm-js-string">{'"' + node.value + '"'}</span>
-            }else{
-                return () => {
-                    return <span className="cm-js-string">{node.value}</span>
                 }
             }
         }else if(node.type == 'object'){
@@ -77,20 +99,6 @@ export default class ObjectTree3 extends Component {
             }else{
                 return <span className="object-value-object">Object</span>;
             }
-        }else if(node.type == 'undefined'){
-            return <span className="object-value-undefined">undefined</span>
-        }else if(node.type == 'number'){
-            return <span className="object-value-number">{node.value}</span>
-        }else if(node.type == 'boolean'){
-            return <span className="object-value-boolean">{node.value ? 'true' : 'false'}</span>
-        }else if(node.type == 'function'){
-            return <span className="console-message-text source-code">
-                <span className="object-value-function">{node.name || 'anonymous'}</span>()
-            </span>
-        }else if(node.type == 'null'){
-            return <span className="object-value-null">null</span>
-        }else if(node.type == "regexp"){
-            return <span className="object-value-regexp source-code">{node.code}</span>
         }
         return <span>wumbo {JSON.stringify(node)}</span>
     }

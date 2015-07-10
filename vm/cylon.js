@@ -53,6 +53,8 @@ function summarizeObject(obj, noRecurse){
     }else{ // object
         if(obj instanceof RegExp){
             return { type: 'regexp', code: obj.toString() }
+        }else if(obj instanceof Date){
+            return { type: 'date', unix: obj.getTime() }
         }
         var res = {type: 'object'}
         if(!noRecurse) res.pairs = Object.keys(obj).map(x => [x, summarizeObject(obj[x], true)]);

@@ -17,7 +17,9 @@ export class Palette extends Component {
         var {doc} = this.props;
         var source = [
             ['Cell', [
-                {name: "Type: Code"},
+                {name: "Type: Code", action: () => {
+                    doc.focused.markdown = false;
+                }},
                 {name: "Type: Markdown", action: () => {
                     doc.focused.markdown = true;
                 }},
