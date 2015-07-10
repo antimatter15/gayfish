@@ -70,7 +70,7 @@ export default class CellModel {
     get value(){ return this._value; }
     set value(val){
         this._value = val;
-        this.update()
+        // this.update()
     }
     get has_focus(){ return this._has_focus; }
     set has_focus(val){
@@ -103,7 +103,7 @@ export default class CellModel {
     set height(val){
         if(this._height != val){
             this._height = val;
-            this.update()
+            // this.update()
         }
     }
     get collapsed(){ return this._collapsed }

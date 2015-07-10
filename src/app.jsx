@@ -252,6 +252,7 @@ export default class App extends Component {
 
         doc.update = () => {
             if(!this.updateQueued){
+                console.trace()
                 this.updateQueued = true;
                 requestAnimationFrame(renderTick)
             }

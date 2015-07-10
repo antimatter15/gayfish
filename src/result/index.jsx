@@ -73,7 +73,12 @@ class GlobalTable extends Component {
                 )
             }
         }
-        return <table className="global-table"><tbody>{globals}</tbody></table>
+        if(globals.length > 0){
+            return <table className="global-table"><tbody>{globals}</tbody></table>    
+        }else{
+            return null;
+        }
+        
     }
 }
 
