@@ -12,143 +12,135 @@ require('./blink/inspectorSyntaxHighlight.css')
 
 // TODO: rewrite this so it's not a gnarly mess
 
-// this shows shallow object descriptions
-class ObjectPreview extends Component {
-    render(){
-        var {node} = this.props;
-        if(typeof node == "object"){
-            if(node.type == 'array'){
+export default class ObjectTree3 extends Component {
+    constructor() {
+        super()
+        this.state = { expanded: false }
+    }
+    toggleExpand = () => { this.setState({ expanded: !this.state.expanded }) }
+
+    // returns a function if the thing is expandable
+    renderCore(){
+        var {node, preview, label} = this.props;
+        var {expanded} = this.state;
+
+        if(node.type == 'array'){
+            if(preview){
                 return <span className="value object-value-array">Array[{node.length}]</span>;
-            }else if(node.type == 'object'){
-                return <span className="object-value-object">Object</span>;
-            }else if(node.type == 'null'){
-                return <span className="object-value-null">null</span>
-            }else if(node.type == 'undefined'){
-                return <span className="object-value-undefined">undefined</span>
-            }else if(node.type == 'number'){
-                return <span className="object-value-number">{node.value}</span>
-            }else if(node.type == 'string'){
-                return <span className="cm-js-string">{'"' + node.value + '"'}</span>
-            }else if(node.type == 'boolean'){
-                return <span className="object-value-boolean">{node.value ? 'true' : 'false'}</span>
-            }else if(node.type == 'function'){
-                return <span className="console-message-text source-code">
-                    <span className="object-value-function">{node.name || 'anonymous'}</span>()
-                </span>
-            }else if(node.type == "regexp"){
-                return <span className="object-value-regexp source-code">{node.code}</span>
-            }else{
-                return <span>Unhandled Type: {node.type}</span>
-            }
-        }else{
-            return <span>Unwrapped {JSON.stringify(node)}</span>
-        }
-    }
-}
-
-// this shows a deeper description of some expandable objects (arrays, objects)
-class ObjectFatPreview extends Component {
-    render(){
-        var {node} = this.props;
-        if(typeof node == "object"){
-            if(node.type == 'array'){
-                if(node.length < 100 && node.values){
-                    return <span className="object-value-array">[{
-                        array_join(node.values.map(x => <ObjectPreview node={x} />), ', ')
+            }else if(node.length < 100 && node.values){
+                return (
+                    <span className="object-value-array">[{
+                        array_join(node.values.map(x => <ObjectTree3 preview={true} node={x} />), ', ')
                     }]</span>
+                )
+            }else if(node.values){
+                return () => {
+                    return node.values.map((v, i) => <ObjectTree3 label={i} node={v} />)
                 }
-            }else if(node.type == 'object' && node.pairs){
-                var keys = _.pluck(node.pairs, 0),
-                    obj  = _.object(node.pairs);
-                return <span className="console-object-preview console-line">
-                    Object {"{"}
-                    {array_join(keys.map(key => [
-                        <span className="name">{key}</span>,
-                        ": ",
-                        <ObjectPreview node={obj[key]} />
-                    ]), ', ')}
-                    {"}"}
-                </span>
             }
+        }else if(node.type == 'string'){
+            if(preview){
+                return <span className="cm-js-string">{'"' + node.value + '"'}</span>
+            }else if(node.value.split("\n").length == 1 && node.value < 50){
+                return <span className="cm-js-string">{'"' + node.value + '"'}</span>
+            }else{
+                return () => {
+                    return <span className="cm-js-string">{node.value}</span>
+                }
+            }
+        }else if(node.type == 'object'){
+            if(preview){
+                if(node.pairs){
+                    var keys = _.pluck(node.pairs, 0),
+                        obj  = _.object(node.pairs);
+                    return (
+                        <span className="console-object-preview console-line">
+                            Object {"{"}
+                            {array_join(keys.map(key => [
+                                <span className="name">{key}</span>,
+                                ": ",
+                                <ObjectTree3 preview={true} node={obj[key]} />
+                            ]), ', ')}
+                            {"}"}
+                        </span>
+                    );
+                }else{
+                    return <span className="object-value-object">Object</span>;   
+                }
+            }else if(node.pairs){
+                return () => {
+                    var keys = _.pluck(node.pairs, 0),
+                        obj  = _.object(node.pairs);
+                    var desc = { enumerable: true }
+                    return keys.map(k => <ObjectTree3 node={obj[k]} label={k} />)
+                }
+            }else{
+                return <span className="object-value-object">Object</span>;
+            }
+        }else if(node.type == 'undefined'){
+            return <span className="object-value-undefined">undefined</span>
+        }else if(node.type == 'number'){
+            return <span className="object-value-number">{node.value}</span>
+        }else if(node.type == 'boolean'){
+            return <span className="object-value-boolean">{node.value ? 'true' : 'false'}</span>
+        }else if(node.type == 'function'){
+            return <span className="console-message-text source-code">
+                <span className="object-value-function">{node.name || 'anonymous'}</span>()
+            </span>
+        }else if(node.type == 'null'){
+            return <span className="object-value-null">null</span>
+        }else if(node.type == "regexp"){
+            return <span className="object-value-regexp source-code">{node.code}</span>
         }
-        return <ObjectPreview node={node} / >
+        return <span>wumbo {JSON.stringify(node)}</span>
     }
-}
-
-export class ExpandableTree extends Component {
-    constructor() {
-        super()
-        this.state = { expanded: false }
-    }
-    toggleExpand = () => { this.setState({ expanded: !this.state.expanded }) }
     render(){
-        var {node} = this.props;
+        var {node, preview, label} = this.props;
         var {expanded} = this.state;
-        var keys = _.pluck(node.pairs, 0),
-            obj  = _.object(node.pairs);
-        return (
-            <ol className="tree-outline component-root platform-mac source-code object-properties-section">
-                <li className={classNames({"parent": 1, expanded})} onClick={this.toggleExpand}>
-                    <div className="selection"></div>
-                    <content>
-                        <ObjectFatPreview node={node} />
-                    </content>
-                </li>
-                {!expanded ? <ol className="children" /> : <ol className="children expanded">{
-                    keys.map(key => <LabelPair key={key} name={key} parent={obj} />)
-                }</ol>}
-            </ol>
-        )
-    }
-}
-
-export class LabelPair extends Component {
-    constructor() {
-        super()
-        this.state = { expanded: false }
-    }
-    toggleExpand = () => { this.setState({ expanded: !this.state.expanded }) }
-    render(){
-        var {parent, name} = this.props;
-        var node = parent[name];
-        var {expanded} = this.state;
-        var desc = { enumerable: true };
-        if(node.type == 'array' || node.type == 'object' || (node.type == 'string' && node.value.length > 50)){
-            return (
-                <div>
-                    <li className={classNames({"parent": 1, expanded})} onClick={this.toggleExpand}>
+        if(typeof node != "object" || !node.type) return <span>Walp</span>;
+        var desc = {enumerable: true}
+        var result = this.renderCore();
+        if(typeof label != 'undefined'){
+            if(typeof result == 'function'){
+                return (
+                    <div>
+                        <li className={classNames({"parent": 1, expanded})} onClick={this.toggleExpand}>
+                            <div className="selection"></div>
+                            <span className={classNames({name: 1, "object-properties-section-dimmed": !desc.enumerable})}>{label}</span>
+                            <span className="object-properties-section-separator">: </span>
+                            <ObjectTree3 preview={true} node={node} />
+                        </li>
+                        {!expanded ? <ol className="children" /> : <ol className="children expanded">{result()}</ol>}
+                    </div>
+                );
+            }else{
+                return (
+                    <li>
                         <div className="selection"></div>
-                        <span className={classNames({name: 1, "object-properties-section-dimmed": !desc.enumerable})}>{name}</span>
+                        <span className={classNames({name: 1, "object-properties-section-dimmed": !desc.enumerable})}>{label}</span>
                         <span className="object-properties-section-separator">: </span>
-                        <ObjectPreview node={node} />
+                        <ObjectTree3 preview={true} node={node} />
                     </li>
-                    {!expanded ? <ol className="children" /> : <ol className="children expanded">{
-                        JSON.stringify(node)
-                    }</ol>}
-                </div>
-            );
+                )
+            }
+            
         }else{
-            return (
-                <li>
-                    <div className="selection"></div>
-                    <span className={classNames({name: 1, "object-properties-section-dimmed": !desc.enumerable})}>{name}</span>
-                    <span className="object-properties-section-separator">: </span>
-                    <ObjectPreview node={node} />
-                </li>
-            )
+            if(typeof result == 'function'){
+                return (
+                    <ol className="tree-outline component-root platform-mac source-code object-properties-section">
+                        <li className={classNames({"parent": 1, expanded})} onClick={this.toggleExpand}>
+                            <div className="selection"></div>
+                            <content><ObjectTree3 preview={true} node={node} /></content>
+                        </li>
+                        {!expanded ? <ol className="children" /> : <ol className="children expanded">{ result() }</ol>}
+                    </ol>
+                )
+            }else{
+                return result;
+            }
         }
         
     }
 }
 
 
-export default class ObjectTree extends Component {
-    render() {
-        var {node} = this.props;
-        if(node.type == 'array' || node.type == 'object'){
-            return <ExpandableTree node={node} />
-        }else{
-            return <ObjectPreview node={node} />
-        }
-    }
-}
