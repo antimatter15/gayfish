@@ -90,6 +90,7 @@ class UnifiedPair extends Component {
         var el = React.findDOMNode(this.refs.result)
         if(el.scrollHeight > el.offsetHeight){
             var output = React.findDOMNode(this.refs.output);
+            console.log(el.scrollHeight, el.offsetHeight)
             if(output.className.indexOf('overflowing') == -1){
                 output.className += " overflowing"   
             }
@@ -243,6 +244,8 @@ export default class App extends Component {
 
         this.state = { doc, size: this.defaultSize }
 
+        // TODO: remove this, it's quite likely that this is entirely unnecessary
+        // because react already does this
         var renderTick = () => {
             this.updateQueued = false;
 

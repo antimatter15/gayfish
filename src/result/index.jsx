@@ -14,15 +14,15 @@ class LogTable extends Component {
     render(){
         var {doc, cell} = this.props;
 
-        var output = <div></div>;
+        var output = null;
         if(typeof cell.logs !== 'undefined' && cell.logs.length > 0){
-            output = <table className="platform-mac source-code log-table">
+            output = <table className="platform-mac source-code">
             <tbody>{
                 cell.logs.map(x => <LogLine doc={doc} cell={cell} log={x} />)
             }</tbody>
             </table>
         }
-        return output;
+        return <div className="log-table">{output}</div>;
     }
 }
 
@@ -74,7 +74,9 @@ class GlobalTable extends Component {
             }
         }
         if(globals.length > 0){
-            return <table className="global-table"><tbody>{globals}</tbody></table>    
+            return <div className="global-table">
+                <table><tbody>{globals}</tbody></table>
+            </div>
         }else{
             return null;
         }
@@ -116,9 +118,9 @@ export class CellResult extends Component {
                     <LogTable cell={cell} doc={doc} />
                     <GlobalTable cell={cell} doc={doc} />
                     {cell.status == 'error' ? <DropdownCodeViewer code={cell.compiled} /> : null }
-                </div>
 
-                <ConsoleWidget cell={cell} doc={doc} />
+                    <ConsoleWidget cell={cell} doc={doc} />
+                </div>
             </div>
         )
     }
@@ -157,13 +159,18 @@ class ConsoleWidget extends Component {
                 );
             }
         });
-        return (
-            <div className="monospace console-widget">
-                <div className="console-group console-group-messages">
-                    {messages}
+        if(messages.length > 0){
+            return (
+                <div className="monospace console-widget">
+                    <div className="console-group console-group-messages">
+                        {messages}
+                    </div>
                 </div>
-            </div>
-        )
+            )
+        }else{
+            return null;
+        }
+        
     }
 }
 
