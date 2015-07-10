@@ -85,6 +85,10 @@ class GlobalTable extends Component {
 }
 
 export class CellResult extends Component {
+    clickStop = () => {
+        var {doc, cell} = this.props;
+        doc.vm.stop()
+    }
     render() {
         var {doc, cell} = this.props;
 
@@ -109,6 +113,7 @@ export class CellResult extends Component {
         return (
             <div className={cell_classes} style={style}>
                 {(cell.status == 'running' && cell.progress > 0 && cell.progress <= 1) ? <div className="progress-container">
+                    <button onClick={this.clickStop}>&times;</button>
                     <progress value={cell.progress} max={1} />
                 </div> : null}
                 {(cell.status == 'running' && cell.activity ? <div className="activity">{cell.activity}</div> : null)}
