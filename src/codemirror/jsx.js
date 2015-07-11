@@ -1,5 +1,7 @@
 var CodeMirror = require('codemirror')
 
+// TODO: make it smart enough to parse JS within {} within JSX
+
 CodeMirror.defineMode("jsx", function(config, parserConfig) {
   var jsMode = CodeMirror.getMode(config, "javascript");
   var xmlMode =  CodeMirror.getMode(config, {name: "xml", htmlMode: true});

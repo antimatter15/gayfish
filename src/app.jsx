@@ -90,7 +90,7 @@ class UnifiedPair extends Component {
         var el = React.findDOMNode(this.refs.result)
         if(el.scrollHeight > el.offsetHeight){
             var output = React.findDOMNode(this.refs.output);
-            console.log(el.scrollHeight, el.offsetHeight)
+            // console.log(el.scrollHeight, el.offsetHeight)
             if(output.className.indexOf('overflowing') == -1){
                 output.className += " overflowing"   
             }

@@ -111,11 +111,13 @@ export default class CellModel {
     get prev(){ 
         var prev = this.doc.item(this.index - 1)
         // if(prev && prev.collapsed) return prev.prev;
+        if(prev && prev.markdown) return prev.prev;
         return prev;
     }
     get next(){
         var next = this.doc.item(this.index + 1)
         // if(next && next.collapsed) return next.next;
+        if(next && next.markdown) return next.next;
         return next;
     }
     checkNext(){

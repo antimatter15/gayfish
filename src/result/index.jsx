@@ -6,6 +6,9 @@ import classNames from 'classnames'
 import * as _ from 'lodash'
 import {array_join} from '../util.js'
 
+// http://webpack.github.io/docs/api-in-modules.html#__webpack_require__
+// console.log('resolver', require.resolveWeak('moment'), __webpack_modules__, __webpack_require__)
+
 // TODO: figure out a way to define the table row height by the right column
 // and have the name cells overflow with ellipsis rather than constraining the
 // name cells to have a height of one line

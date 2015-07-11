@@ -49,7 +49,7 @@ export default class ObjectTree3 extends Component {
         }else if(node.type == 'string'){
             if(preview){
                 return <span className="cm-js-string">{JSON.stringify(node.value)}</span>
-            }else if(node.value.split("\n").length == 1 && node.value < 50){
+            }else if(node.value.split("\n").length == 1 && node.value.length < 50){
                 return <span className="cm-js-string">{'"' + node.value + '"'}</span>
             }else{
                 return () => {
@@ -59,11 +59,16 @@ export default class ObjectTree3 extends Component {
         }else if(node.type == 'array'){
             if(preview){
                 if(node.values){
-                    return (
-                        <span className="object-value-array">[{
-                            array_join(node.values.map(x => <ObjectTree3 preview={true} node={x} />), ', ')
-                        }]</span>
-                    )
+                    if(node.length < 100){
+                        return (
+                            <span className="object-value-array">[{
+                                array_join(node.values.map(x => <ObjectTree3 preview={true} node={x} />), ', ')
+                            }]</span>
+                        )    
+                    }else{
+                        return <span className="value object-value-array">Array[{node.length}]</span>;
+                    }
+                    
                 }else{
                     return <span className="value object-value-array">Array[{node.length}]</span>;   
                 }
