@@ -129,12 +129,15 @@ global.__prepareModule = function __prepareModule(code, config){
 	var [name, version] = id.split('@');
 	var pkg = version_cache(name, version);
 	process.platform = 'linux';
-
+	var __require = function(path){
+		return requireModule(...subresolve(pkg, filename, path))
+	};
+	__require.resolve = function(arg){
+		console.log('resolve', arg)
+	}
 	npm_modules_cache[id][filename] = {
 		exports: {},
-		require: function(path){
-			return requireModule(...subresolve(pkg, filename, path))
-		},
+		require: __require,
 		Buffer: Buffer,
 		// console: {},
 		process: process,

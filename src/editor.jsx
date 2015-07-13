@@ -40,29 +40,29 @@ require("codemirror/addon/dialog/dialog.css")
 // require("codemirror/addon/search/searchcursor")
 // require("codemirror/addon/search/search")
 
-global.tern = require('tern')
-require("codemirror/addon/tern/tern.css")
-require("codemirror/addon/tern/tern")
-require("./codemirror/node")
+// global.tern = require('tern')
+// require("codemirror/addon/tern/tern.css")
+// require("codemirror/addon/tern/tern")
+// require("./codemirror/node")
 
-// Tern Server Eliot
-var eliot = new CodeMirror.TernServer({
-    defs: [
-        require('tern/defs/ecma5.json'),
-        require('tern/defs/browser.json'),
-        require('./codemirror/carbide.json')
-    ],
-    plugins: {
-        node: {
-            // this bit is especially hacky
-            resolver: function(name){
-                return Doc.vm.queryModule(name)
-            }
-        }
-    }
-});
+// // Tern Server Eliot
+// var eliot = new CodeMirror.TernServer({
+//     defs: [
+//         require('tern/defs/ecma5.json'),
+//         require('tern/defs/browser.json'),
+//         require('./codemirror/carbide.json')
+//     ],
+//     plugins: {
+//         node: {
+//             // this bit is especially hacky
+//             resolver: function(name){
+//                 return Doc.vm.queryModule(name)
+//             }
+//         }
+//     }
+// });
 
-global.eliot = eliot
+// global.eliot = eliot
 
 export default class Editor extends Component {
     constructor(props) {
@@ -115,12 +115,13 @@ export default class Editor extends Component {
         if(cell.collapsed){
             // cm.foldAll();
             cm.execCommand('foldAll')
+            
         }
 
         cell.mount(cm);
         cell.editor = this;
 
-        eliot.addDoc('cell' + cell.id, cm);
+        // eliot.addDoc('cell' + cell.id, cm);
 
         function slideNext(){
             if(cell.next){
@@ -159,11 +160,11 @@ export default class Editor extends Component {
         }
 
         cm.setOption("extraKeys", {
-            "Ctrl-I": function(cm) { eliot.showType(cm); },
-            "Ctrl-O": function(cm) { eliot.showDocs(cm); },
-            "Ctrl-Space": function(cm) { eliot.complete(cm); },
-            "Alt-.": function(cm) { eliot.jumpToDef(cm); },
-            "Alt-,": function(cm) { eliot.jumpBack(cm); },
+            // "Ctrl-I": function(cm) { eliot.showType(cm); },
+            // "Ctrl-O": function(cm) { eliot.showDocs(cm); },
+            // "Ctrl-Space": function(cm) { eliot.complete(cm); },
+            // "Alt-.": function(cm) { eliot.jumpToDef(cm); },
+            // "Alt-,": function(cm) { eliot.jumpBack(cm); },
             "Cmd-Left": (cm) => {
                 cm.execCommand("goLineStartSmart")
             },
@@ -299,7 +300,7 @@ export default class Editor extends Component {
             
             cell.checkNext();
 
-            cm.showPrediction({ ts: eliot })
+            // cm.showPrediction({ ts: eliot })
 
             let {line, ch} = cm.getCursor();
 
@@ -314,7 +315,7 @@ export default class Editor extends Component {
 
         })
         cm.on("cursorActivity", function(cm) { 
-            eliot.updateArgHints(cm); 
+            // eliot.updateArgHints(cm); 
             // eliot.complete(cm)
             // let {line, ch} = cm.getCursor();
             // console.log(line, cm.findMarks({line, ch: 0}, {line, ch: 1e8}).map(x => x._originalLine))

@@ -24,8 +24,10 @@ class LogTable extends Component {
                 cell.logs.map(x => <LogLine doc={doc} cell={cell} log={x} />)
             }</tbody>
             </table>
+            return <div className="log-table">{output}</div>;
         }
-        return <div className="log-table">{output}</div>;
+        return null;
+        
     }
 }
 
@@ -151,7 +153,7 @@ class ConsoleWidget extends Component {
             //         </span>
             //     </div>
             // </div>
-            if(c.type == 'log'){
+            if(c.format == 'log'){
                 // <a className="console-message-url webkit-html-resource-link" title=":2">VM240:2 </a>
                 return (
                     <div className="console-message-wrapper console-log-level">
@@ -165,6 +167,22 @@ class ConsoleWidget extends Component {
                         </div>
                     </div>
                 );
+            }else if(c.format == 'html'){
+                return (
+                    <div dangerouslySetInnerHTML={{__html: c.html}} />
+                )
+            }else{
+                return (
+                    <div className="console-message-wrapper console-error-level">
+                        <div className="console-message">
+                            <span className="console-message-text source-code">
+                                <span>
+                                    No handler for Console format "{c.format}"
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+                )
             }
         });
         if(messages.length > 0){

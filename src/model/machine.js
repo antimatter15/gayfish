@@ -63,10 +63,7 @@ export default class Machine {
             cell.progress = data.frac;
             cell.update()
         }else if(data.type == 'console'){
-            cell.console.push({
-                arguments: data.arguments,
-                type: 'log'
-            })
+            cell.console.push(data)
             cell.update()
         }else if(data.type == 'logs'){
             cell.logs = data.instances

@@ -20,8 +20,6 @@ import {FocusedCellResult, CellResult} from './result'
 
 var CodeMirror = require('codemirror');
 
-
-
 const cardSource = {
     beginDrag(props, monitor, component) {
         var {cell} = props;

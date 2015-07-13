@@ -5,11 +5,15 @@ var Globalize = new BabelTransformer("Globalize", {
     FunctionDeclaration(node, parent, scope) {
         if(scope.parent.parent) return;
         var id = node.id;
-            node.type = "FunctionExpression";
-            node.id   = null;
+        node.type = "FunctionExpression";
         return t.variableDeclaration("var", [
             t.variableDeclarator(id, node)
         ]);
+    },
+    ClassDeclaration(node, parent, scope){
+        return t.variableDeclaration("var", [
+            t.variableDeclarator(node.id, t.toExpression(node))
+        ])
     },
     VariableDeclaration(node, parent, scope){
         // don't apply to let or const
